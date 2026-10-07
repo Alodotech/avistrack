@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# avistrack
 
-## Getting Started
+## Présentation
+Bienvenue sur le projet **avistrack**, une application fullstack basée sur Next.js.
 
-First, run the development server:
+## Collaboration et Stratégie Git (Pour les 2 Développeurs)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Ce projet est développé en équipe. Voici comment nous allons travailler ensemble de manière organisée :
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. Branches et Workflow
+- `main` : La branche principale de production. Le code ici doit toujours être stable. On n'y pousse jamais de code directement.
+- `dev` : La branche principale d'intégration. Toutes les nouvelles fonctionnalités et correctifs sont fusionnés ici avant d'aller sur `main`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Comment cloner et démarrer le projet
+Pour commencer à travailler sur le projet, voici les étapes :
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Cloner le dépôt :**
+   ```bash
+   git clone https://github.com/Alodotech/avistrack.git
+   cd avistrack
+   ```
 
-## Learn More
+2. **Se placer sur la branche d'intégration (dev) :**
+   ```bash
+   git checkout dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. **Installer les dépendances (une fois le projet Next.js initialisé) :**
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Lancer le serveur de développement :**
+   ```bash
+   npm run dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Travailler sur une nouvelle fonctionnalité (Feature Branch)
+Chaque développeur travaille sur sa propre branche avant de fusionner son travail avec les autres.
 
-## Deploy on Vercel
+1. **Assurez-vous d'être à jour avec la branche `dev` :**
+   ```bash
+   git checkout dev
+   git pull origin dev
+   ```
+2. **Créez une nouvelle branche pour votre tâche :**
+   Préfixez le nom de la branche par `feature/` (nouvelle fonctionnalité) ou `fix/` (correction de bug).
+   ```bash
+   git checkout -b feature/nom-de-votre-tache
+   ```
+3. **Faites vos modifications et commitez :**
+   ```bash
+   git add .
+   git commit -m "Ajout de la page de connexion"
+   ```
+4. **Poussez votre branche sur le dépôt distant (GitHub) :**
+   ```bash
+   git push origin feature/nom-de-votre-tache
+   ```
+5. **Faire une Pull Request (PR) :**
+   Sur GitHub, ouvrez une Pull Request de votre branche vers la branche `dev`. L'autre développeur peut relire le code et le valider avant de le fusionner (merge).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack Technique Prévue
+- Frontend / Backend : Next.js
+- *Autres technologies à définir...*
