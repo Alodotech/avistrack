@@ -24,10 +24,10 @@ export function AccountStateScreen({
   return (
     <section
       role="alert"
-      className="flex flex-col gap-3 rounded border-l-4 border-red bg-gray-100 p-6"
+      className="grid gap-4 rounded-lg border border-black/15 border-l-4 border-l-red bg-white p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-8 lg:p-8"
     >
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <p className="max-w-2xl text-sm leading-6">{body}</p>
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+      <p className="text-sm leading-6">{body}</p>
     </section>
   );
 }

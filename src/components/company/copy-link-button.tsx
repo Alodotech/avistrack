@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { CopyIcon } from "@/components/ui/icons";
 
 export function CopyLinkButton({ value }: { value: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -16,16 +17,19 @@ export function CopyLinkButton({ value }: { value: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <>
       <Button type="button" variant="secondary" onClick={copy}>
-        Copier le lien
+        <CopyIcon />
+        {state === "copied" ? "Lien copié" : "Copier le lien"}
       </Button>
-      <p role="status" className="min-h-5 text-xs text-gray-600">
-        {state === "copied" ? "Lien copié." : null}
-        {state === "failed"
-          ? "Copie impossible : sélectionnez le lien pour le copier."
-          : null}
-      </p>
-    </div>
+      <span role="status" className="sr-only">
+        {state === "copied" ? "Lien copié dans le presse-papiers." : null}
+      </span>
+      {state === "failed" ? (
+        <p role="alert" className="text-xs text-red">
+          Copie impossible : sélectionnez le lien pour le copier.
+        </p>
+      ) : null}
+    </>
   );
 }

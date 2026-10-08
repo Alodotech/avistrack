@@ -4,7 +4,9 @@ import { PERIOD_OPTIONS, type ReviewQuery } from "@/lib/review-query";
 import { RATINGS } from "@/lib/review-stats";
 
 const selectClass =
-  "min-h-11 rounded border border-black/30 bg-white px-3 text-sm";
+  "min-h-11 cursor-pointer rounded-md border border-black/30 bg-white px-3 text-sm";
+
+const labelClass = "text-xs font-semibold tracking-wide text-gray-600 uppercase";
 
 /** DE-07 : formulaire GET, donc utilisable sans JavaScript et partageable par URL. */
 export function ReviewFilters({ query }: { query: ReviewQuery }) {
@@ -17,7 +19,7 @@ export function ReviewFilters({ query }: { query: ReviewQuery }) {
       className="flex flex-wrap items-end gap-3"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="filter-rating" className="text-sm font-semibold">
+        <label htmlFor="filter-rating" className={labelClass}>
           Note
         </label>
         <select
@@ -36,7 +38,7 @@ export function ReviewFilters({ query }: { query: ReviewQuery }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="filter-period" className="text-sm font-semibold">
+        <label htmlFor="filter-period" className={labelClass}>
           Période
         </label>
         <select

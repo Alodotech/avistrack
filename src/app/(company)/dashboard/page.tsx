@@ -7,29 +7,54 @@ import { QrCard } from "@/components/company/qr-card";
 import { RatingHistogram } from "@/components/company/rating-histogram";
 import { ReviewFilters } from "@/components/company/review-filters";
 import { ReviewsTable } from "@/components/company/reviews-table";
+import {
+  MessageIcon,
+  StarIcon,
+  ThumbUpIcon,
+  TrendIcon,
+} from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
-import { StatCard, StatCardSkeleton } from "@/components/ui/stat-card";
-import { formatAverage, formatCount } from "@/lib/format";
+import { EmptyState, PageHeader, Panel } from "@/components/ui/panel";
+import {
+  StatCard,
+  StatCardSkeleton,
+  StatGrid,
+} from "@/components/ui/stat-card";
+import { formatAverage, formatCount, formatPercent } from "@/lib/format";
 import { pageCount } from "@/lib/pagination";
 import {
   parseReviewQuery,
+  periodStart,
   reviewQueryToHref,
   REVIEWS_PAGE_SIZE,
 } from "@/lib/review-query";
 import { statsFromDistribution } from "@/lib/review-stats";
 import { requireCompany } from "@/server/auth/guards";
-import { getRatingDistributionForCompany } from "@/server/repositories/review-repository";
+import {
+  countReviewsForCompanySince,
+  getRatingDistributionForCompany,
+} from "@/server/repositories/review-repository";
 import { listReviewsForDashboard } from "@/server/services/company-reviews";
 import { publicReviewUrl } from "@/server/services/qr";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
+
+const STAT_LABELS = {
+  average: "Note moyenne",
+  total: "Avis reçus",
+  recent: "Avis sur 30 jours",
+  satisfied: "Clients satisfaits",
+} as const;
 
 export default function DashboardPage({
   searchParams,
 }: PageProps<"/dashboard">) {
   return (
     <>
-      <h1 className="text-2xl font-semibold">Tableau de bord</h1>
+      <PageHeader
+        title="Tableau de bord"
+        description="Votre QR code, la satisfaction de vos clients et leurs avis."
+      />
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardContent searchParams={searchParams} />
       </Suspense>
@@ -46,12 +71,13 @@ async function DashboardContent({
     return <AccountStateScreen status={company.status} />;
   }
 
-  // Le filtre par période dépend de l'heure courante : rendu à la requête uniquement.
+  // Les indicateurs par période dépendent de l'heure courante : rendu à la requête uniquement.
   await connection();
   const query = parseReviewQuery(await searchParams);
-  const [distribution, reviews] = await Promise.all([
+  const [distribution, reviews, recentCount] = await Promise.all([
     getRatingDistributionForCompany(company.id),
     listReviewsForDashboard(company, query),
+    countReviewsForCompanySince(company.id, periodStart(30, new Date())),
   ]);
 
   const lastPage = pageCount(reviews.total, REVIEWS_PAGE_SIZE);
@@ -61,85 +87,101 @@ async function DashboardContent({
 
   const stats = statsFromDistribution(distribution);
   const isFiltered = Boolean(query.rating || query.periodDays);
+  const satisfied = distribution[4] + distribution[5];
 
   return (
     <>
-      <QrCard publicUrl={publicReviewUrl(company.publicId)} />
-
-      <dl className="grid gap-4 sm:grid-cols-2">
+      <StatGrid>
         <StatCard
-          label="Note moyenne"
+          label={STAT_LABELS.average}
           value={
             <>
               {formatAverage(stats.average)}
               {stats.average !== null ? (
-                <span className="text-base font-normal text-gray-600"> / 5</span>
+                <span className="text-lg font-normal text-gray-600"> / 5</span>
               ) : null}
             </>
           }
-          hint="Calculée sur l'ensemble de vos avis"
+          hint="Sur l'ensemble de vos avis"
+          icon={<StarIcon filled={false} className="size-5" />}
         />
-        <StatCard label="Nombre total d'avis" value={formatCount(stats.total)} />
-      </dl>
+        <StatCard
+          label={STAT_LABELS.total}
+          value={formatCount(stats.total)}
+          hint="Depuis la création du compte"
+          icon={<MessageIcon />}
+        />
+        <StatCard
+          label={STAT_LABELS.recent}
+          value={formatCount(recentCount)}
+          hint="Déposés ces 30 derniers jours"
+          icon={<TrendIcon />}
+        />
+        <StatCard
+          label={STAT_LABELS.satisfied}
+          value={stats.total === 0 ? "—" : formatPercent(satisfied / stats.total)}
+          hint="Part des avis à 4 ou 5 étoiles"
+          icon={<ThumbUpIcon />}
+        />
+      </StatGrid>
 
-      {stats.total > 0 ? <RatingHistogram stats={stats} /> : null}
+      <div className="grid gap-6 lg:gap-8 xl:grid-cols-2">
+        <QrCard publicUrl={publicReviewUrl(company.publicId)} />
+        <RatingHistogram stats={stats} />
+      </div>
 
-      <section aria-labelledby="reviews-title" className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 id="reviews-title" className="text-lg font-semibold">
-            Avis reçus
-          </h2>
-          {stats.total > 0 ? (
-            <p className="text-sm text-gray-600">
-              {isFiltered
-                ? `${formatCount(reviews.total)} avis correspondent aux filtres, sur ${formatCount(stats.total)}.`
-                : "Du plus récent au plus ancien."}
-            </p>
-          ) : null}
-        </div>
-
+      <Panel
+        id="avis"
+        title="Avis reçus"
+        description={
+          stats.total === 0
+            ? undefined
+            : isFiltered
+              ? `${formatCount(reviews.total)} avis correspondent aux filtres, sur ${formatCount(stats.total)}.`
+              : `${formatCount(stats.total)} avis, du plus récent au plus ancien.`
+        }
+        actions={stats.total > 0 ? <ReviewFilters query={query} /> : undefined}
+        flush
+      >
         {stats.total === 0 ? (
-          <p className="rounded bg-gray-100 p-5 text-sm">
+          <EmptyState>
             Vous n&apos;avez pas encore reçu d&apos;avis. Affichez votre QR code
             en point de vente pour recueillir les premiers.
-          </p>
+          </EmptyState>
+        ) : reviews.total === 0 ? (
+          <EmptyState>Aucun avis ne correspond à ces filtres.</EmptyState>
         ) : (
           <>
-            <ReviewFilters query={query} />
-            {reviews.total === 0 ? (
-              <p className="rounded bg-gray-100 p-5 text-sm">
-                Aucun avis ne correspond à ces filtres.
-              </p>
-            ) : (
-              <>
-                <ReviewsTable reviews={reviews.items} />
-                <Pagination
-                  label="Pagination des avis"
-                  page={query.page}
-                  total={reviews.total}
-                  pageSize={REVIEWS_PAGE_SIZE}
-                  hrefForPage={(page) =>
-                    reviewQueryToHref("/dashboard", { ...query, page })
-                  }
-                />
-              </>
-            )}
+            <ReviewsTable reviews={reviews.items} />
+            <Pagination
+              label="Pagination des avis"
+              page={query.page}
+              total={reviews.total}
+              pageSize={REVIEWS_PAGE_SIZE}
+              hrefForPage={(page) =>
+                reviewQueryToHref("/dashboard", { ...query, page })
+              }
+            />
           </>
         )}
-      </section>
+      </Panel>
     </>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div aria-busy="true" className="flex flex-col gap-8">
+    <div aria-busy="true" className="flex flex-col gap-6 lg:gap-8">
       <p className="sr-only">Chargement de vos données…</p>
-      <div className="h-56 rounded border border-black/15 bg-gray-100" />
-      <dl className="grid gap-4 sm:grid-cols-2">
-        <StatCardSkeleton label="Note moyenne" />
-        <StatCardSkeleton label="Nombre total d'avis" />
-      </dl>
+      <StatGrid>
+        {Object.values(STAT_LABELS).map((label) => (
+          <StatCardSkeleton key={label} label={label} />
+        ))}
+      </StatGrid>
+      <div className="grid gap-6 lg:gap-8 xl:grid-cols-2">
+        <div className="h-72 rounded-lg border border-black/15 bg-white" />
+        <div className="h-72 rounded-lg border border-black/15 bg-white" />
+      </div>
     </div>
   );
 }

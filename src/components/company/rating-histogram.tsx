@@ -1,10 +1,7 @@
-import { formatCount } from "@/lib/format";
+import { StarIcon } from "@/components/ui/icons";
+import { EmptyState, Panel } from "@/components/ui/panel";
+import { formatCount, formatPercent } from "@/lib/format";
 import { RATINGS, type ReviewStats } from "@/lib/review-stats";
-
-const percentFormatter = new Intl.NumberFormat("fr-FR", {
-  style: "percent",
-  maximumFractionDigits: 0,
-});
 
 /**
  * DE-06 : répartition des notes. Une seule série, donc une seule couleur ;
@@ -16,46 +13,52 @@ export function RatingHistogram({ stats }: { stats: ReviewStats }) {
   const max = Math.max(...RATINGS.map((rating) => stats.distribution[rating]));
 
   return (
-    <section
-      aria-labelledby="histogram-title"
-      className="flex flex-col gap-4 rounded border border-black/15 p-5"
+    <Panel
+      id="repartition"
+      title="Répartition des notes"
+      description="Nombre d'avis et part du total pour chaque note."
+      flush={stats.total === 0}
     >
-      <h2 id="histogram-title" className="text-lg font-semibold">
-        Répartition des notes
-      </h2>
-      <ul className="flex flex-col gap-2">
-        {[...RATINGS].reverse().map((rating) => {
-          const count = stats.distribution[rating];
-          const share = stats.total === 0 ? 0 : count / stats.total;
-          return (
-            <li
-              key={rating}
-              className="grid grid-cols-[3.5rem_1fr_6.5rem] items-center gap-3 text-sm"
-            >
-              <span className="font-semibold">
-                {rating} <span aria-hidden>★</span>
-                <span className="sr-only">
-                  {rating > 1 ? "étoiles" : "étoile"}
-                </span>
-              </span>
-              <svg
-                aria-hidden
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-                className="h-3 w-full fill-black"
+      {stats.total === 0 ? (
+        <EmptyState>
+          La répartition apparaîtra dès votre premier avis.
+        </EmptyState>
+      ) : (
+        <ul className="flex flex-1 flex-col justify-around gap-4">
+          {[...RATINGS].reverse().map((rating) => {
+            const count = stats.distribution[rating];
+            return (
+              <li
+                key={rating}
+                className="grid grid-cols-[2.5rem_1fr_7rem] items-center gap-4 text-sm"
               >
-                <rect
-                  width={max === 0 ? 0 : (count / max) * 100}
-                  height="10"
-                />
-              </svg>
-              <span className="text-right tabular-nums text-gray-600">
-                {formatCount(count)} · {percentFormatter.format(share)}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+                <span className="flex items-center gap-1 font-semibold tabular-nums">
+                  {rating}
+                  <StarIcon filled />
+                  <span className="sr-only">
+                    {rating > 1 ? "étoiles" : "étoile"}
+                  </span>
+                </span>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 100 10"
+                  preserveAspectRatio="none"
+                  className="h-4 w-full rounded-sm bg-gray-100 fill-black"
+                >
+                  <rect width={(count / max) * 100} height="10" />
+                </svg>
+                <span className="text-right tabular-nums">
+                  <span className="font-semibold">{formatCount(count)}</span>
+                  <span className="text-gray-600">
+                    {" "}
+                    · {formatPercent(count / stats.total)}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Panel>
   );
 }
