@@ -102,6 +102,7 @@ export async function listCompaniesForAdmin(options: {
 
 export type PlatformStats = {
   companyCount: number;
+  suspendedCompanyCount: number;
   reviewCount: number;
   newCompaniesLast30Days: number;
 };
@@ -114,6 +115,9 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 
   return {
     companyCount: live.length,
+    suspendedCompanyCount: live.filter(
+      (company) => company.status === "SUSPENDED",
+    ).length,
     reviewCount: reviews.filter((review) => liveIds.has(review.companyId))
       .length,
     newCompaniesLast30Days: live.filter(
