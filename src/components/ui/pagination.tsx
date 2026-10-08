@@ -25,7 +25,10 @@ export function Pagination({
   const disabled = "pointer-events-none opacity-40";
 
   return (
-    <nav aria-label={label} className="flex items-center justify-between gap-4">
+    <nav
+      aria-label={label}
+      className="flex items-center justify-between gap-4 border-t border-black/10 px-5 py-4 lg:px-6"
+    >
       <Link
         href={hrefForPage(Math.max(1, page - 1))}
         aria-disabled={page <= 1}
@@ -34,7 +37,7 @@ export function Pagination({
       >
         Précédent
       </Link>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 tabular-nums">
         Page {page} sur {pages}
       </p>
       <Link
