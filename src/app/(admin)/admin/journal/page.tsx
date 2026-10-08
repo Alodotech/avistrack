@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Pagination } from "@/components/ui/pagination";
-import { formatDateTime } from "@/lib/format";
+import { EmptyState, PageHeader, Panel } from "@/components/ui/panel";
+import { tableStyles as t } from "@/components/ui/table";
+import { formatCount, formatDateTime } from "@/lib/format";
 import { pageCount, parsePage } from "@/lib/pagination";
 import { requireAdmin } from "@/server/auth/guards";
 import type { AuditAction } from "@/server/domain";
@@ -18,6 +20,8 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   DELETE: "Suppression",
 };
 
+const COLUMNS = ["Date", "Administrateur", "Action", "Entreprise"];
+
 const journalHref = (page: number) =>
   page > 1 ? `/admin/journal?page=${page}` : "/admin/journal";
 
@@ -27,7 +31,10 @@ export default function AuditLogPage({
 }: PageProps<"/admin/journal">) {
   return (
     <>
-      <h1 className="text-2xl font-semibold">Journal d&apos;audit</h1>
+      <PageHeader
+        title="Journal d'audit"
+        description="Trace des actions d'administration : qui a fait quoi, quand, sur quelle entreprise."
+      />
       <Suspense
         fallback={<p className="text-sm text-gray-600">Chargement du journal…</p>}
       >
@@ -48,51 +55,62 @@ async function AuditLogContent({
   const lastPage = pageCount(entries.total, PAGE_SIZE);
   if (page > lastPage) redirect(journalHref(lastPage));
 
-  if (entries.total === 0) {
-    return (
-      <p className="rounded bg-gray-100 p-5 text-sm">
-        Aucune action enregistrée. Les suspensions, réactivations et
-        suppressions d&apos;entreprises apparaîtront ici.
-      </p>
-    );
-  }
-
   return (
-    <>
-      <div className="relative overflow-x-auto rounded border border-black/15">
-        <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-          <thead className="bg-black text-white">
-            <tr>
-              {["Date", "Administrateur", "Action", "Entreprise"].map(
-                (heading) => (
-                  <th key={heading} scope="col" className="px-3 py-3">
-                    {heading}
-                  </th>
-                ),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {entries.items.map((entry) => (
-              <tr key={entry.id} className="border-t border-black/15">
-                <td className="px-3 py-3 whitespace-nowrap tabular-nums">
-                  {formatDateTime(entry.createdAt)}
-                </td>
-                <td className="px-3 py-3 break-all">{entry.adminEmail}</td>
-                <td className="px-3 py-3">{ACTION_LABELS[entry.action]}</td>
-                <td className="px-3 py-3">{entry.companyName ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <Pagination
-        label="Pagination du journal"
-        page={page}
-        total={entries.total}
-        pageSize={PAGE_SIZE}
-        hrefForPage={journalHref}
-      />
-    </>
+    <Panel
+      id="journal"
+      title="Actions enregistrées"
+      description={
+        entries.total === 0
+          ? undefined
+          : `${formatCount(entries.total)} ${entries.total > 1 ? "actions" : "action"}, de la plus récente à la plus ancienne.`
+      }
+      flush
+    >
+      {entries.total === 0 ? (
+        <EmptyState>
+          Aucune action enregistrée. Les suspensions, réactivations et
+          suppressions d&apos;entreprises apparaîtront ici.
+        </EmptyState>
+      ) : (
+        <>
+          <div className={t.wrapper}>
+            <table className={`${t.table} min-w-176`}>
+              <thead className={t.head}>
+                <tr>
+                  {COLUMNS.map((heading) => (
+                    <th key={heading} scope="col" className={t.th}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {entries.items.map((entry) => (
+                  <tr key={entry.id} className={t.row}>
+                    <td className={`${t.td} whitespace-nowrap tabular-nums`}>
+                      {formatDateTime(entry.createdAt)}
+                    </td>
+                    <td className={`${t.td} whitespace-nowrap`}>{entry.adminEmail}</td>
+                    <td className={`${t.td} font-semibold`}>
+                      {ACTION_LABELS[entry.action]}
+                    </td>
+                    <td className={`${t.td} w-full`}>
+                      {entry.companyName ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            label="Pagination du journal"
+            page={page}
+            total={entries.total}
+            pageSize={PAGE_SIZE}
+            hrefForPage={journalHref}
+          />
+        </>
+      )}
+    </Panel>
   );
 }
