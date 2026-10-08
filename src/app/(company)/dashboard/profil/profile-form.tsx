@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { updateProfile, type ProfileFormState } from "./actions";
 
 const inputClass =
-  "min-h-11 w-full rounded border border-black/30 bg-white px-3 text-sm aria-[invalid=true]:border-red";
+  "min-h-11 w-full rounded-md border border-black/30 bg-white px-3 text-sm aria-invalid:border-red";
 
 const initialState: ProfileFormState = { status: "idle" };
 
@@ -13,7 +13,7 @@ export function ProfileForm({ name, phone }: { name: string; phone: string }) {
   const [state, action, pending] = useActionState(updateProfile, initialState);
 
   return (
-    <form action={action} className="flex max-w-md flex-col gap-5" noValidate>
+    <form action={action} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1">
         <label htmlFor="profile-name" className="text-sm font-semibold">
           Nom de l&apos;entreprise
@@ -64,7 +64,7 @@ export function ProfileForm({ name, phone }: { name: string; phone: string }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4 border-t border-black/10 pt-5">
         <Button type="submit" disabled={pending}>
           {pending ? "Enregistrement…" : "Enregistrer"}
         </Button>
