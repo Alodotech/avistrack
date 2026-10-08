@@ -4,7 +4,7 @@ export const tableStyles = {
   wrapper: "relative overflow-x-auto",
   table: "w-full border-collapse text-left text-sm",
   head: "bg-black text-xs tracking-wide text-white uppercase",
-  th: "px-5 py-3 font-semibold whitespace-nowrap lg:px-6",
+  th: "px-3 py-3 font-semibold whitespace-nowrap first:pl-5 last:pr-5 lg:first:pl-6 lg:last:pr-6",
   row: "border-t border-black/10 transition-colors duration-200 hover:bg-gray-100",
-  td: "px-5 py-4 align-middle lg:px-6",
+  td: "px-3 py-4 align-middle first:pl-5 last:pr-5 lg:first:pl-6 lg:last:pr-6",
 } as const;
