@@ -35,15 +35,19 @@ export const DEV_IDS = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const COMMENTS = [
+const POSITIVE_COMMENTS = [
   "Accueil très professionnel, je recommande.",
-  "Un peu d'attente en caisse mais personnel aimable.",
   "Conseils clairs et précis, merci.",
-  "Produit indisponible, dommage.",
   "Rapide et efficace.",
   "Lieu propre et bien organisé.",
   "Le personnel a pris le temps de m'expliquer.",
+];
+
+const NEGATIVE_COMMENTS = [
+  "Beaucoup d'attente en caisse.",
+  "Produit indisponible, dommage.",
   "Horaires d'ouverture peu pratiques.",
+  "Accueil expéditif, je n'ai pas eu de réponse à ma question.",
 ];
 
 const EXTRA_COMPANIES = [
@@ -121,6 +125,9 @@ function seed(): Store {
     [DEV_IDS.companyPending, 0],
   ]);
 
+  const pick = (comments: string[]) =>
+    comments[Math.floor(random() * comments.length)];
+
   const reviews: Review[] = [];
   for (const { id: companyId } of companies) {
     const count = reviewCounts.get(companyId) ?? Math.floor(random() * 6);
@@ -132,7 +139,7 @@ function seed(): Store {
         id: seededUuid("0e71e000", reviews.length + 1),
         companyId,
         rating,
-        comment: random() < 0.75 ? COMMENTS[Math.floor(random() * COMMENTS.length)] : null,
+        comment: random() < 0.75 ? pick(rating >= 4 ? POSITIVE_COMMENTS : NEGATIVE_COMMENTS) : null,
         visitDate: createdAt.toISOString().slice(0, 10),
         createdAt,
       });
