@@ -53,7 +53,7 @@ export function ConfirmDialog({
       <Button
         type="button"
         variant={destructive ? "ghost" : "secondary"}
-        className="min-h-9 px-3"
+        size="sm"
         onClick={() => dialogRef.current?.showModal()}
       >
         {triggerLabel}
@@ -63,7 +63,7 @@ export function ConfirmDialog({
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded border border-black bg-white p-6 text-left text-black backdrop:bg-black/60"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-lg border border-black bg-white p-6 text-left text-black backdrop:bg-black/60"
       >
         <form action={formAction} className="flex flex-col gap-4">
           <h2 id={titleId} className="text-lg font-semibold">
@@ -85,7 +85,7 @@ export function ConfirmDialog({
                 name="confirmation"
                 required
                 autoComplete="off"
-                className="min-h-11 rounded border border-black/30 px-3 text-sm"
+                className="min-h-11 rounded-md border border-black/30 px-3 text-sm"
               />
             </div>
           ) : null}
