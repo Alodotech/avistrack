@@ -39,3 +39,13 @@ export function formatAverage(average: number | null): string {
 export function formatCount(value: number): string {
   return countFormatter.format(value);
 }
+
+const percentFormatter = new Intl.NumberFormat("fr-FR", {
+  style: "percent",
+  maximumFractionDigits: 0,
+});
+
+/** Part comprise entre 0 et 1, affichée en pourcentage entier. */
+export function formatPercent(share: number): string {
+  return percentFormatter.format(share);
+}

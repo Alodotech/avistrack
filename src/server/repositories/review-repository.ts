@@ -60,3 +60,13 @@ export async function getRatingDistributionForCompany(
   }
   return distribution;
 }
+
+export async function countReviewsForCompanySince(
+  companyId: string,
+  since: Date,
+): Promise<number> {
+  assertCompanyId(companyId);
+  return getStore().reviews.filter(
+    (review) => review.companyId === companyId && review.createdAt >= since,
+  ).length;
+}
