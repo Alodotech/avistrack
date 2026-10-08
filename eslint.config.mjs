@@ -24,6 +24,24 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // AD-05 : l'espace Admin n'affiche que des agrégats, jamais le contenu des avis.
+    files: ["src/app/(admin)/**/*.{ts,tsx}", "src/components/admin/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/server/repositories/review-repository", "@/server/dev/*"],
+              message:
+                "L'espace Admin ne lit pas les avis : utilisez les agrégats de company-repository.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
