@@ -18,7 +18,7 @@ const cell = "px-3 py-3 align-top";
 /** DE-04 : avis du plus récent au plus ancien. Les commentaires sont du texte brut. */
 export function ReviewsTable({ reviews }: { reviews: Review[] }) {
   return (
-    <div className="overflow-x-auto rounded border border-black/15">
+    <div className="relative overflow-x-auto rounded border border-black/15">
       <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
         <thead className="bg-black text-white">
           <tr>
