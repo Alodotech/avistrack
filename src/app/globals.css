@@ -284,6 +284,65 @@ body {
   padding: 6.5rem clamp(1.5rem, 6vw, 6rem) 5.5rem;
 }
 
+/*
+ * Chapitres avec écran produit : la copie à gauche, la maquette à droite.
+ * Sous 1024 px, une seule colonne : le texte, puis l'écran clair et net.
+ */
+.chapter-inner--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4rem);
+}
+
+.screen-block {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+}
+
+/* Halo de fond : détache la maquette de la scène 3D en mouvement. */
+.screen-block::before {
+  content: "";
+  position: absolute;
+  inset: -12% -6%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 68% 68% at 50% 50%,
+    var(--scene-bg) 46%,
+    transparent 72%
+  );
+}
+
+/*
+ * Le contenu s'affiche SUR les écrans modélisés de la scène 3D. La maquette
+ * HTML ne sert que de repli quand la 3D n'est pas rendue (WebGL absent).
+ */
+.webgl-ready .screen-block {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .chapter-inner--split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .chapter-inner--split .copy-block {
+    max-width: 34rem;
+  }
+
+  /* Le tableau de bord respire plus large que la copie. */
+  .chapter-inner--wide {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  }
+
+  .chapter-inner--wide .copy-block {
+    max-width: 30rem;
+  }
+}
+
 .copy-block {
   position: relative;
   padding: 1.5rem 0;
