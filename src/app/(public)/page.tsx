@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
+import {
+  DashboardScreen,
+  PhoneFormScreen,
+  QrStandScreen,
+} from "@/components/landing/product-screens";
 
 export const metadata: Metadata = {
   title: "Des avis clients. Un seul scan.",
@@ -68,7 +73,7 @@ export default function LandingPage() {
 
       {/* 01 — Générez */}
       <section id="s1" className="chapter" aria-labelledby="s1-title">
-        <div className="chapter-inner">
+        <div className="chapter-inner chapter-inner--split">
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="chapter-number">01</span>
@@ -88,13 +93,16 @@ export default function LandingPage() {
               <li>Éditable et ré-imprimable à volonté</li>
             </ul>
           </ScrollReveal>
+          <ScrollReveal className="screen-block" delay={140}>
+            <QrStandScreen />
+          </ScrollReveal>
           <ChapterIndex current="02" />
         </div>
       </section>
 
       {/* 02 — Affichez */}
       <section id="s2" className="chapter" aria-labelledby="s2-title">
-        <div className="chapter-inner">
+        <div className="chapter-inner chapter-inner--split">
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="chapter-number">02</span>
@@ -113,13 +121,16 @@ export default function LandingPage() {
               Scannez · 30 secondes · sans compte
             </p>
           </ScrollReveal>
+          <ScrollReveal className="screen-block" delay={140}>
+            <PhoneFormScreen />
+          </ScrollReveal>
           <ChapterIndex current="03" />
         </div>
       </section>
 
       {/* 03 — Pilotez */}
       <section id="s3" className="chapter" aria-labelledby="s3-title">
-        <div className="chapter-inner">
+        <div className="chapter-inner chapter-inner--split chapter-inner--wide">
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="chapter-number">03</span>
@@ -138,6 +149,9 @@ export default function LandingPage() {
               <li>Note moyenne et tendances, en temps réel</li>
               <li>Répondez, archivez, partagez</li>
             </ul>
+          </ScrollReveal>
+          <ScrollReveal className="screen-block" delay={140}>
+            <DashboardScreen />
           </ScrollReveal>
           <ChapterIndex current="04" />
         </div>
