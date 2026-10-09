@@ -2,11 +2,11 @@ import type { ComponentProps } from "react";
 
 type Variant = "primary" | "secondary" | "ghost";
 
-/** Le rouge est réservé à l'action principale et aux actions destructrices (§13.1). */
+/** L'accent est réservé à l'action principale ; le rouge reste aux alertes (§13.1). */
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-red text-white hover:bg-black",
+  primary: "bg-accent text-white hover:bg-accent-deep",
   secondary: "border border-black bg-white text-black hover:bg-gray-100",
-  ghost: "text-black underline underline-offset-4 hover:text-red",
+  ghost: "text-black underline underline-offset-4 hover:text-accent",
 };
 
 type Size = "md" | "sm";
@@ -18,7 +18,7 @@ const SIZES: Record<Size, string> = {
 };
 
 const BASE =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-semibold whitespace-nowrap transition-[transform,background-color,color,border-color,opacity] duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function buttonClass(
   variant: Variant = "primary",
