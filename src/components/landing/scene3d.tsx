@@ -10,7 +10,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 
-const RED = 0xd71920;
+const ACCENT = 0xd71920;
 const SHELL = 0x111113;
 
 type Keyframe = [number, number, number, number, number, number, number];
@@ -193,6 +193,9 @@ async function initScene(
   root.classList.add("webgl-ready");
 
   const isDesktop = window.innerWidth >= 700;
+  // Décalage vers la droite sur desktop : les écrans s'éloignent de la colonne
+  // texte et restent parfaitement visibles. Mobile : centrage plein.
+  const screenShift = isDesktop ? 1.8 : 0;
   const maxPixelRatio = isDesktop ? 1.7 : 1.35;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -259,7 +262,7 @@ async function initScene(
 
   // --- Plaque QR sur socle ---
   const plaque = new THREE.Group();
-  plaque.position.set(sceneX, 0, 0);
+  plaque.position.set(sceneX + screenShift, 0, 0);
   scene.add(plaque);
   const plaqueShell = new THREE.Mesh(extrudedRounded(4.3, 5.55, 0.32, 0.23), shellMaterial);
   plaqueShell.castShadow = isDesktop;
@@ -282,38 +285,56 @@ async function initScene(
     boardContext.arc(204, 52, 7, 0, Math.PI * 2);
     boardContext.fill();
 
-    // QR code réel (modules noirs, cadres de détection noirs).
-    try {
-      const code = qrcode(0, "M");
-      code.addData("https://avistrack.fr/avis/demo-avistrack");
-      code.make();
-      const count = code.getModuleCount();
-      const size = 330;
-      const cell = size / count;
-      const left = 44;
-      const top = 108;
-      for (let row = 0; row < count; row += 1) {
-        for (let col = 0; col < count; col += 1) {
-          if (!code.isDark(row, col)) continue;
-          boardContext.fillStyle = "#0a0a0a";
-          boardContext.fillRect(
-            Math.round(left + col * cell),
-            Math.round(top + row * cell),
-            Math.ceil(cell),
-            Math.ceil(cell),
-          );
-        }
-      }
-    } catch {
-      boardContext.fillStyle = "#101012";
-      for (let row = 0; row < 27; row += 1) {
-        for (let col = 0; col < 27; col += 1) {
-          if (((row * 11 + col * 7 + row * col) % 5) < 2) {
-            boardContext.fillRect(59 + col * 12, 125 + row * 12, 10, 10);
+    // QR code réel : l'image de marque fournie, repli sur un QR généré.
+    const qrSize = 330;
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = qrSize / Math.max(1, img.width, img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        boardContext.drawImage(
+          img,
+          44 + (qrSize - w) / 2,
+          108 + (qrSize - h) / 2,
+          w,
+          h,
+        );
+        resolve();
+      };
+      img.onerror = () => {
+        try {
+          const code = qrcode(0, "M");
+          code.addData("https://avistrack.fr/avis/demo-avistrack");
+          code.make();
+          const count = code.getModuleCount();
+          const cell = qrSize / count;
+          for (let row = 0; row < count; row += 1) {
+            for (let col = 0; col < count; col += 1) {
+              if (!code.isDark(row, col)) continue;
+              boardContext.fillStyle = "#0a0a0a";
+              boardContext.fillRect(
+                Math.round(44 + col * cell),
+                Math.round(108 + row * cell),
+                Math.ceil(cell),
+                Math.ceil(cell),
+              );
+            }
+          }
+        } catch {
+          boardContext.fillStyle = "#101012";
+          for (let row = 0; row < 27; row += 1) {
+            for (let col = 0; col < 27; col += 1) {
+              if (((row * 11 + col * 7 + row * col) % 5) < 2) {
+                boardContext.fillRect(59 + col * 12, 125 + row * 12, 10, 10);
+              }
+            }
           }
         }
-      }
-    }
+        resolve();
+      };
+      img.src = "/assets/landing/qr-code-avistrack.png";
+    });
 
     // Sous-titre + CTA.
     boardContext.textAlign = "center";
@@ -343,13 +364,13 @@ async function initScene(
 
   const scanBeam = new THREE.Mesh(
     new THREE.PlaneGeometry(3.25, 0.035),
-    new THREE.MeshBasicMaterial({ color: RED, transparent: true, opacity: 0.95, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.95, depthWrite: false }),
   );
   scanBeam.position.set(0, 0.45, 0.18);
   plaque.add(scanBeam);
   const scanGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(3.25, 0.48),
-    new THREE.MeshBasicMaterial({ color: RED, transparent: true, opacity: 0.08, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.08, depthWrite: false }),
   );
   scanGlow.position.set(0, 0.45, 0.175);
   plaque.add(scanGlow);
@@ -362,7 +383,7 @@ async function initScene(
     envMapIntensity: 1.1,
   });
   const phone = new THREE.Group();
-  phone.position.set(sceneX + 0.4, 0.26, -17);
+  phone.position.set(sceneX + screenShift + 0.4, 0.26, -17);
   scene.add(phone);
   const phoneFrame = new THREE.Mesh(extrudedRounded(2.66, 5.24, 0.48, 0.36), frameMaterial);
   phoneFrame.castShadow = isDesktop;
@@ -371,7 +392,7 @@ async function initScene(
     new THREE.CylinderGeometry(1.05, 1.05, 0.75, 32),
     shellMaterial,
   );
-  phonePlinth.position.set(sceneX + 0.4, -2.7, -17);
+  phonePlinth.position.set(sceneX + screenShift + 0.4, -2.7, -17);
   phonePlinth.castShadow = isDesktop;
   scene.add(phonePlinth);
 
@@ -493,7 +514,7 @@ async function initScene(
 
   // --- Tableau de bord : écran sur pied, comme un bornier de cuisine. ---
   const dashboard = new THREE.Group();
-  dashboard.position.set(sceneX, 0, -34);
+  dashboard.position.set(sceneX + screenShift, 0, -34);
   scene.add(dashboard);
   const dashStand = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.9, 12), shellMaterial);
   dashStand.position.set(-0.2, -2.1, -1.4);
@@ -519,20 +540,73 @@ async function initScene(
     dashboardContext.fillRect(0, 0, 1024, 576);
     dashboardContext.fillStyle = "#d71920";
     dashboardContext.fillRect(0, 0, 1024, 8);
-    dashboardContext.fillStyle = "#96979b";
-    dashboardContext.font = "500 22px Inter, Arial, sans-serif";
-    dashboardContext.fillText("AVISTRACK  ·  TABLEAU DE BORD", 46, 63);
+
+    // Entête — copie exacte du vrai dashboard.
     dashboardContext.fillStyle = "#ffffff";
-    dashboardContext.font = "600 204px Inter, Arial, sans-serif";
-    dashboardContext.fillText("4,6", 43, 320);
+    dashboardContext.font = "700 26px Inter, Arial, sans-serif";
+    dashboardContext.textAlign = "left";
+    dashboardContext.fillText("Tableau de bord", 46, 48);
     dashboardContext.fillStyle = "#96979b";
-    dashboardContext.font = "500 40px Inter, Arial, sans-serif";
-    dashboardContext.fillText("/ 5", 390, 316);
-    dashboardContext.font = "500 30px Inter, Arial, sans-serif";
-    dashboardContext.fillText("128 avis reçus", 49, 381);
-    for (let i = 0; i < 5; i += 1) {
-      drawStar(dashboardContext, 68 + i * 62, 455, 25, i < 4 ? "#d71920" : "#55282a");
-    }
+    dashboardContext.font = "500 15px Inter, Arial, sans-serif";
+    dashboardContext.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 46, 74);
+
+    // Quatre cartes d'indicateurs, mêmes libellés que l'app.
+    const statCards = [
+      { label: "Note moyenne", value: "4,6", hint: "Sur l'ensemble de vos avis" },
+      { label: "Avis reçus", value: "128", hint: "Depuis la création du compte" },
+      { label: "Avis sur 30 jours", value: "42", hint: "Déposés ces 30 derniers jours" },
+      { label: "Clients satisfaits", value: "91 %", hint: "Part des avis à 4 ou 5 étoiles" },
+    ] as const;
+    const cardTop = 96;
+    const cardH = 128;
+    const cardW = 232;
+    const cardGap = 10;
+    statCards.forEach((card, i) => {
+      const x = 40 + i * (cardW + cardGap);
+      dashboardContext.fillStyle = "#1a1a1e";
+      roundRectPath(dashboardContext, x, cardTop, cardW, cardH, 14);
+      dashboardContext.fill();
+      dashboardContext.fillStyle = "#96979b";
+      dashboardContext.font = "500 14px Inter, Arial, sans-serif";
+      dashboardContext.fillText(card.label, x + 18, cardTop + 30);
+      dashboardContext.fillStyle = "#ffffff";
+      dashboardContext.font = "600 40px Inter, Arial, sans-serif";
+      dashboardContext.fillText(card.value, x + 18, cardTop + 86);
+      if (i === 0) {
+        dashboardContext.font = "400 19px Inter, Arial, sans-serif";
+        dashboardContext.fillText("/ 5", x + 96, cardTop + 86);
+      }
+      dashboardContext.fillStyle = "#7d7f85";
+      dashboardContext.font = "400 12px Inter, Arial, sans-serif";
+      dashboardContext.fillText(card.hint, x + 18, cardTop + 112);
+    });
+
+    // Histogramme des notes, comme RatingHistogram.
+    dashboardContext.fillStyle = "#ffffff";
+    dashboardContext.font = "600 21px Inter, Arial, sans-serif";
+    dashboardContext.fillText("Répartition des notes", 46, 262);
+    dashboardContext.fillStyle = "#96979b";
+    dashboardContext.font = "400 14px Inter, Arial, sans-serif";
+    dashboardContext.fillText("4,6 / 5 · 128 avis", 286, 262);
+
+    const counts = [8, 12, 16, 60, 32];
+    const maxCount = 60;
+    const baseline = 470;
+    const slotW = 168;
+    counts.forEach((count, i) => {
+      const centerX = 118 + i * slotW;
+      const barH = Math.max(10, (count / maxCount) * 200);
+      dashboardContext.fillStyle = i >= 3 ? "#d71920" : "#3a3a40";
+      roundRectPath(dashboardContext, centerX - 24, baseline - barH, 48, barH, 8);
+      dashboardContext.fill();
+      dashboardContext.fillStyle = "#96979b";
+      dashboardContext.font = "500 15px Inter, Arial, sans-serif";
+      dashboardContext.textAlign = "center";
+      dashboardContext.fillText(`${count}`, centerX, baseline - barH - 12);
+      drawStar(dashboardContext, centerX, baseline + 28, 13, i >= 3 ? "#d71920" : "#6b6b72");
+    });
+    dashboardContext.fillStyle = "#3a3a40";
+    dashboardContext.fillRect(40, baseline + 4, 944, 2);
   }
   const dashboardTexture = new THREE.CanvasTexture(dashboardCanvas);
   dashboardTexture.colorSpace = THREE.SRGBColorSpace;
@@ -546,7 +620,7 @@ async function initScene(
     0.55, 0.9, 1.35, 2.05, 3.0, 2.4,
   ].map((targetHeight, index) => {
     const material = new THREE.MeshBasicMaterial({
-      color: index === 5 ? RED : 0xc7c7c9,
+      color: index === 5 ? ACCENT : 0xc7c7c9,
       fog: false,
     });
     const bar = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1, 0.32), material);
@@ -566,7 +640,7 @@ async function initScene(
     }),
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(sceneX, -3.05, -27);
+  floor.position.set(sceneX + screenShift, -3.05, -27);
   floor.receiveShadow = isDesktop;
   scene.add(floor);
 
@@ -579,7 +653,7 @@ async function initScene(
       opacity: 0.96,
     }),
   );
-  backdrop.position.set(sceneX, 6, -64);
+  backdrop.position.set(sceneX + screenShift, 6, -64);
   scene.add(backdrop);
 
   const makeSoftTexture = () => {
@@ -597,10 +671,9 @@ async function initScene(
   const shadowTexture = makeSoftTexture();
   const groundShadows: THREE.MeshBasicMaterial[] = [];
   [
-    [sceneX, 0],
-    [sceneX, -17],
-    [sceneX, -34],
-    [sceneX - 0.05, -52],
+    [sceneX + screenShift, 0],
+    [sceneX + screenShift, -17],
+    [sceneX + screenShift, -34],
   ].forEach(([x, z], index) => {
     const material = new THREE.MeshBasicMaterial({
       map: shadowTexture,
@@ -700,12 +773,12 @@ async function initScene(
 
     const drift = reducedMotion.matches ? 0 : clamp(scrollVelocity, -1, 1);
     camera.position.set(
-      interpolate(0) + easedPointerX * 0.16,
+      interpolate(0) + screenShift * 0.55 + easedPointerX * 0.16,
       interpolate(1) - easedPointerY * 0.12,
       interpolate(2),
     );
     camera.lookAt(
-      interpolate(3) + easedPointerX * 0.07,
+      interpolate(3) + screenShift * 0.8 + easedPointerX * 0.07,
       interpolate(4),
       interpolate(5),
     );
