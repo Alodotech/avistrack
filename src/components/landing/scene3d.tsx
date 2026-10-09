@@ -5,10 +5,6 @@ import * as THREE from "three";
 import qrcode from "qrcode-generator";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 
 const ACCENT = 0xd71920;
 const SHELL = 0x111113;
@@ -271,35 +267,46 @@ async function initScene(
   const board = makeCanvas(512, 670);
   const boardContext = board.getContext("2d");
   if (boardContext) {
-    // Carte fidèle : blanc, marque en haut, QR noir standard à gauche.
-    boardContext.fillStyle = "#ffffff";
-    boardContext.fillRect(0, 0, board.width, board.height);
+    const ctx = boardContext;
+    // Carte imprimée : blanche, marque en haut, QR encadré au centre.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 512, 670);
 
     // Marque.
-    boardContext.fillStyle = "#0a0a0a";
-    boardContext.font = "600 22px Inter, Arial, sans-serif";
-    boardContext.textAlign = "left";
-    boardContext.fillText("AVISTRACK", 44, 58);
-    boardContext.fillStyle = "#d71920";
-    boardContext.beginPath();
-    boardContext.arc(204, 52, 7, 0, Math.PI * 2);
-    boardContext.fill();
+    ctx.fillStyle = "#d71920";
+    roundRectPath(ctx, 44, 38, 22, 22, 7);
+    ctx.fill();
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 21px Inter, Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("AVISTRACK", 78, 55);
+
+    // Accroche.
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "700 38px Inter, Arial, sans-serif";
+    ctx.fillText("Votre avis compte.", 256, 124);
+    ctx.fillStyle = "#555555";
+    ctx.font = "400 18px Inter, Arial, sans-serif";
+    ctx.fillText("Scannez le QR code et notez", 256, 160);
+    ctx.fillText("votre visite en 30 secondes.", 256, 184);
+
+    // Encart du code.
+    ctx.fillStyle = "#f4f4f4";
+    roundRectPath(ctx, 44, 210, 424, 354, 18);
+    ctx.fill();
 
     // QR code réel : l'image de marque fournie, repli sur un QR généré.
-    const qrSize = 330;
+    const qrSize = 314;
+    const qrX = 256 - qrSize / 2;
+    const qrY = 210 + (354 - qrSize) / 2;
     await new Promise<void>((resolve) => {
       const img = new Image();
       img.onload = () => {
         const scale = qrSize / Math.max(1, img.width, img.height);
         const w = img.width * scale;
         const h = img.height * scale;
-        boardContext.drawImage(
-          img,
-          44 + (qrSize - w) / 2,
-          108 + (qrSize - h) / 2,
-          w,
-          h,
-        );
+        ctx.drawImage(img, qrX + (qrSize - w) / 2, qrY + (qrSize - h) / 2, w, h);
         resolve();
       };
       img.onerror = () => {
@@ -312,21 +319,21 @@ async function initScene(
           for (let row = 0; row < count; row += 1) {
             for (let col = 0; col < count; col += 1) {
               if (!code.isDark(row, col)) continue;
-              boardContext.fillStyle = "#0a0a0a";
-              boardContext.fillRect(
-                Math.round(44 + col * cell),
-                Math.round(108 + row * cell),
+              ctx.fillStyle = "#0a0a0a";
+              ctx.fillRect(
+                Math.round(qrX + col * cell),
+                Math.round(qrY + row * cell),
                 Math.ceil(cell),
                 Math.ceil(cell),
               );
             }
           }
         } catch {
-          boardContext.fillStyle = "#101012";
+          ctx.fillStyle = "#101012";
           for (let row = 0; row < 27; row += 1) {
             for (let col = 0; col < 27; col += 1) {
               if (((row * 11 + col * 7 + row * col) % 5) < 2) {
-                boardContext.fillRect(59 + col * 12, 125 + row * 12, 10, 10);
+                ctx.fillRect(qrX + col * 12, qrY + row * 12, 10, 10);
               }
             }
           }
@@ -336,21 +343,13 @@ async function initScene(
       img.src = "/assets/landing/qr-code-avistrack.png";
     });
 
-    // Sous-titre + CTA.
-    boardContext.textAlign = "center";
-    boardContext.fillStyle = "#111113";
-    boardContext.font = "600 37px Inter, Arial, sans-serif";
-    boardContext.fillText("Donnez votre avis", 256, 516);
-    boardContext.fillStyle = "#d71920";
-    roundRectPath(boardContext, 146, 548, 220, 66, 12);
-    boardContext.fill();
-    boardContext.textAlign = "center";
-    boardContext.fillStyle = "#ffffff";
-    boardContext.font = "600 23px Inter, Arial, sans-serif";
-    boardContext.fillText("31 secondes", 256, 591);
-    boardContext.fillStyle = "#8b8d90";
-    boardContext.font = "400 19px Inter, Arial, sans-serif";
-    boardContext.fillText("sans compte · vous repartez avec mon avis", 256, 646);
+    // Commerce + réassurance.
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 24px Inter, Arial, sans-serif";
+    ctx.fillText("Pharmacie du Centre", 256, 612);
+    ctx.fillStyle = "#555555";
+    ctx.font = "400 16px Inter, Arial, sans-serif";
+    ctx.fillText("Sans compte · sans application", 256, 644);
   }
   const boardTexture = new THREE.CanvasTexture(board);
   boardTexture.colorSpace = THREE.SRGBColorSpace;
@@ -359,20 +358,23 @@ async function initScene(
     new THREE.PlaneGeometry(4.02, 5.22),
     new THREE.MeshBasicMaterial({ map: boardTexture }),
   );
-  plaqueFace.position.z = 0.15;
+  // La coque (extrusion biseautée) a sa surface avant la plus avancée à
+  // z = 0.16 : la carte doit être devant elle, sinon seule la coque sombre
+  // s'affiche et la plaque paraît vide.
+  plaqueFace.position.z = 0.185;
   plaque.add(plaqueFace);
 
   const scanBeam = new THREE.Mesh(
     new THREE.PlaneGeometry(3.25, 0.035),
     new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.95, depthWrite: false }),
   );
-  scanBeam.position.set(0, 0.45, 0.18);
+  scanBeam.position.set(0, 0.45, 0.205);
   plaque.add(scanBeam);
   const scanGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(3.25, 0.48),
     new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.08, depthWrite: false }),
   );
-  scanGlow.position.set(0, 0.45, 0.175);
+  scanGlow.position.set(0, 0.45, 0.2);
   plaque.add(scanGlow);
 
   // --- Smartphone posé sur un socle, chassis métal, vrai écran ---
@@ -419,89 +421,104 @@ async function initScene(
     new THREE.PlaneGeometry(0.62, 0.17),
     new THREE.MeshBasicMaterial({ color: 0x000000 }),
   );
-  island.position.set(0, 2.14, 0.19);
+  island.position.set(0, 2.14, 0.256);
   phone.add(island);
   const homeBar = new THREE.Mesh(
     new THREE.PlaneGeometry(0.9, 0.06),
     new THREE.MeshBasicMaterial({ color: 0x111113, transparent: true, opacity: 0.8 }),
   );
-  homeBar.position.set(0, -2.2, 0.19);
+  homeBar.position.set(0, -2.2, 0.256);
   phone.add(homeBar);
 
   // Écran : UI du formulaire, réaliste et vivante.
   const phoneScreen = makeCanvas(512, 1070);
   const phoneContext = phoneScreen.getContext("2d");
   if (phoneContext) {
-    phoneContext.fillStyle = "#f6f7f8";
-    phoneContext.fillRect(0, 0, 512, 1070);
+    const ctx = phoneContext;
+    ctx.fillStyle = "#f6f7f8";
+    ctx.fillRect(0, 0, 512, 1070);
 
     // Barre de statut.
-    phoneContext.textAlign = "center";
-    phoneContext.fillStyle = "#111113";
-    phoneContext.font = "600 24px Inter, Arial, sans-serif";
-    phoneContext.fillText("9:41", 256, 52);
-    phoneContext.fillStyle = "#111113";
-    phoneContext.fillRect(368, 36, 18, 12);
-    phoneContext.clearRect(370, 38, 14, 8);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 22px Inter, Arial, sans-serif";
+    ctx.fillText("9:41", 44, 60);
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(392, 44, 5, 10);
+    ctx.fillRect(402, 40, 5, 14);
+    ctx.fillRect(412, 36, 5, 18);
+    ctx.strokeStyle = "#0a0a0a";
+    ctx.lineWidth = 3;
+    roundRectPath(ctx, 428, 38, 40, 18, 4);
+    ctx.stroke();
+    ctx.fillRect(433, 43, 26, 8);
 
-    // Marque + commerce.
-    phoneContext.textAlign = "left";
-    phoneContext.fillStyle = "#d71920";
-    phoneContext.fillRect(44, 156, 26, 26);
-    phoneContext.fillStyle = "#111113";
-    phoneContext.font = "600 29px Inter, Arial, sans-serif";
-    phoneContext.fillText("Pharmacie du Centre", 84, 177);
-    phoneContext.fillStyle = "#8b8d90";
-    phoneContext.font = "500 17px Inter, Arial, sans-serif";
-    phoneContext.fillText("Notez votre visite", 86, 205);
+    // En-tête commerce.
+    ctx.fillStyle = "#d71920";
+    roundRectPath(ctx, 44, 108, 46, 46, 13);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 24px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("P", 67, 141);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 27px Inter, Arial, sans-serif";
+    ctx.fillText("Pharmacie du Centre", 106, 132);
+    ctx.fillStyle = "#555555";
+    ctx.font = "500 16px Inter, Arial, sans-serif";
+    ctx.fillText("Notez votre visite", 106, 156);
 
-    // Titre.
-    phoneContext.fillStyle = "#111113";
-    phoneContext.font = "650 52px Inter, Arial, sans-serif";
-    phoneContext.fillText("Votre avis compte.", 44, 282);
-    phoneContext.fillStyle = "#d71920";
-    phoneContext.fillRect(44, 300, 62, 5);
-
-    // Étoiles.
+    // Titre + note sélectionnée.
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 34px Inter, Arial, sans-serif";
+    ctx.fillText("Comment s'est passée", 44, 232);
+    ctx.fillText("votre visite ?", 44, 272);
     for (let i = 0; i < 5; i += 1) {
-      drawStar(phoneContext, 76 + i * 86, 388, 34, i < 4 ? "#d71920" : "#d7d9dc");
+      drawStar(ctx, 66 + i * 52, 330, 22, i < 4 ? "#d71920" : "#d7d9dc");
     }
-    phoneContext.fillStyle = "#8b8d90";
-    phoneContext.font = "500 19px Inter, Arial, sans-serif";
-    phoneContext.fillText("Comment s'est passée votre visite ?", 44, 462);
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 22px Inter, Arial, sans-serif";
+    ctx.fillText("Très bien", 316, 338);
 
-    // Champ date.
-    phoneContext.fillStyle = "#eceef0";
-    roundRectPath(phoneContext, 44, 500, 424, 64, 16);
-    phoneContext.fill();
-    phoneContext.fillStyle = "#111113";
-    phoneContext.font = "500 25px Inter, Arial, sans-serif";
-    phoneContext.fillText("Aujourd'hui", 66, 540);
+    // Date de visite.
+    ctx.fillStyle = "#555555";
+    ctx.font = "600 16px Inter, Arial, sans-serif";
+    ctx.fillText("Date de visite", 44, 404);
+    ctx.fillStyle = "#eceef0";
+    roundRectPath(ctx, 44, 418, 424, 64, 14);
+    ctx.fill();
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "500 23px Inter, Arial, sans-serif";
+    ctx.fillText("Aujourd'hui", 66, 458);
 
-    // Zone commentaire.
-    phoneContext.fillStyle = "#eceef0";
-    roundRectPath(phoneContext, 44, 620, 424, 148, 16);
-    phoneContext.fill();
-    phoneContext.fillStyle = "#9a9ca0";
-    phoneContext.font = "400 23px Inter, Arial, sans-serif";
-    phoneContext.fillText("Dites-nous en plus (facultatif)", 66, 686);
+    // Commentaire.
+    ctx.fillStyle = "#555555";
+    ctx.font = "600 16px Inter, Arial, sans-serif";
+    ctx.fillText("Votre commentaire", 44, 532);
+    ctx.fillStyle = "#eceef0";
+    roundRectPath(ctx, 44, 546, 424, 150, 14);
+    ctx.fill();
+    ctx.fillStyle = "#8b8d90";
+    ctx.font = "400 23px Inter, Arial, sans-serif";
+    ctx.fillText("Dites-nous en plus (facultatif)", 66, 592);
 
     // Bouton d'envoi.
-    phoneContext.shadowColor = "rgba(215, 25, 32, 0.35)";
-    phoneContext.shadowBlur = 22;
-    phoneContext.fillStyle = "#d71920";
-    roundRectPath(phoneContext, 44, 830, 424, 88, 20);
-    phoneContext.fill();
-    phoneContext.shadowBlur = 0;
-    phoneContext.textAlign = "center";
-    phoneContext.fillStyle = "#ffffff";
-    phoneContext.font = "600 28px Inter, Arial, sans-serif";
-    phoneContext.fillText("Envoyer mon avis", 256, 887);
+    ctx.shadowColor = "rgba(215, 25, 32, 0.35)";
+    ctx.shadowBlur = 22;
+    ctx.fillStyle = "#d71920";
+    roundRectPath(ctx, 44, 780, 424, 88, 44);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "600 27px Inter, Arial, sans-serif";
+    ctx.fillText("Envoyer mon avis", 256, 836);
 
     // Note de réassurance.
-    phoneContext.fillStyle = "#8b8d90";
-    phoneContext.font = "500 18px Inter, Arial, sans-serif";
-    phoneContext.fillText("Confidentiel · sans compte, sans appli", 256, 966);
+    ctx.fillStyle = "#8b8d90";
+    ctx.font = "500 17px Inter, Arial, sans-serif";
+    ctx.fillText("Confidentiel · sans compte, sans application", 256, 952);
   }
   const phoneTexture = new THREE.CanvasTexture(phoneScreen);
   phoneTexture.colorSpace = THREE.SRGBColorSpace;
@@ -509,7 +526,9 @@ async function initScene(
     new THREE.PlaneGeometry(2.46, 4.96),
     new THREE.MeshBasicMaterial({ map: phoneTexture }),
   );
-  phoneFace.position.z = 0.185;
+  // Le cadre biseauté monte jusqu'à z = 0.225 : la dalle doit passer devant
+  // cette surface, sinon le formulaire reste caché derrière la coque.
+  phoneFace.position.z = 0.25;
   phone.add(phoneFace);
 
   // --- Tableau de bord : écran sur pied, comme un bornier de cuisine. ---
@@ -536,77 +555,118 @@ async function initScene(
   const dashboardCanvas = makeCanvas(1024, 576);
   const dashboardContext = dashboardCanvas.getContext("2d");
   if (dashboardContext) {
-    dashboardContext.fillStyle = "#101012";
-    dashboardContext.fillRect(0, 0, 1024, 576);
-    dashboardContext.fillStyle = "#d71920";
-    dashboardContext.fillRect(0, 0, 1024, 8);
+    const ctx = dashboardContext;
+    // Le vrai dashboard, en clair : le moniteur affiche l'application.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 1024, 576);
 
-    // Entête — copie exacte du vrai dashboard.
-    dashboardContext.fillStyle = "#ffffff";
-    dashboardContext.font = "700 26px Inter, Arial, sans-serif";
-    dashboardContext.textAlign = "left";
-    dashboardContext.fillText("Tableau de bord", 46, 48);
-    dashboardContext.fillStyle = "#96979b";
-    dashboardContext.font = "500 15px Inter, Arial, sans-serif";
-    dashboardContext.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 46, 74);
+    // Entête.
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "700 30px Inter, Arial, sans-serif";
+    ctx.fillText("Tableau de bord", 46, 60);
+    ctx.fillStyle = "#555555";
+    ctx.font = "400 15px Inter, Arial, sans-serif";
+    ctx.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 46, 86);
 
-    // Quatre cartes d'indicateurs, mêmes libellés que l'app.
+    // Quatre cartes d'indicateurs : mêmes libellés et valeurs que l'app.
     const statCards = [
-      { label: "Note moyenne", value: "4,6", hint: "Sur l'ensemble de vos avis" },
-      { label: "Avis reçus", value: "128", hint: "Depuis la création du compte" },
-      { label: "Avis sur 30 jours", value: "42", hint: "Déposés ces 30 derniers jours" },
-      { label: "Clients satisfaits", value: "91 %", hint: "Part des avis à 4 ou 5 étoiles" },
+      { label: "NOTE MOYENNE", value: "4,6", suffix: " / 5", hint: "Sur l'ensemble de vos avis" },
+      { label: "AVIS REÇUS", value: "128", suffix: "", hint: "Depuis la création du compte" },
+      { label: "AVIS SUR 30 JOURS", value: "42", suffix: "", hint: "Déposés ces 30 derniers jours" },
+      { label: "CLIENTS SATISFAITS", value: "97 %", suffix: "", hint: "Part des avis à 4 ou 5 étoiles" },
     ] as const;
-    const cardTop = 96;
-    const cardH = 128;
+    const cardTop = 106;
+    const cardH = 132;
     const cardW = 232;
-    const cardGap = 10;
+    const cardGap = 12;
     statCards.forEach((card, i) => {
       const x = 40 + i * (cardW + cardGap);
-      dashboardContext.fillStyle = "#1a1a1e";
-      roundRectPath(dashboardContext, x, cardTop, cardW, cardH, 14);
-      dashboardContext.fill();
-      dashboardContext.fillStyle = "#96979b";
-      dashboardContext.font = "500 14px Inter, Arial, sans-serif";
-      dashboardContext.fillText(card.label, x + 18, cardTop + 30);
-      dashboardContext.fillStyle = "#ffffff";
-      dashboardContext.font = "600 40px Inter, Arial, sans-serif";
-      dashboardContext.fillText(card.value, x + 18, cardTop + 86);
-      if (i === 0) {
-        dashboardContext.font = "400 19px Inter, Arial, sans-serif";
-        dashboardContext.fillText("/ 5", x + 96, cardTop + 86);
+      ctx.fillStyle = "#f4f4f4";
+      roundRectPath(ctx, x, cardTop, cardW, cardH, 14);
+      ctx.fill();
+      ctx.fillStyle = "#555555";
+      ctx.font = "600 12px Inter, Arial, sans-serif";
+      ctx.fillText(card.label, x + 18, cardTop + 32);
+      ctx.fillStyle = "#0a0a0a";
+      ctx.font = "700 40px Inter, Arial, sans-serif";
+      ctx.fillText(card.value, x + 18, cardTop + 84);
+      if (card.suffix) {
+        const valueWidth = ctx.measureText(card.value).width;
+        ctx.fillStyle = "#555555";
+        ctx.font = "400 18px Inter, Arial, sans-serif";
+        ctx.fillText(card.suffix, x + 20 + valueWidth, cardTop + 84);
       }
-      dashboardContext.fillStyle = "#7d7f85";
-      dashboardContext.font = "400 12px Inter, Arial, sans-serif";
-      dashboardContext.fillText(card.hint, x + 18, cardTop + 112);
+      ctx.fillStyle = "#555555";
+      ctx.font = "400 11px Inter, Arial, sans-serif";
+      ctx.fillText(card.hint, x + 18, cardTop + 112);
     });
 
-    // Histogramme des notes, comme RatingHistogram.
-    dashboardContext.fillStyle = "#ffffff";
-    dashboardContext.font = "600 21px Inter, Arial, sans-serif";
-    dashboardContext.fillText("Répartition des notes", 46, 262);
-    dashboardContext.fillStyle = "#96979b";
-    dashboardContext.font = "400 14px Inter, Arial, sans-serif";
-    dashboardContext.fillText("4,6 / 5 · 128 avis", 286, 262);
+    // Répartition des notes (colonne gauche), comme RatingHistogram.
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 20px Inter, Arial, sans-serif";
+    ctx.fillText("Répartition des notes", 46, 292);
+    ctx.fillStyle = "#555555";
+    ctx.font = "400 14px Inter, Arial, sans-serif";
+    ctx.fillText("4,6 / 5 · 128 avis", 46, 314);
 
-    const counts = [8, 12, 16, 60, 32];
-    const maxCount = 60;
-    const baseline = 470;
-    const slotW = 168;
+    // Cohérent avec la moyenne 4,6 / 5 (128 avis, 97 % à 4-5 étoiles).
+    const counts = [1, 1, 2, 42, 82];
+    const maxCount = 82;
+    const barLeft = 108;
+    const barWidth = 296;
+    const barTop = 344;
+    const barStep = 42;
     counts.forEach((count, i) => {
-      const centerX = 118 + i * slotW;
-      const barH = Math.max(10, (count / maxCount) * 200);
-      dashboardContext.fillStyle = i >= 3 ? "#d71920" : "#3a3a40";
-      roundRectPath(dashboardContext, centerX - 24, baseline - barH, 48, barH, 8);
-      dashboardContext.fill();
-      dashboardContext.fillStyle = "#96979b";
-      dashboardContext.font = "500 15px Inter, Arial, sans-serif";
-      dashboardContext.textAlign = "center";
-      dashboardContext.fillText(`${count}`, centerX, baseline - barH - 12);
-      drawStar(dashboardContext, centerX, baseline + 28, 13, i >= 3 ? "#d71920" : "#6b6b72");
+      const y = barTop + i * barStep;
+      ctx.fillStyle = "#0a0a0a";
+      ctx.font = "600 18px Inter, Arial, sans-serif";
+      ctx.fillText(String(i + 1), 46, y + 15);
+      drawStar(ctx, 74, y + 9, 10, "#d71920");
+      ctx.fillStyle = "#f4f4f4";
+      roundRectPath(ctx, barLeft, y, barWidth, 18, 9);
+      ctx.fill();
+      const filled = Math.max(22, (count / maxCount) * barWidth);
+      ctx.fillStyle = "#d71920";
+      roundRectPath(ctx, barLeft, y, filled, 18, 9);
+      ctx.fill();
+      ctx.fillStyle = "#555555";
+      ctx.font = "500 15px Inter, Arial, sans-serif";
+      ctx.fillText(String(count), barLeft + barWidth + 14, y + 15);
     });
-    dashboardContext.fillStyle = "#3a3a40";
-    dashboardContext.fillRect(40, baseline + 4, 944, 2);
+
+    // Derniers avis (colonne droite).
+    ctx.fillStyle = "#0a0a0a";
+    ctx.font = "600 20px Inter, Arial, sans-serif";
+    ctx.fillText("Derniers avis", 532, 292);
+    ctx.fillStyle = "#555555";
+    ctx.font = "400 14px Inter, Arial, sans-serif";
+    ctx.fillText("Du plus récent au plus ancien", 532, 314);
+
+    const recentReviews = [
+      { rating: 5, date: "08/10/2026", comment: "Accueil très professionnel, je recommande." },
+      { rating: 5, date: "06/10/2026", comment: "Conseils clairs et précis, merci." },
+      { rating: 4, date: "05/10/2026", comment: "Rapide et efficace." },
+      { rating: 2, date: "03/10/2026", comment: "Beaucoup d'attente en caisse." },
+    ] as const;
+    recentReviews.forEach((review, i) => {
+      const y = 344 + i * 54;
+      for (let star = 0; star < 5; star += 1) {
+        drawStar(ctx, 540 + star * 25, y + 8, 9, star < review.rating ? "#d71920" : "#d7d9dc");
+      }
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#555555";
+      ctx.font = "500 13px Inter, Arial, sans-serif";
+      ctx.fillText(review.date, 984, y + 13);
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#0a0a0a";
+      ctx.font = "400 16px Inter, Arial, sans-serif";
+      ctx.fillText(review.comment, 532, y + 38);
+      if (i < recentReviews.length - 1) {
+        ctx.fillStyle = "#e6e6e6";
+        ctx.fillRect(532, y + 46, 452, 1);
+      }
+    });
   }
   const dashboardTexture = new THREE.CanvasTexture(dashboardCanvas);
   dashboardTexture.colorSpace = THREE.SRGBColorSpace;
@@ -614,21 +674,10 @@ async function initScene(
     new THREE.PlaneGeometry(8.2, 4.61),
     new THREE.MeshBasicMaterial({ map: dashboardTexture }),
   );
-  dashboardFace.position.z = 0.01;
+  // Le panneau arrière (boîte) va jusqu'à z = 0.03 : la dalle du tableau de
+  // bord doit être devant, sinon l'écran disparaît derrière la coque.
+  dashboardFace.position.z = 0.09;
   dashboard.add(dashboardFace);
-  const bars: { mesh: THREE.Mesh; targetHeight: number; current: number }[] = [
-    0.55, 0.9, 1.35, 2.05, 3.0, 2.4,
-  ].map((targetHeight, index) => {
-    const material = new THREE.MeshBasicMaterial({
-      color: index === 5 ? ACCENT : 0xc7c7c9,
-      fog: false,
-    });
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1, 0.32), material);
-    bar.position.set(1.15 + index * 0.57, -1.83, 0.25);
-    dashboard.add(bar);
-    return { mesh: bar, targetHeight, current: 0.001 };
-  });
-
   // --- Sol studio : disque de lumière doux, pas un pavé uniforme. ---
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
@@ -693,22 +742,6 @@ async function initScene(
 
   const followLight = new THREE.PointLight(0xffeee8, 0.5, 23);
   scene.add(followLight);
-
-  // Post-traitement : bloom discret sur la lumière rouge (scan, halos).
-  let composer: EffectComposer | null = null;
-  let bloomPass: UnrealBloomPass | null = null;
-  if (!reducedMotion.matches) {
-    composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.45,
-      0.55,
-      0.72,
-    );
-    composer.addPass(bloomPass);
-    composer.addPass(new OutputPass());
-  }
 
   // --- Pilotage ---
   let width = window.innerWidth;
@@ -809,23 +842,13 @@ async function initScene(
       dashboard.rotation.y = -0.09 + easedPointerX * 0.035;
     }
 
-    bars.forEach((bar, index) => {
-      const threshold = 2.72 + index * 0.035;
-      const target =
-        currentProgress > threshold ? bar.targetHeight : 0.001;
-      bar.current = THREE.MathUtils.lerp(bar.current, target, reducedMotion.matches ? 1 : Math.min(1, dt * 2.8));
-      bar.mesh.scale.y = bar.current;
-      bar.mesh.position.y = -1.83 + bar.current / 2;
-    });
-
     followLight.position.set(
       camera.position.x + 1.5,
       camera.position.y + 3,
       camera.position.z - 4,
     );
 
-    if (composer) composer.render();
-    else renderer.render(scene, camera);
+    renderer.render(scene, camera);
   };
 
   const applyTheme = () => {
@@ -845,10 +868,6 @@ async function initScene(
     sceneX = width < 700 ? 0.1 : 2.15;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 700 ? 1.35 : 1.7));
     renderer.setSize(width, height, false);
-    if (composer) {
-      composer.setSize(width, height);
-      bloomPass?.setSize(width, height);
-    }
     camera.aspect = width / Math.max(1, height);
     camera.fov = width < 700 ? 45 : 37;
     camera.updateProjectionMatrix();
