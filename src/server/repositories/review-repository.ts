@@ -70,3 +70,18 @@ export async function countReviewsForCompanySince(
     (review) => review.companyId === companyId && review.createdAt >= since,
   ).length;
 }
+
+/** Tous les avis d'une entreprise, triés du plus récent au plus ancien (graphique de tendance). */
+export async function getAllReviewsForCompany(
+  companyId: string,
+): Promise<Review[]> {
+  assertCompanyId(companyId);
+  return getStore()
+    .reviews.filter((review) => review.companyId === companyId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+/** Crée un avis pour une entreprise (formulaire public). */
+export async function createReview(review: Review): Promise<void> {
+  getStore().reviews.push(review);
+}

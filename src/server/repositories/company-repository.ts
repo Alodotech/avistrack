@@ -30,6 +30,16 @@ export async function findCompanyById(id: string): Promise<Company | null> {
   return record ? toCompany(record) : null;
 }
 
+/** Recherche par identifiant public (lien QR code). */
+export async function findCompanyByPublicId(
+  publicId: string,
+): Promise<Company | null> {
+  const record = getStore().companies.find(
+    (c) => c.publicId === publicId && c.deletedAt === null,
+  );
+  return record ? toCompany(record) : null;
+}
+
 export async function updateCompanyProfile(
   companyId: string,
   profile: { name: string; phone: string },
