@@ -56,6 +56,9 @@ export function QrCard({ publicUrl }: { publicUrl: string }) {
                 SVG vectoriel
               </a>
             </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Téléchargez le QR code en PNG pour l&apos;impression papier, ou en SVG pour une utilisation numérique (site web, réseaux sociaux).
+            </p>
           </div>
         </div>
       </div>
