@@ -104,6 +104,22 @@ export const SearchIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const QrIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <path d="M14 14h3v3h-3zM19 14h2M14 19h3M19 19h2" />
+  </Icon>
+);
+
+export const ShieldIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+    <path d="M9 12l2 2 4-4" />
+  </Icon>
+);
+
 /** Étoile de notation : pleine ou vide, la valeur est toujours doublée en texte. */
 export function StarIcon({
   filled,
