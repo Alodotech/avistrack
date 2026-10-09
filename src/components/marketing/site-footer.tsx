@@ -12,16 +12,16 @@ const YEAR = new Date().getFullYear();
 export function SiteFooter() {
   return (
     <footer id="contact" className="border-t border-black/10 bg-black text-white">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-3 lg:px-8">
+      <div className="grid w-full gap-8 px-6 py-12 lg:grid-cols-3 lg:px-16">
         <div className="flex flex-col gap-3">
           <p className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span
               aria-hidden
-              className="inline-block size-2.5 rounded-full bg-red"
+              className="inline-block size-2.5 rounded-full bg-accent"
             />
             AvisTrack
           </p>
-          <p className="max-w-xs text-sm leading-6 text-white/70">
+          <p className="pr-8 text-sm leading-6 text-white/70">
             Collecte et analyse des avis clients par QR code, avec isolation
             stricte des données par entreprise.
           </p>
@@ -47,7 +47,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10">
-        <p className="mx-auto w-full max-w-6xl px-4 py-5 text-xs text-white/50 sm:px-6 lg:px-8">
+        <p className="w-full px-6 py-5 text-xs text-white/50 lg:px-16">
           © {YEAR} AvisTrack — Tous droits réservés.
         </p>
       </div>
