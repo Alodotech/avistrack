@@ -18,7 +18,7 @@ const SIZES: Record<Size, string> = {
 };
 
 const BASE =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-semibold whitespace-nowrap transition-[transform,background-color,color,border-color,opacity] duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function buttonClass(
   variant: Variant = "primary",
