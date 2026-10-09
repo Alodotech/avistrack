@@ -10,6 +10,8 @@
   --color-white: #ffffff;
   --color-black: #0a0a0a;
   --color-red: #d71920;
+  --color-accent: #d71920;
+  --color-accent-deep: #b31217;
   --color-gray-100: #f4f4f4;
   --color-gray-600: #555555;
 
@@ -23,7 +25,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-red);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -179,7 +181,7 @@ body {
   right: 0;
   height: 2px;
   z-index: 70;
-  background: var(--color-red);
+  background: var(--color-accent);
   transform: scaleX(0);
   transform-origin: left;
   pointer-events: none;
@@ -219,10 +221,8 @@ body {
 
 .site-header-inner {
   width: 100%;
-  max-width: 88rem;
-  margin-inline: auto;
   height: 4rem;
-  padding-inline: 1.5rem;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -244,7 +244,7 @@ body {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 2px;
-  background: var(--color-red);
+  background: var(--color-accent);
 }
 
 .site-nav {
@@ -260,7 +260,7 @@ body {
 }
 
 .site-nav a:hover {
-  color: var(--color-red);
+  color: var(--color-accent);
 }
 
 @media (max-width: 760px) {
@@ -281,14 +281,11 @@ body {
 .chapter-inner {
   position: relative;
   width: 100%;
-  max-width: 88rem;
-  margin-inline: auto;
-  padding: 6.5rem 2rem 5.5rem;
+  padding: 6.5rem clamp(1.5rem, 6vw, 6rem) 5.5rem;
 }
 
 .copy-block {
   position: relative;
-  max-width: 34rem;
   padding: 1.5rem 0;
   background: linear-gradient(90deg, var(--scrim-from), var(--scrim-to) 60%);
 }
@@ -318,11 +315,11 @@ body {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--color-red);
+  background: var(--color-accent);
 }
 
 .chapter-number {
-  color: var(--color-red);
+  color: var(--color-accent);
 }
 
 .heading {
@@ -346,7 +343,6 @@ body {
 
 .lead {
   margin: 1.5rem 0 0;
-  max-width: 30rem;
   font-size: 1.1rem;
   line-height: 1.75;
   color: var(--ink-muted);
@@ -373,9 +369,8 @@ body {
 }
 
 .finale-block {
-  max-width: 54rem;
-  margin-inline: auto;
-  padding: 1.5rem 0;
+  width: 100%;
+  padding: 1.5rem clamp(1rem, 5vw, 4rem);
   text-align: center;
   background: radial-gradient(
     ellipse 80% 90% at 50% 50%,
@@ -394,8 +389,6 @@ body {
 }
 
 .finale-lead {
-  margin-inline: auto;
-  max-width: 36rem;
   font-size: 1.1rem;
 }
 
@@ -417,7 +410,7 @@ body {
 }
 
 .text-link:hover {
-  color: var(--color-red);
+  color: var(--color-accent);
 }
 
 .hero-note {
@@ -432,7 +425,7 @@ body {
 .note-rule {
   width: 2.5rem;
   height: 1px;
-  background: var(--color-red);
+  background: var(--color-accent);
 }
 
 .feature-list {
@@ -458,7 +451,7 @@ body {
   width: 0.35rem;
   height: 0.35rem;
   border-radius: 50%;
-  background: var(--color-red);
+  background: var(--color-accent);
   transform: translateY(-0.05rem);
 }
 
