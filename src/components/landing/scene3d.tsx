@@ -188,17 +188,18 @@ async function initScene(
 
   root.classList.add("webgl-ready");
 
-  const isDesktop = window.innerWidth >= 700;
-  // Décalage vers la droite sur desktop : les écrans s'éloignent de la colonne
-  // texte et restent parfaitement visibles. Mobile : centrage plein.
-  const screenShift = isDesktop ? 1.8 : 0;
-  const maxPixelRatio = isDesktop ? 1.7 : 1.35;
+  // Mise en page en deux colonnes (lg) : la scène se décale à droite de la
+  // colonne texte. Sous 1024 px, l'affichage est mono-colonne et les écrans
+  // produits sont rendus en HTML (lisibles et nets) : la scène reste centrée.
+  const isSceneWide = window.innerWidth >= 1024;
+  const screenShift = isSceneWide ? 1.8 : 0;
+  const maxPixelRatio = isSceneWide ? 1.7 : 1.35;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  if (isDesktop) {
+  if (isSceneWide) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   }
@@ -239,7 +240,7 @@ async function initScene(
   const rimLight = new THREE.DirectionalLight(0xffffff, 1.1);
   rimLight.position.set(-7, 3, -5);
   scene.add(rimLight);
-  if (isDesktop) {
+  if (isSceneWide) {
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(1024, 1024);
     keyLight.shadow.camera.near = 2;
@@ -253,15 +254,16 @@ async function initScene(
     envMapIntensity: 0.9,
   });
 
-  // Décalage horizontal : colonne texte à gauche sur desktop, centrage mobile.
-  let sceneX = window.innerWidth < 700 ? 0.1 : 2.15;
+  // Décalage horizontal : colonne texte à gauche sur deux colonnes (lg),
+  // centrage plein sur les plus petites fenêtres.
+  let sceneX = window.innerWidth >= 1024 ? 2.15 : 0.1;
 
   // --- Plaque QR sur socle ---
   const plaque = new THREE.Group();
   plaque.position.set(sceneX + screenShift, 0, 0);
   scene.add(plaque);
   const plaqueShell = new THREE.Mesh(extrudedRounded(4.3, 5.55, 0.32, 0.23), shellMaterial);
-  plaqueShell.castShadow = isDesktop;
+  plaqueShell.castShadow = isSceneWide;
   plaque.add(plaqueShell);
 
   const board = makeCanvas(512, 670);
@@ -385,17 +387,18 @@ async function initScene(
     envMapIntensity: 1.1,
   });
   const phone = new THREE.Group();
-  phone.position.set(sceneX + screenShift + 0.4, 0.26, -17);
+  const phoneX = sceneX + screenShift + 0.4;
+  phone.position.set(phoneX, 0.26, -17);
   scene.add(phone);
   const phoneFrame = new THREE.Mesh(extrudedRounded(2.66, 5.24, 0.48, 0.36), frameMaterial);
-  phoneFrame.castShadow = isDesktop;
+  phoneFrame.castShadow = isSceneWide;
   phone.add(phoneFrame);
   const phonePlinth = new THREE.Mesh(
     new THREE.CylinderGeometry(1.05, 1.05, 0.75, 32),
     shellMaterial,
   );
-  phonePlinth.position.set(sceneX + screenShift + 0.4, -2.7, -17);
-  phonePlinth.castShadow = isDesktop;
+  phonePlinth.position.set(phoneX, -2.7, -17);
+  phonePlinth.castShadow = isSceneWide;
   scene.add(phonePlinth);
 
   // Boutons de volume / veille sur les tranches.
@@ -537,7 +540,7 @@ async function initScene(
   scene.add(dashboard);
   const dashStand = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.9, 12), shellMaterial);
   dashStand.position.set(-0.2, -2.1, -1.4);
-  dashStand.castShadow = isDesktop;
+  dashStand.castShadow = isSceneWide;
   dashboard.add(dashStand);
   const dashBase = new THREE.Mesh(
     new THREE.BoxGeometry(2.7, 0.14, 1.3),
@@ -690,7 +693,7 @@ async function initScene(
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(sceneX + screenShift, -3.05, -27);
-  floor.receiveShadow = isDesktop;
+  floor.receiveShadow = isSceneWide;
   scene.add(floor);
 
   // --- Mur de fond : plan clair photostudio, éloigne le vide. ---
@@ -719,11 +722,12 @@ async function initScene(
   };
   const shadowTexture = makeSoftTexture();
   const groundShadows: THREE.MeshBasicMaterial[] = [];
-  [
+  const shadowAnchors = [
     [sceneX + screenShift, 0],
-    [sceneX + screenShift, -17],
+    [phoneX, -17],
     [sceneX + screenShift, -34],
-  ].forEach(([x, z], index) => {
+  ];
+  shadowAnchors.forEach(([x, z], index) => {
     const material = new THREE.MeshBasicMaterial({
       map: shadowTexture,
       transparent: true,
@@ -805,13 +809,15 @@ async function initScene(
     easedPointerY += (pointerY - easedPointerY) * damping;
 
     const drift = reducedMotion.matches ? 0 : clamp(scrollVelocity, -1, 1);
+    // La caméra suit le décalage complet des écrans : le cadrage de chaque
+    // chapitre reste identique à celui d'origine, simplement translaté.
     camera.position.set(
-      interpolate(0) + screenShift * 0.55 + easedPointerX * 0.16,
+      interpolate(0) + screenShift + easedPointerX * 0.16,
       interpolate(1) - easedPointerY * 0.12,
       interpolate(2),
     );
     camera.lookAt(
-      interpolate(3) + screenShift * 0.8 + easedPointerX * 0.07,
+      interpolate(3) + screenShift + easedPointerX * 0.07,
       interpolate(4),
       interpolate(5),
     );
@@ -865,11 +871,11 @@ async function initScene(
   const resize = () => {
     width = window.innerWidth;
     height = window.innerHeight;
-    sceneX = width < 700 ? 0.1 : 2.15;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 700 ? 1.35 : 1.7));
+    sceneX = width >= 1024 ? 2.15 : 0.1;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width >= 1024 ? 1.7 : 1.35));
     renderer.setSize(width, height, false);
     camera.aspect = width / Math.max(1, height);
-    camera.fov = width < 700 ? 45 : 37;
+    camera.fov = width < 1024 ? 45 : 37;
     camera.updateProjectionMatrix();
     targetProgress = getScrollProgress();
     queueRender();
