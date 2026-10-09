@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AccountStateScreen } from "@/components/company/account-state-screen";
-import { QrCard } from "@/components/company/qr-card";
 import { RatingHistogram } from "@/components/company/rating-histogram";
 import { ReviewFilters } from "@/components/company/review-filters";
 import { ReviewsTable } from "@/components/company/reviews-table";
@@ -35,7 +34,6 @@ import {
   getRatingDistributionForCompany,
 } from "@/server/repositories/review-repository";
 import { listReviewsForDashboard } from "@/server/services/company-reviews";
-import { publicReviewUrl } from "@/server/services/qr";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -126,7 +124,6 @@ async function DashboardContent({
       </StatGrid>
 
       <div className="grid gap-6 lg:gap-8 xl:grid-cols-2">
-        <QrCard publicUrl={publicReviewUrl(company.publicId)} />
         <RatingHistogram stats={stats} />
       </div>
 

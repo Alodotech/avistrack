@@ -174,6 +174,24 @@ body {
   display: none;
 }
 
+/* Studio QR : le repli statique n'apparaît que sans WebGL, l'indice qu'avec. */
+.qr-studio-fallback {
+  display: none;
+}
+
+.no-webgl .qr-studio-fallback {
+  display: block;
+}
+
+.qr-studio-hint {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.webgl-ready .qr-studio-hint {
+  opacity: 1;
+}
+
 .scroll-progress {
   position: fixed;
   top: 0;
