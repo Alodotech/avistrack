@@ -316,11 +316,14 @@ body {
 }
 
 /*
- * Le contenu s'affiche SUR les écrans modélisés de la scène 3D. La maquette
- * HTML ne sert que de repli quand la 3D n'est pas rendue (WebGL absent).
+ * Sur les petites fenêtres, les écrans produits restent en HTML : ils sont
+ * nets, lisibles et ne dépendent pas du WebGL. À partir de 1024 px, la scène
+ * WebGL les modélise déjà en pleine vue, la maquette HTML se replie alors.
  */
-.webgl-ready .screen-block {
-  display: none;
+@media (min-width: 1024px) {
+  .webgl-ready .screen-block {
+    display: none;
+  }
 }
 
 @media (min-width: 1024px) {
