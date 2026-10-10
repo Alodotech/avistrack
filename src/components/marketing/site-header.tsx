@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 
 const NAV = [
-  { href: "#s1", label: "Fonctionnement" },
+  { href: "#s1", label: "Générer" },
+  { href: "#s2", label: "Collecter" },
+  { href: "#s3", label: "Piloter" },
   { href: "#s4", label: "Sécurité" },
-  { href: "#s5", label: "Tarifs" },
   { href: "/login", label: "Connexion" },
 ] as const;
 
