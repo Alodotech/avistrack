@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 
 const NAV = [
@@ -11,10 +11,11 @@ const NAV = [
   { href: "/login", label: "Connexion" },
 ] as const;
 
-/** Barre de navigation : se masque au défilement vers le bas, revient vers le haut. */
+/** Barre de navigation : fixe en haut, fond apparent au scroll. */
 export function SiteHeader() {
   const headerRef = useRef<HTMLElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -23,24 +24,12 @@ export function SiteHeader() {
 
     const maxScroll = () =>
       Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    let lastY = window.scrollY;
 
     const onScroll = () => {
       const y = window.scrollY;
-      const velocity = y - lastY;
-      lastY = y;
       progress.style.transform = `scaleX(${Math.min(1, y / maxScroll())})`;
       header.classList.toggle("on", y > 8);
-      if (
-        y <= 24 ||
-        document.activeElement?.closest(".site-header")
-      ) {
-        header.classList.remove("hide");
-      } else if (velocity > 0) {
-        header.classList.add("hide");
-      } else if (velocity < 0) {
-        header.classList.remove("hide");
-      }
+      setScrolled(y > 8);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
