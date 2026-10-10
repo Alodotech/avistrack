@@ -19,6 +19,16 @@
   --font-mono: var(--font-inter), ui-monospace, monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: var(--color-white);
   color: var(--color-black);
