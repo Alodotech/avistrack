@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import qrcode from "qrcode-generator";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 
 const ACCENT = 0xd71920;
 const SHELL = 0x111113;
@@ -12,14 +12,14 @@ const SHELL = 0x111113;
 type Keyframe = [number, number, number, number, number, number, number];
 
 // [position x,y,z · lookAt x,y,z · fov] pour les 6 chapitres.
-const CAMERA_KEYS: Keyframe[] = [
-  [-2.6, 0.35, 13.8, 0.45, 0.1, 0, 36],
-  [-1.9, 0.6, 9.3, 0.45, 0.4, 0, 37],
-  [-2.3, 0.4, -7.6, 2.4, 0.9, -17, 39],
-  [-2.4, 0.15, -24.6, 1.9, -0.3, -34.4, 42],
-  [-4.2, 5.2, -30.5, 1.9, 0.1, -35.5, 50],
-  [-5.6, 7.2, 4.8, 2.1, 0.2, -30, 64],
-];
+  const CAMERA_KEYS: Keyframe[] = [
+    [-2.6, 0.35, 13.8, 0.45, 0.1, 0, 36],
+    [-1.9, 0.6, 9.3, 0.45, 0.4, 0, 37],
+    [-1.8, 0.5, -7.2, 1.8, 0.85, -16, 36],
+    [-2.4, 0.15, -24.6, 1.9, -0.3, -34.4, 42],
+    [-4.2, 5.2, -30.5, 1.9, 0.1, -35.5, 50],
+    [-5.6, 7.2, 4.8, 2.1, 0.2, -30, 64],
+  ];
 
 // Brume par chapitre : le plan final se déploie et doit montrer les trois
 // écrans (QR, téléphone, tableau) jusqu'au mur du fond, sans les noyer.
@@ -201,7 +201,7 @@ async function initScene(
   renderer.toneMappingExposure = 1.05;
   if (isSceneWide) {
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
   }
 
   // Les textures 3D (QR, formulaire, dashboard) utilisent la vraie Inter :
@@ -218,7 +218,7 @@ async function initScene(
   const hdriUrl = "/assets/landing/studio_small_09_1k.hdr";
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  new RGBELoader()
+  new HDRLoader()
     .loadAsync(hdriUrl)
     .then((equirectangular) => {
       scene.environment = pmrem.fromEquirectangular(equirectangular).texture;
@@ -441,76 +441,79 @@ async function initScene(
     ctx.fillStyle = "#f6f7f8";
     ctx.fillRect(0, 0, 512, 1070);
 
+    const MARGIN = 64; // marges internes confortables
+    const WIDTH = 512 - MARGIN * 2;
+
     // Barre de statut.
     ctx.textAlign = "left";
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 22px Inter, Arial, sans-serif";
-    ctx.fillText("9:41", 44, 60);
+    ctx.fillText("9:41", MARGIN, 60);
     ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(392, 44, 5, 10);
-    ctx.fillRect(402, 40, 5, 14);
-    ctx.fillRect(412, 36, 5, 18);
+    ctx.fillRect(512 - MARGIN - 70, 44, 5, 10);
+    ctx.fillRect(512 - MARGIN - 60, 40, 5, 14);
+    ctx.fillRect(512 - MARGIN - 50, 36, 5, 18);
     ctx.strokeStyle = "#0a0a0a";
     ctx.lineWidth = 3;
-    roundRectPath(ctx, 428, 38, 40, 18, 4);
+    roundRectPath(ctx, 512 - MARGIN - 84, 38, 40, 18, 4);
     ctx.stroke();
-    ctx.fillRect(433, 43, 26, 8);
+    ctx.fillRect(512 - MARGIN - 79, 43, 26, 8);
 
     // En-tête commerce.
     ctx.fillStyle = "#d71920";
-    roundRectPath(ctx, 44, 108, 46, 46, 13);
+    roundRectPath(ctx, MARGIN, 108, 46, 46, 13);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 24px Inter, Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("P", 67, 141);
+    ctx.fillText("P", MARGIN + 23, 141);
     ctx.textAlign = "left";
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 27px Inter, Arial, sans-serif";
-    ctx.fillText("Pharmacie du Centre", 106, 132);
+    ctx.fillText("Pharmacie du Centre", MARGIN + 62, 132);
     ctx.fillStyle = "#555555";
     ctx.font = "500 16px Inter, Arial, sans-serif";
-    ctx.fillText("Notez votre visite", 106, 156);
+    ctx.fillText("Notez votre visite", MARGIN + 62, 156);
 
     // Titre + note sélectionnée.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 34px Inter, Arial, sans-serif";
-    ctx.fillText("Comment s'est passée", 44, 232);
-    ctx.fillText("votre visite ?", 44, 272);
+    ctx.fillText("Comment s'est passée", MARGIN, 232);
+    ctx.fillText("votre visite ?", MARGIN, 272);
     for (let i = 0; i < 5; i += 1) {
-      drawStar(ctx, 66 + i * 52, 330, 22, i < 4 ? "#d71920" : "#d7d9dc");
+      drawStar(ctx, MARGIN + 22 + i * 52, 330, 22, i < 4 ? "#d71920" : "#d7d9dc");
     }
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 22px Inter, Arial, sans-serif";
-    ctx.fillText("Très bien", 316, 338);
+    ctx.fillText("Très bien", MARGIN + 252, 338);
 
     // Date de visite.
     ctx.fillStyle = "#555555";
     ctx.font = "600 16px Inter, Arial, sans-serif";
-    ctx.fillText("Date de visite", 44, 404);
+    ctx.fillText("Date de visite", MARGIN, 404);
     ctx.fillStyle = "#eceef0";
-    roundRectPath(ctx, 44, 418, 424, 64, 14);
+    roundRectPath(ctx, MARGIN, 418, WIDTH, 64, 14);
     ctx.fill();
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "500 23px Inter, Arial, sans-serif";
-    ctx.fillText("Aujourd'hui", 66, 458);
+    ctx.fillText("Aujourd'hui", MARGIN + 22, 458);
 
     // Commentaire.
     ctx.fillStyle = "#555555";
     ctx.font = "600 16px Inter, Arial, sans-serif";
-    ctx.fillText("Votre commentaire", 44, 532);
+    ctx.fillText("Votre commentaire", MARGIN, 532);
     ctx.fillStyle = "#eceef0";
-    roundRectPath(ctx, 44, 546, 424, 150, 14);
+    roundRectPath(ctx, MARGIN, 546, WIDTH, 150, 14);
     ctx.fill();
     ctx.fillStyle = "#8b8d90";
     ctx.font = "400 23px Inter, Arial, sans-serif";
-    ctx.fillText("Dites-nous en plus (facultatif)", 66, 592);
+    ctx.fillText("Dites-nous en plus (facultatif)", MARGIN + 22, 592);
 
     // Bouton d'envoi.
     ctx.shadowColor = "rgba(215, 25, 32, 0.35)";
     ctx.shadowBlur = 22;
     ctx.fillStyle = "#d71920";
-    roundRectPath(ctx, 44, 780, 424, 88, 44);
+    roundRectPath(ctx, MARGIN, 780, WIDTH, 88, 44);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.textAlign = "center";
@@ -563,14 +566,14 @@ async function initScene(
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, 1024, 576);
 
-    // Entête.
+    // Entête - marges augmentées.
     ctx.textAlign = "left";
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "700 30px Inter, Arial, sans-serif";
-    ctx.fillText("Tableau de bord", 46, 60);
+    ctx.fillText("Tableau de bord", 60, 60);
     ctx.fillStyle = "#555555";
     ctx.font = "400 15px Inter, Arial, sans-serif";
-    ctx.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 46, 86);
+    ctx.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 60, 86);
 
     // Quatre cartes d'indicateurs : mêmes libellés et valeurs que l'app.
     const statCards = [
@@ -579,53 +582,53 @@ async function initScene(
       { label: "AVIS SUR 30 JOURS", value: "42", suffix: "", hint: "Déposés ces 30 derniers jours" },
       { label: "CLIENTS SATISFAITS", value: "97 %", suffix: "", hint: "Part des avis à 4 ou 5 étoiles" },
     ] as const;
-    const cardTop = 106;
-    const cardH = 132;
-    const cardW = 232;
-    const cardGap = 12;
+    const cardTop = 116;
+    const cardH = 128;
+    const cardW = 220;
+    const cardGap = 16;
     statCards.forEach((card, i) => {
-      const x = 40 + i * (cardW + cardGap);
+      const x = 60 + i * (cardW + cardGap);
       ctx.fillStyle = "#f4f4f4";
       roundRectPath(ctx, x, cardTop, cardW, cardH, 14);
       ctx.fill();
       ctx.fillStyle = "#555555";
       ctx.font = "600 12px Inter, Arial, sans-serif";
-      ctx.fillText(card.label, x + 18, cardTop + 32);
+      ctx.fillText(card.label, x + 20, cardTop + 32);
       ctx.fillStyle = "#0a0a0a";
-      ctx.font = "700 40px Inter, Arial, sans-serif";
-      ctx.fillText(card.value, x + 18, cardTop + 84);
+      ctx.font = "700 38px Inter, Arial, sans-serif";
+      ctx.fillText(card.value, x + 20, cardTop + 82);
       if (card.suffix) {
         const valueWidth = ctx.measureText(card.value).width;
         ctx.fillStyle = "#555555";
         ctx.font = "400 18px Inter, Arial, sans-serif";
-        ctx.fillText(card.suffix, x + 20 + valueWidth, cardTop + 84);
+        ctx.fillText(card.suffix, x + 22 + valueWidth, cardTop + 82);
       }
       ctx.fillStyle = "#555555";
       ctx.font = "400 11px Inter, Arial, sans-serif";
-      ctx.fillText(card.hint, x + 18, cardTop + 112);
+      ctx.fillText(card.hint, x + 20, cardTop + 108);
     });
 
     // Répartition des notes (colonne gauche), comme RatingHistogram.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 20px Inter, Arial, sans-serif";
-    ctx.fillText("Répartition des notes", 46, 292);
+    ctx.fillText("Répartition des notes", 60, 292);
     ctx.fillStyle = "#555555";
     ctx.font = "400 14px Inter, Arial, sans-serif";
-    ctx.fillText("4,6 / 5 · 128 avis", 46, 314);
+    ctx.fillText("4,6 / 5 · 128 avis", 60, 314);
 
     // Cohérent avec la moyenne 4,6 / 5 (128 avis, 97 % à 4-5 étoiles).
     const counts = [1, 1, 2, 42, 82];
     const maxCount = 82;
-    const barLeft = 108;
-    const barWidth = 296;
-    const barTop = 344;
-    const barStep = 42;
+    const barLeft = 120;
+    const barWidth = 270;
+    const barTop = 340;
+    const barStep = 40;
     counts.forEach((count, i) => {
       const y = barTop + i * barStep;
       ctx.fillStyle = "#0a0a0a";
       ctx.font = "600 18px Inter, Arial, sans-serif";
-      ctx.fillText(String(i + 1), 46, y + 15);
-      drawStar(ctx, 74, y + 9, 10, "#d71920");
+      ctx.fillText(String(i + 1), 60, y + 15);
+      drawStar(ctx, 86, y + 9, 10, "#d71920");
       ctx.fillStyle = "#f4f4f4";
       roundRectPath(ctx, barLeft, y, barWidth, 18, 9);
       ctx.fill();
@@ -641,10 +644,10 @@ async function initScene(
     // Derniers avis (colonne droite).
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 20px Inter, Arial, sans-serif";
-    ctx.fillText("Derniers avis", 532, 292);
+    ctx.fillText("Derniers avis", 580, 292);
     ctx.fillStyle = "#555555";
     ctx.font = "400 14px Inter, Arial, sans-serif";
-    ctx.fillText("Du plus récent au plus ancien", 532, 314);
+    ctx.fillText("Du plus récent au plus ancien", 580, 314);
 
     const recentReviews = [
       { rating: 5, date: "08/10/2026", comment: "Accueil très professionnel, je recommande." },
@@ -653,21 +656,21 @@ async function initScene(
       { rating: 2, date: "03/10/2026", comment: "Beaucoup d'attente en caisse." },
     ] as const;
     recentReviews.forEach((review, i) => {
-      const y = 344 + i * 54;
+      const y = 340 + i * 52;
       for (let star = 0; star < 5; star += 1) {
-        drawStar(ctx, 540 + star * 25, y + 8, 9, star < review.rating ? "#d71920" : "#d7d9dc");
+        drawStar(ctx, 588 + star * 24, y + 8, 9, star < review.rating ? "#d71920" : "#d7d9dc");
       }
       ctx.textAlign = "right";
       ctx.fillStyle = "#555555";
       ctx.font = "500 13px Inter, Arial, sans-serif";
-      ctx.fillText(review.date, 984, y + 13);
+      ctx.fillText(review.date, 964, y + 13);
       ctx.textAlign = "left";
       ctx.fillStyle = "#0a0a0a";
       ctx.font = "400 16px Inter, Arial, sans-serif";
-      ctx.fillText(review.comment, 532, y + 38);
+      ctx.fillText(review.comment, 580, y + 36);
       if (i < recentReviews.length - 1) {
         ctx.fillStyle = "#e6e6e6";
-        ctx.fillRect(532, y + 46, 452, 1);
+        ctx.fillRect(580, y + 44, 410, 1);
       }
     });
   }
@@ -844,8 +847,8 @@ async function initScene(
     if (!reducedMotion.matches) {
       plaque.rotation.y = -0.24 + easedPointerX * 0.1;
       plaque.rotation.x = easedPointerY * 0.04;
-      phone.rotation.y = 0.22 + easedPointerX * 0.07;
-      dashboard.rotation.y = -0.09 + easedPointerX * 0.035;
+      phone.rotation.y = 0.08 + easedPointerX * 0.05;
+      dashboard.rotation.y = -0.02 + easedPointerX * 0.02;
     }
 
     followLight.position.set(
