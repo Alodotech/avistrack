@@ -273,8 +273,33 @@ body {
   text-decoration: none;
 }
 
+/* Bouton primaire dans la nav : garde texte blanc sur fond rouge même en état scrolled */
+.site-nav a.bg-accent,
+.site-nav .bg-accent {
+  color: white !important;
+}
+
 .site-nav a:hover {
   color: var(--color-accent);
+}
+
+/* Au scroll : les liens nav s'assombrissent, mais pas le bouton primaire */
+.site-header.on .site-nav a:not(.bg-accent) {
+  color: var(--ink);
+}
+
+/* Spécificité plus forte pour le bouton primaire : garde texte blanc toujours */
+.site-header .site-nav .bg-accent,
+.site-header.on .site-nav .bg-accent,
+.site-header .site-nav a.bg-accent,
+.site-header.on .site-nav a.bg-accent {
+  color: white !important;
+}
+
+.site-header.on .site-nav a.bg-accent:hover,
+.site-header.on .site-nav .bg-accent:hover {
+  background-color: var(--color-accent-deep);
+  color: white !important;
 }
 
 @media (max-width: 760px) {
