@@ -257,6 +257,8 @@ async function initScene(
   // Décalage horizontal : colonne texte à gauche sur deux colonnes (lg),
   // centrage plein sur les plus petites fenêtres.
   let sceneX = window.innerWidth >= 1024 ? 2.15 : 0.1;
+  let basePhoneX = sceneX + screenShift + 0.4;
+  let baseDashboardX = sceneX + screenShift;
 
   // --- Plaque QR sur socle ---
   const plaque = new THREE.Group();
@@ -387,8 +389,8 @@ async function initScene(
     envMapIntensity: 1.1,
   });
   const phone = new THREE.Group();
-  const phoneX = sceneX + screenShift + 0.4;
-  phone.position.set(phoneX, 0.26, -17);
+  basePhoneX = sceneX + screenShift + 0.4;
+  phone.position.set(basePhoneX, 0.26, -17);
   scene.add(phone);
   const phoneFrame = new THREE.Mesh(extrudedRounded(2.66, 5.24, 0.48, 0.36), frameMaterial);
   phoneFrame.castShadow = isSceneWide;
@@ -397,9 +399,9 @@ async function initScene(
     new THREE.CylinderGeometry(1.05, 1.05, 0.75, 32),
     shellMaterial,
   );
-  phonePlinth.position.set(phoneX, -2.7, -17);
+  phonePlinth.position.set(0, -2.7, 0); // relatif au groupe phone
   phonePlinth.castShadow = isSceneWide;
-  scene.add(phonePlinth);
+  phone.add(phonePlinth); // ajouté au groupe phone pour bouger ensemble
 
   // Boutons de volume / veille sur les tranches.
   const buttonGeometry = new THREE.BoxGeometry(0.07, 0.36, 0.16);
@@ -539,7 +541,8 @@ async function initScene(
 
   // --- Tableau de bord : écran sur pied, comme un bornier de cuisine. ---
   const dashboard = new THREE.Group();
-  dashboard.position.set(sceneX + screenShift, 0, -34);
+  baseDashboardX = sceneX + screenShift;
+  dashboard.position.set(baseDashboardX, 0, -34);
   scene.add(dashboard);
   const dashStand = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.9, 12), shellMaterial);
   dashStand.position.set(-0.2, -2.1, -1.4);
@@ -727,9 +730,10 @@ async function initScene(
   const groundShadows: THREE.MeshBasicMaterial[] = [];
   const shadowAnchors = [
     [sceneX + screenShift, 0],
-    [phoneX, -17],
+    [basePhoneX, -17],
     [sceneX + screenShift, -34],
   ];
+  const shadowMeshes: THREE.Mesh[] = [];
   shadowAnchors.forEach(([x, z], index) => {
     const material = new THREE.MeshBasicMaterial({
       map: shadowTexture,
@@ -745,6 +749,7 @@ async function initScene(
     shadow.position.set(x as number, -3.025, z as number);
     scene.add(shadow);
     groundShadows.push(material);
+    shadowMeshes.push(shadow);
   });
 
   const followLight = new THREE.PointLight(0xffeee8, 0.5, 23);
@@ -763,6 +768,8 @@ async function initScene(
   let scrollVelocity = 0;
   let lastScroll = window.scrollY;
   let previousScrollTime = performance.now();
+  let phoneSlideX = 0;
+  let dashSlideX = 0;
 
   const sections = ["hero", "s1", "s2", "s3", "s4", "s5"]
     .map((id) => document.getElementById(id))
@@ -842,13 +849,25 @@ async function initScene(
     scanBeam.position.y = 1.5 - scan * 3;
     scanGlow.position.y = scanBeam.position.y;
 
-    // Objets fixes : la caméra seule raconte le parcours. Pas de balancement
-    // perpétuel (mouvement « vide », signature de rendu amateur).
+    // Animation latérale téléphone (segment 2) et dashboard (segment 3) :
+    // ils glissent vers la GAUCHE (négatif) quand on arrive à leur section
+    // pour s'éloigner de la zone de texte.
+    const phoneTargetX = segment === 2 ? -1.2 : 0;
+    const dashTargetX = segment === 3 ? -1.0 : 0;
+    const slideDamping = Math.min(1, dt * 3);
+    phoneSlideX += (phoneTargetX - phoneSlideX) * slideDamping;
+    dashSlideX += (dashTargetX - dashSlideX) * slideDamping;
+
+    // Perpétuel (mouvement « vide », signature de rendu amateur).
     if (!reducedMotion.matches) {
       plaque.rotation.y = -0.24 + easedPointerX * 0.1;
       plaque.rotation.x = easedPointerY * 0.04;
       phone.rotation.y = 0.08 + easedPointerX * 0.05;
+      phone.position.x = basePhoneX + phoneSlideX;
+      // Mettre à jour l'ombre du téléphone (index 1) pour qu'elle suive
+      shadowMeshes[1].position.x = basePhoneX + phoneSlideX;
       dashboard.rotation.y = -0.02 + easedPointerX * 0.02;
+      dashboard.position.x = baseDashboardX + dashSlideX;
     }
 
     followLight.position.set(
@@ -875,6 +894,8 @@ async function initScene(
     width = window.innerWidth;
     height = window.innerHeight;
     sceneX = width >= 1024 ? 2.15 : 0.1;
+    basePhoneX = sceneX + screenShift + 0.4;
+    baseDashboardX = sceneX + screenShift;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width >= 1024 ? 1.7 : 1.35));
     renderer.setSize(width, height, false);
     camera.aspect = width / Math.max(1, height);
