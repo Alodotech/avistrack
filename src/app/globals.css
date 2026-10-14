@@ -367,13 +367,13 @@ body {
 .copy-block {
   position: relative;
   padding: 1.5rem 0;
-  background: linear-gradient(90deg, var(--scrim-from), var(--scrim-to) 60%);
+  background: transparent;
 }
 
 @media (max-width: 680px) {
   .copy-block {
-    background: linear-gradient(180deg, var(--scrim-from) 0%, var(--scrim-to) 70%);
-    border-radius: 1rem;
+    background: transparent;
+    border-radius: 0;
     padding: 1rem;
   }
 }
