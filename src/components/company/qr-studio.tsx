@@ -162,10 +162,17 @@ export function QrStudio({ url }: { url: string }) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 0.85));
-    const key = new THREE.DirectionalLight(0xfff3dc, 0.8);
-    key.position.set(3, 6, 4);
+    // Éclairage en trois temps : une ambiance douce, une lumière de ciel et une
+    // lumière principale chaude, complétées par un contre-jour froid qui détache
+    // les branches du fond.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.16));
+    scene.add(new THREE.HemisphereLight(0xf7fff0, 0x9c8a70, 0.7));
+    const key = new THREE.DirectionalLight(0xfff4e0, 0.95);
+    key.position.set(3.2, 6.5, 4.2);
     scene.add(key);
+    const rim = new THREE.DirectionalLight(0xdbe6ff, 0.3);
+    rim.position.set(-3.5, 3.8, -4.6);
+    scene.add(rim);
 
     /* ---- arbre procédural : tronc + branches effilées ---- */
     let seed = 20260;
@@ -183,7 +190,8 @@ export function QrStudio({ url }: { url: string }) {
     const anchors: THREE.Vector3[] = [];
 
     const addTube = (path: THREE.Vector3[], radius: number[], depth: number) => {
-      const sides = radius[0]! > 0.07 ? 8 : 5;
+      const sides =
+        radius[0]! > 0.06 ? 10 : radius[0]! > 0.03 ? 7 : 5;
       const base = trunkPositions.length / 3;
       const n = path.length;
       for (let i = 0; i < n; i += 1) {
@@ -196,16 +204,27 @@ export function QrStudio({ url }: { url: string }) {
           .crossVectors(d, Math.abs(d.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0))
           .normalize();
         const wv = new THREE.Vector3().crossVectors(d, u);
+        // Écorce : assombrit le bas du tronc, ajoute un léger bruit vertical et
+        // éclaircit les jeunes rameaux, comme un dégradé de matière.
+        const gradient = 0.74 + 0.26 * Math.min(1, path[i]!.y / 4.5);
+        const noise = 0.9 + 0.2 * Math.sin(i * 2.3 + depth * 1.7);
         for (let s = 0; s < sides; s += 1) {
           const a = (s / sides) * 6.2832;
-          const k = 1 + 0.12 * Math.sin(a * 3 + i * 1.7 + depth);
+          const k = 1 + 0.11 * Math.sin(a * 3 + i * 1.7 + depth);
           trunkPositions.push(
             path[i]!.x + (u.x * Math.cos(a) + wv.x * Math.sin(a)) * radius[i]! * k,
             path[i]!.y + (u.y * Math.cos(a) + wv.y * Math.sin(a)) * radius[i]! * k,
             path[i]!.z + (u.z * Math.cos(a) + wv.z * Math.sin(a)) * radius[i]! * k,
           );
-          const shade = 0.78 + 0.22 * Math.sin(a * 5 + i * 0.9) + (depth > 2 ? 0.12 : 0);
-          trunkColors.push(0.34 * shade, 0.24 * shade, 0.17 * shade);
+          const shade =
+            (0.82 + 0.18 * Math.sin(a * 5 + i * 0.9)) * gradient * noise +
+            (depth > 2 ? 0.16 : 0);
+          const green = depth >= 3 ? 0.05 : 0;
+          trunkColors.push(
+            0.37 * shade,
+            (0.25 + green) * shade,
+            (0.17 + green) * shade,
+          );
         }
       }
       for (let i = 0; i < n - 1; i += 1) {
@@ -364,8 +383,11 @@ export function QrStudio({ url }: { url: string }) {
         " if(abs(q.x)>.5||abs(q.y)>w) discard;",
         " float rib=smoothstep(.03,.0,abs(q.y))*(1.-vE)*.16;",
         " vec3 c=vC*mix(.84+.3*(q.x+.5),1.,vE)*(1.-rib);",
-        " c*=1.-.1*smoothstep(.55,1.,abs(q.y)/max(w,.01))*(1.-vE);",
-        " c+=vec3(.08,.07,.0)*smoothstep(.8,1.,vSh)*(1.-vE);",
+        " c*=mix(.8+.34*(q.y+.5),1.,vE);",
+        " c*=1.-.13*smoothstep(.5,1.,abs(q.y)/max(w,.01))*(1.-vE);",
+        " c+=vec3(.08,.07,.0)*smoothstep(.78,1.,vSh)*(1.-vE);",
+        " float sheen=pow(max(0.,1.-length(q)*1.25),2.5)*.16*(1.-vE);",
+        " c+=vec3(.11,.12,.08)*sheen;",
         " gl_FragColor=vec4(c,1.);",
         "}",
       ].join("\n"),
@@ -803,7 +825,7 @@ export function QrStudio({ url }: { url: string }) {
               }}
               placeholder="https://exemple.com/mon-lien"
               aria-invalid={linkError ? true : undefined}
-              className="min-h-11 w-full min-w-0 flex-1 rounded-md border border-black/30 bg-gray-100 px-3 font-mono text-sm text-black transition-colors placeholder:text-gray-500 focus:border-accent focus:bg-white focus:outline-none"
+              className="min-h-11 w-full min-w-0 flex-1 rounded-md border border-black/30 bg-gray-100 px-3 font-mono text-sm text-black transition-colors placeholder:text-gray-600 focus:border-accent focus:bg-white focus:outline-none"
             />
             <Button type="button" onClick={loadLink}>
               Charger le lien
@@ -845,7 +867,7 @@ export function QrStudio({ url }: { url: string }) {
                   className={`border-b-[1.5px] pb-1.5 pt-0.5 text-sm transition-colors ${
                     season === id
                       ? "border-black font-semibold text-black"
-                      : "border-transparent text-gray-500 hover:border-black/30 hover:text-black"
+                      : "border-transparent text-gray-600 hover:border-black/30 hover:text-black"
                   }`}
                 >
                   {SEASONS[id].label}
