@@ -23,22 +23,12 @@ export const metadata: Metadata = {
   },
 };
 
-function ChapterIndex({ current }: { current: string }) {
-  return (
-    <span className="chapter-index" aria-hidden>
-      {current}
-      <i />
-      06
-    </span>
-  );
-}
-
 export default function LandingPage() {
   return (
     <>
       {/* Héros — la promesse */}
       <section id="hero" className="chapter" aria-labelledby="hero-title">
-        <div className="chapter-inner">
+        <div className="chapter-inner chapter-inner--split">
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="ink-dot" aria-hidden />
@@ -50,9 +40,9 @@ export default function LandingPage() {
               <span className="heading-muted">Un seul scan.</span>
             </h1>
             <p className="lead">
-              Votre client garde son avis pour lui, faute de s&apos;y laisser
-              inviter. Posez un QR code sur le comptoir : il note en 30 secondes,
-              et le retour arrive directement dans votre tableau de bord.
+              Posez un QR code sur votre comptoir. Vos clients scannent,
+              notent leur visite en 30 secondes. Les avis arrivent directement
+              sur votre tableau de bord.
             </p>
             <div className="cta-row">
               <Link href="/onboarding" className={buttonClass("primary")}>
@@ -62,12 +52,8 @@ export default function LandingPage() {
                 Comment ça marche ↓
               </a>
             </div>
-            <p className="hero-note">
-              <span className="note-rule" aria-hidden />
-              Prêt en 2 minutes, dès maintenant.
-            </p>
+            <p className="hero-note">Prêt en 2 minutes, dès maintenant.</p>
           </ScrollReveal>
-          <ChapterIndex current="01" />
         </div>
       </section>
 
@@ -90,13 +76,12 @@ export default function LandingPage() {
             </p>
             <ul className="feature-list">
               <li>Unique à votre établissement</li>
-              <li>Éditable et ré-imprimable à volonté</li>
+              <li>Téléchargeable et ré-imprimable à volonté</li>
             </ul>
           </ScrollReveal>
           <ScrollReveal className="screen-block" delay={140}>
             <QrStandScreen />
           </ScrollReveal>
-          <ChapterIndex current="02" />
         </div>
       </section>
 
@@ -124,7 +109,6 @@ export default function LandingPage() {
           <ScrollReveal className="screen-block" delay={140}>
             <PhoneFormScreen />
           </ScrollReveal>
-          <ChapterIndex current="03" />
         </div>
       </section>
 
@@ -141,19 +125,18 @@ export default function LandingPage() {
               <span className="heading-muted">au même endroit.</span>
             </h2>
             <p className="lead">
-              Note moyenne, répartition, liste : chaque avis arrive dans votre
-              tableau de bord, trié par établissement. Vous savez enfin ce qui
-              se passe vraiment en salle.
+              Note moyenne, répartition par étoiles, liste complète : chaque
+              avis arrive dans votre tableau de bord, du plus récent au plus
+              ancien. Vous savez enfin ce qui se passe vraiment en salle.
             </p>
             <ul className="feature-list">
-              <li>Note moyenne et tendances, en temps réel</li>
-              <li>Répondez, archivez, partagez</li>
+              <li>Note moyenne et activité des 30 derniers jours</li>
+              <li>Historique complet, filtrable par note et par période</li>
             </ul>
           </ScrollReveal>
           <ScrollReveal className="screen-block" delay={140}>
             <DashboardScreen />
           </ScrollReveal>
-          <ChapterIndex current="04" />
         </div>
       </section>
 
@@ -185,7 +168,6 @@ export default function LandingPage() {
               </li>
             </ul>
           </ScrollReveal>
-          <ChapterIndex current="05" />
         </div>
       </section>
 
@@ -221,11 +203,9 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="finale-foot">
-              <span className="note-rule" aria-hidden />
               Commerce indépendant · Franchise · Hôtellerie · Restauration
             </p>
           </ScrollReveal>
-          <ChapterIndex current="06" />
         </div>
       </section>
     </>

@@ -11,7 +11,7 @@ const YEAR = new Date().getFullYear();
 /** Pied de page institutionnel : mentions légales et contact (LP-05). */
 export function SiteFooter() {
   return (
-    <footer id="contact" className="border-t border-black/10 bg-black text-white">
+    <footer id="contact" className="bg-black text-white">
       <div className="grid w-full gap-8 px-6 py-12 lg:grid-cols-3 lg:px-16">
         <div className="flex flex-col gap-3">
           <p className="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -46,7 +46,7 @@ export function SiteFooter() {
         </nav>
       </div>
 
-      <div className="border-t border-white/10">
+      <div>
         <p className="w-full px-6 py-5 text-xs text-white/50 lg:px-16">
           © {YEAR} AvisTrack — Tous droits réservés.
         </p>

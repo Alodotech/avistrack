@@ -7,7 +7,7 @@ import { buttonClass } from "@/components/ui/button";
 const NAV = [
   { href: "#s1", label: "Fonctionnement" },
   { href: "#s4", label: "Sécurité" },
-  { href: "#s5", label: "Tarifs" },
+  { href: "#contact", label: "Contact" },
   { href: "/login", label: "Connexion" },
 ] as const;
 

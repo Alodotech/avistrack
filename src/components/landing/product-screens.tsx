@@ -28,7 +28,7 @@ const MAX = 82;
 
 const STATS = [
   { label: "Note moyenne", value: "4,6", suffix: " / 5", icon: <StarIcon filled={false} className="size-4" /> },
-  { label: "Avis reçus", value: String(TOTAL), icon: <MessageIcon className="size-4" /> },
+  { label: "Avis au total", value: String(TOTAL), icon: <MessageIcon className="size-4" /> },
   { label: "Avis sur 30 jours", value: "42", icon: <TrendIcon className="size-4" /> },
   { label: "Clients satisfaits", value: "97 %", icon: <ThumbUpIcon className="size-4" /> },
 ] as const;
@@ -240,7 +240,8 @@ export function DashboardScreen() {
               Tableau de bord
             </h3>
             <p className="text-xs text-gray-600">
-              Votre QR code, la satisfaction de vos clients et leurs avis.
+              La satisfaction de vos clients et leurs avis récents, en un coup
+              d&apos;œil.
             </p>
           </header>
 
