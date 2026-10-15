@@ -40,8 +40,13 @@ async function ProfileContent() {
     {
       term: "Lien public du formulaire",
       value: (
-        <span className="font-mono break-all">
-          {publicReviewUrl(company.publicId)}
+        <span className="flex flex-col gap-1">
+          <span className="font-mono break-all">
+            {publicReviewUrl(company.publicId)}
+          </span>
+          <span className="text-xs text-gray-600">
+            Adresse que vos clients ouvrent en scannant le QR code.
+          </span>
         </span>
       ),
     },

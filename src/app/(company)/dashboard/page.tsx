@@ -98,6 +98,7 @@ async function DashboardContent({
       <StatGrid>
         <StatCard
           label={STAT_LABELS.average}
+          info="Moyenne des notes attribuées par vos clients, de 1 à 5, sur l'ensemble de vos avis."
           value={
             <>
               {formatAverage(stats.average)}
@@ -111,18 +112,21 @@ async function DashboardContent({
         />
         <StatCard
           label={STAT_LABELS.total}
+          info="Tous les avis reçus depuis la création du compte."
           value={formatCount(stats.total)}
           hint="Depuis la création du compte"
           icon={<MessageIcon />}
         />
         <StatCard
           label={STAT_LABELS.recent}
+          info="Les avis déposés au cours des 30 derniers jours."
           value={formatCount(recentCount)}
           hint="Déposés ces 30 derniers jours"
           icon={<TrendIcon />}
         />
         <StatCard
           label={STAT_LABELS.satisfied}
+          info="Part des avis notés 4 ou 5 étoiles. Il s'agit d'une proportion d'avis, pas d'un nombre de clients."
           value={stats.total === 0 ? "—" : formatPercent(satisfied / stats.total)}
           hint="Part des avis à 4 ou 5 étoiles"
           icon={<ThumbUpIcon />}

@@ -27,7 +27,11 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
       <table className={`${t.table} min-w-176`}>
         <thead className={t.head}>
           <tr>
-            <th scope="col" className={t.th}>
+            <th
+              scope="col"
+              className={t.th}
+              title="Date à laquelle le client a envoyé son avis."
+            >
               Déposé le
             </th>
             <th scope="col" className={t.th}>
@@ -36,7 +40,11 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
             <th scope="col" className={`${t.th} w-full`}>
               Commentaire
             </th>
-            <th scope="col" className={t.th}>
+            <th
+              scope="col"
+              className={t.th}
+              title="Date de la visite indiquée par le client ; peut différer de la date de dépôt."
+            >
               Date de visite
             </th>
           </tr>
