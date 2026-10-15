@@ -8,6 +8,8 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 const ACCENT = 0xd71920;
 const SHELL = 0x111113;
+// Format de référence des keyframes de caméra (16/9, desktop).
+const REF_ASPECT = 16 / 9;
 
 type Keyframe = [number, number, number, number, number, number, number];
 
@@ -809,19 +811,28 @@ async function initScene(
     easedPointerY += (pointerY - easedPointerY) * damping;
 
     const drift = reducedMotion.matches ? 0 : clamp(scrollVelocity, -1, 1);
+    // Cadrage adaptatif : sous un format large (16/9) on élargit le champ
+    // vertical pour que le produit, centré, tienne entièrement en portrait.
+    // On abaisse aussi la scène pour laisser la place au texte, resté en haut.
+    const aspect = camera.aspect;
+    const fovScale =
+      aspect < REF_ASPECT ? Math.min(1.45, Math.pow(REF_ASPECT / aspect, 0.4)) : 1;
+    const portrait = aspect < 1 ? clamp((1 - aspect) / 0.6, 0, 1) : 0;
+    const lift = portrait * 2.6;
+
     // La caméra suit le décalage complet des écrans : le cadrage de chaque
     // chapitre reste identique à celui d'origine, simplement translaté.
     camera.position.set(
       interpolate(0) + screenShift + easedPointerX * 0.16,
-      interpolate(1) - easedPointerY * 0.12,
+      interpolate(1) - easedPointerY * 0.12 + lift,
       interpolate(2),
     );
     camera.lookAt(
       interpolate(3) + screenShift + easedPointerX * 0.07,
-      interpolate(4),
+      interpolate(4) + lift,
       interpolate(5),
     );
-    camera.fov = interpolate(6) + Math.abs(drift) * 1.2;
+    camera.fov = interpolate(6) * fovScale + Math.abs(drift) * 1.2;
     camera.updateProjectionMatrix();
     camera.rotation.z = drift * 0.007;
 
@@ -875,7 +886,6 @@ async function initScene(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width >= 1024 ? 1.7 : 1.35));
     renderer.setSize(width, height, false);
     camera.aspect = width / Math.max(1, height);
-    camera.fov = width < 1024 ? 45 : 37;
     camera.updateProjectionMatrix();
     targetProgress = getScrollProgress();
     queueRender();
