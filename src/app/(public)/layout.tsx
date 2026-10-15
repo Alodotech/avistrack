@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="surface-public flex min-h-dvh flex-col">
       <Scene3DLoader />
       <a
         href="#contenu"
