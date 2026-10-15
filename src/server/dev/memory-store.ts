@@ -6,6 +6,7 @@ import type {
   CompanyStatus,
   Rating,
   Review,
+  ReviewFormConfig,
 } from "@/server/domain";
 
 /**
@@ -23,6 +24,8 @@ type Store = {
   reviews: Review[];
   admins: Admin[];
   auditLog: AuditLogEntry[];
+  /** Personnalisation du formulaire d'avis, par identifiant d'entreprise. */
+  formConfigs: Record<string, ReviewFormConfig>;
 };
 
 export const DEV_IDS = {
@@ -151,6 +154,7 @@ function seed(): Store {
     reviews,
     admins: [{ id: DEV_IDS.admin, email: "admin@avistrack.example" }],
     auditLog: [],
+    formConfigs: {},
   };
 }
 
