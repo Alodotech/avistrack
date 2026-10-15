@@ -216,9 +216,9 @@ body {
 .surface-public {
   background: var(--scene-bg);
   color: var(--ink);
-  /* Le halo des maquettes déborde légèrement : on rogne pour éviter tout
-     défilement horizontal, sans créer de conteneur de scroll. */
-  overflow-x: clip;
+  /* Le halo des maquettes peut déborder des colonnes : on rogne sur l'axe
+     horizontal pour éviter tout défilement latéral. */
+  overflow-x: hidden;
 }
 
 .scene-canvas {
