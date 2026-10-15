@@ -397,14 +397,12 @@ body {
 }
 
 /*
- * Sur les petites fenêtres, les écrans produits restent en HTML : ils sont
- * nets, lisibles et ne dépendent pas du WebGL. À partir de 1024 px, la scène
- * WebGL les modélise déjà en pleine vue, la maquette HTML se replie alors.
+ * Dès que la 3D est disponible, c'est elle qui porte les produits : on masque
+ * les maquettes HTML à toutes les tailles pour éviter tout doublon. Sans WebGL
+ * (`.no-webgl`), les maquettes HTML restent le repli lisible et net.
  */
-@media (min-width: 1024px) {
-  .webgl-ready .screen-block {
-    display: none;
-  }
+.webgl-ready .screen-block {
+  display: none;
 }
 
 @media (min-width: 1024px) {
@@ -435,6 +433,25 @@ body {
 
   .chapter-inner--wide > .screen-block {
     justify-self: end;
+  }
+}
+
+/*
+ * Sous 1024 px, le texte passe en haut de chaque chapitre : la caméra 3D
+ * abaisse la scène dans la moitié basse, les deux ne se chevauchent plus.
+ */
+@media (max-width: 1023px) {
+  .chapter:not(.finale) {
+    align-items: flex-start;
+  }
+
+  .chapter:not(.finale) .chapter-inner {
+    padding-top: 7rem;
+    padding-bottom: 2rem;
+  }
+
+  .chapter-inner--split .copy-block {
+    max-width: 100%;
   }
 }
 
