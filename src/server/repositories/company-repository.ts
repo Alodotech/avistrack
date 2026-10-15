@@ -30,6 +30,72 @@ export async function findCompanyById(id: string): Promise<Company | null> {
   return record ? toCompany(record) : null;
 }
 
+/** Recherche par identifiant public (lien QR code). */
+export async function findCompanyByPublicId(
+  publicId: string,
+): Promise<Company | null> {
+  const record = getStore().companies.find(
+    (c) => c.publicId === publicId && c.deletedAt === null,
+  );
+  return record ? toCompany(record) : null;
+}
+
+/** Recherche par adresse e-mail (connexion). */
+export async function findCompanyByEmail(email: string): Promise<Company | null> {
+  const needle = email.trim().toLowerCase();
+  const record = getStore().companies.find(
+    (c) => c.deletedAt === null && c.email.toLowerCase() === needle,
+  );
+  return record ? toCompany(record) : null;
+}
+
+/** Identifiant public d'une nouvelle entreprise : URL-safe et non devinable. */
+function randomPublicId(): string {
+  const crypto = globalThis.crypto;
+  return `${crypto.randomUUID().replace(/-/g, "")}${crypto
+    .randomUUID()
+    .slice(0, 4)}`;
+}
+
+export type CreateCompanyInput = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+export type CreateCompanyResult =
+  | { ok: true; company: Company }
+  | { ok: false; reason: "EMAIL_TAKEN" };
+
+/**
+ * Inscription d'une entreprise depuis la page d'accueil. Le compte est
+ * directement actif : la vérification d'e-mail relève d'un lot ultérieur.
+ */
+export async function createCompany(
+  input: CreateCompanyInput,
+): Promise<CreateCompanyResult> {
+  const store = getStore();
+  const email = input.email.trim().toLowerCase();
+  const taken = store.companies.some(
+    (company) =>
+      company.deletedAt === null && company.email.toLowerCase() === email,
+  );
+  if (taken) return { ok: false, reason: "EMAIL_TAKEN" };
+
+  const record: CompanyRecord = {
+    id: globalThis.crypto.randomUUID(),
+    publicId: randomPublicId(),
+    name: input.name.trim(),
+    email,
+    phone: input.phone.trim(),
+    status: "ACTIVE",
+    createdAt: new Date(),
+    deletedAt: null,
+  };
+  store.companies.push(record);
+  return { ok: true, company: toCompany(record) };
+}
+
 export async function updateCompanyProfile(
   companyId: string,
   profile: { name: string; phone: string },

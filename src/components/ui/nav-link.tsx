@@ -26,11 +26,9 @@ export function NavLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
-        active
+className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-200 ${active
           ? "bg-white text-black"
-          : "text-white/80 hover:bg-white/10 hover:text-white"
-      }`}
+          : "text-white/80 hover:bg-white/10 hover:text-white"}`}
     >
       {icon}
       {children}

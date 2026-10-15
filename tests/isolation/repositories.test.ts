@@ -10,6 +10,11 @@ import {
   getRatingDistributionForCompany,
   listReviewsForCompany,
 } from "@/server/repositories/review-repository";
+import {
+  getReviewFormConfig,
+  updateReviewFormConfig,
+} from "@/server/repositories/form-repository";
+import { DEFAULT_REVIEW_FORM_CONFIG } from "@/lib/review-form";
 
 /**
  * Suite d'isolation A contre B (§12, couche 4 ; CA-06). Bloquante : un échec
@@ -62,6 +67,36 @@ describe("isolation des avis entre entreprises", () => {
   it("ne retourne rien pour un companyId inconnu", async () => {
     const page = await listReviewsForCompany("inconnu", everything);
     expect(page).toEqual({ items: [], total: 0 });
+  });
+});
+
+describe("configuration du formulaire par entreprise", () => {
+  it("renvoie les valeurs par défaut sans personnalisation", async () => {
+    expect(await getReviewFormConfig(DEV_IDS.companyA)).toEqual(
+      DEFAULT_REVIEW_FORM_CONFIG,
+    );
+  });
+
+  it("cloisonne la configuration entre entreprises", async () => {
+    const config = {
+      ...DEFAULT_REVIEW_FORM_CONFIG,
+      thanksTitle: "Merci entreprise A !",
+    };
+    await updateReviewFormConfig(DEV_IDS.companyA, config);
+
+    expect((await getReviewFormConfig(DEV_IDS.companyA)).thanksTitle).toBe(
+      "Merci entreprise A !",
+    );
+    expect(await getReviewFormConfig(DEV_IDS.companyB)).toEqual(
+      DEFAULT_REVIEW_FORM_CONFIG,
+    );
+  });
+
+  it("refuse toute lecture ou écriture sans companyId", async () => {
+    await expect(getReviewFormConfig("")).rejects.toThrow();
+    await expect(
+      updateReviewFormConfig("", DEFAULT_REVIEW_FORM_CONFIG),
+    ).rejects.toThrow();
   });
 });
 

@@ -27,11 +27,42 @@ export type Review = {
   /** Date de visite au format ISO `AAAA-MM-JJ`. */
   visitDate: string;
   createdAt: Date;
+  /**
+   * Réponses aux questions personnalisées du formulaire, indexées par
+   * identifiant de question. Absent pour les avis de démonstration.
+   */
+  answers?: Record<string, string>;
 };
 
 export type Admin = {
   id: string;
   email: string;
+};
+
+export const QUESTION_TYPES = ["rating", "text", "date"] as const;
+export type QuestionType = (typeof QUESTION_TYPES)[number];
+
+/** Nombre maximal de questions dans un formulaire d'avis. */
+export const MAX_FORM_QUESTIONS = 5;
+
+export type ReviewFormQuestion = {
+  id: string;
+  type: QuestionType;
+  label: string;
+  required: boolean;
+};
+
+/**
+ * Personnalisation du formulaire d'avis public (Form studio). L'entreprise
+ * compose jusqu'à `MAX_FORM_QUESTIONS` questions ; une seule note (étoiles)
+ * est imposée pour que les statistiques du tableau de bord restent calculables.
+ */
+export type ReviewFormConfig = {
+  questions: ReviewFormQuestion[];
+  /** Titre de l'écran de remerciement. */
+  thanksTitle: string;
+  /** Message de l'écran de remerciement. */
+  thanksMessage: string;
 };
 
 export const AUDIT_ACTIONS = ["SUSPEND", "REACTIVATE", "DELETE"] as const;

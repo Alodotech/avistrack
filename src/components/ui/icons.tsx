@@ -104,6 +104,36 @@ export const SearchIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const QrIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <path d="M14 14h3v3h-3zM19 14h2M14 19h3M19 19h2" />
+  </Icon>
+);
+
+export const ShieldIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+    <path d="M9 12l2 2 4-4" />
+  </Icon>
+);
+
+export const FormIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="4" y="3" width="16" height="18" rx="2" />
+    <path d="M8 8h2v2H8zM13 8.5h3M8 13h2v2H8zM13 13.5h3M8 18h8" />
+  </Icon>
+);
+
+export const CalendarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 9h18M8 3v4M16 3v4" />
+  </Icon>
+);
+
 /** Étoile de notation : pleine ou vide, la valeur est toujours doublée en texte. */
 export function StarIcon({
   filled,
