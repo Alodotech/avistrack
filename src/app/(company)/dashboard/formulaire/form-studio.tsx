@@ -112,7 +112,7 @@ export function FormStudio({
                       htmlFor={`label-${question.id}`}
                       className="text-sm font-semibold"
                     >
-                      Libellé
+                      Question posée au client
                     </label>
                     <input
                       id={`label-${question.id}`}

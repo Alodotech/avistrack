@@ -62,6 +62,13 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           role="img"
           aria-label={`Avis reçus par jour sur 30 jours : ${formatCount(total)} avis au total, maximum ${formatCount(max)} sur une journée.`}
         >
+          <defs>
+            <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
           {gridLevels.map((level) => (
             <line
               key={level}
@@ -74,7 +81,16 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
             />
           ))}
 
-          <path d={area} className="fill-accent" opacity={0.12} />
+          <text
+            x={PAD_X}
+            y={PAD_TOP - 12}
+            className="fill-gray-600"
+            fontSize={13}
+          >
+            max. {formatCount(max)}/jour
+          </text>
+
+          <path d={area} fill="url(#trend-fill)" />
           <path
             d={line}
             className="stroke-accent"

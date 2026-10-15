@@ -13,7 +13,8 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">
+        <h1 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight lg:text-3xl">
+          <span aria-hidden className="size-2.5 rounded-full bg-accent" />
           {title}
         </h1>
         {description ? (
@@ -57,7 +58,8 @@ export function Panel({
     >
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-black/10 px-5 py-4 lg:px-6 lg:py-5">
         <div className="flex flex-col gap-1">
-          <h2 id={titleId} className="text-lg font-semibold">
+          <h2 id={titleId} className="flex items-center gap-2 text-lg font-semibold">
+            <span aria-hidden className="size-2 rounded-full bg-accent" />
             {title}
           </h2>
           {description ? (

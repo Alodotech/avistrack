@@ -95,6 +95,12 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
           <ul className="flex flex-1 flex-col justify-around gap-4">
             {[...RATINGS].reverse().map((rating) => {
               const count = stats.distribution[rating];
+              const tone =
+                rating >= 4
+                  ? "fill-accent"
+                  : rating === 3
+                    ? "fill-gray-600"
+                    : "fill-gray-600/40";
               return (
                 <li
                   key={rating}
@@ -111,9 +117,9 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
                     aria-hidden
                     viewBox="0 0 100 10"
                     preserveAspectRatio="none"
-                    className="h-3.5 w-full rounded-sm bg-gray-100 fill-black"
+                    className="h-3.5 w-full rounded-sm bg-gray-100"
                   >
-                    <rect width={(count / max) * 100} height="10" />
+                    <rect width={(count / max) * 100} height="10" className={tone} />
                   </svg>
                   <span className="text-right tabular-nums">
                     <span className="font-semibold">{formatCount(count)}</span>
