@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AccountStateScreen } from "@/components/company/account-state-screen";
-import { RatingHistogram } from "@/components/company/rating-histogram";
 import { ReviewFilters } from "@/components/company/review-filters";
 import { ReviewsTable } from "@/components/company/reviews-table";
+import { SatisfactionOverview } from "@/components/company/satisfaction-overview";
+import { TrendChart } from "@/components/company/trend-chart";
 import {
   MessageIcon,
   StarIcon,
@@ -28,9 +29,11 @@ import {
   REVIEWS_PAGE_SIZE,
 } from "@/lib/review-query";
 import { statsFromDistribution } from "@/lib/review-stats";
+import { buildDailyTrend } from "@/lib/review-trend";
 import { requireCompany } from "@/server/auth/guards";
 import {
   countReviewsForCompanySince,
+  getAllReviewsForCompany,
   getRatingDistributionForCompany,
 } from "@/server/repositories/review-repository";
 import { listReviewsForDashboard } from "@/server/services/company-reviews";
@@ -39,7 +42,7 @@ export const metadata: Metadata = { title: "Tableau de bord" };
 
 const STAT_LABELS = {
   average: "Note moyenne",
-  total: "Avis reçus",
+  total: "Avis au total",
   recent: "Avis sur 30 jours",
   satisfied: "Clients satisfaits",
 } as const;
@@ -51,7 +54,7 @@ export default function DashboardPage({
     <>
       <PageHeader
         title="Tableau de bord"
-        description="Votre QR code, la satisfaction de vos clients et leurs avis."
+        description="La satisfaction de vos clients et leurs avis récents, en un coup d'œil."
       />
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardContent searchParams={searchParams} />
@@ -72,10 +75,12 @@ async function DashboardContent({
   // Les indicateurs par période dépendent de l'heure courante : rendu à la requête uniquement.
   await connection();
   const query = parseReviewQuery(await searchParams);
-  const [distribution, reviews, recentCount] = await Promise.all([
+  const now = new Date();
+  const [distribution, reviews, recentCount, allReviews] = await Promise.all([
     getRatingDistributionForCompany(company.id),
     listReviewsForDashboard(company, query),
-    countReviewsForCompanySince(company.id, periodStart(30, new Date())),
+    countReviewsForCompanySince(company.id, periodStart(30, now)),
+    getAllReviewsForCompany(company.id),
   ]);
 
   const lastPage = pageCount(reviews.total, REVIEWS_PAGE_SIZE);
@@ -84,6 +89,7 @@ async function DashboardContent({
   }
 
   const stats = statsFromDistribution(distribution);
+  const trend = buildDailyTrend(allReviews, 30, now);
   const isFiltered = Boolean(query.rating || query.periodDays);
   const satisfied = distribution[4] + distribution[5];
 
@@ -123,9 +129,9 @@ async function DashboardContent({
         />
       </StatGrid>
 
-      <div className="grid gap-6 lg:gap-8 xl:grid-cols-2">
-        <RatingHistogram stats={stats} />
-      </div>
+      <SatisfactionOverview stats={stats} />
+
+      <TrendChart points={trend} />
 
       <Panel
         id="avis"
@@ -175,10 +181,8 @@ function DashboardSkeleton() {
           <StatCardSkeleton key={label} label={label} />
         ))}
       </StatGrid>
-      <div className="grid gap-6 lg:gap-8 xl:grid-cols-2">
-        <div className="h-72 rounded-lg border border-black/15 bg-white" />
-        <div className="h-72 rounded-lg border border-black/15 bg-white" />
-      </div>
+      <div className="h-72 rounded-lg border border-black/15 bg-white" />
+      <div className="h-64 rounded-lg border border-black/15 bg-white" />
     </div>
   );
 }

@@ -105,7 +105,7 @@ export function ShellIdentity({
   return (
     <>
       <span className="hidden text-xs text-white/60 lg:block">{label}</span>
-      <span className="block truncate font-semibold" title={value}>
+      <span className="block font-semibold" title={value}>
         {value}
       </span>
     </>
