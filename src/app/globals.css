@@ -216,6 +216,9 @@ body {
 .surface-public {
   background: var(--scene-bg);
   color: var(--ink);
+  /* Le halo des maquettes déborde légèrement : on rogne pour éviter tout
+     défilement horizontal, sans créer de conteneur de scroll. */
+  overflow-x: clip;
 }
 
 .scene-canvas {
@@ -363,14 +366,14 @@ body {
 }
 
 /*
- * Chapitres avec écran produit : la copie à gauche, la maquette à droite.
- * Toujours en 2 colonnes sur toutes les tailles d'écran.
+ * Chapitres avec écran produit : copie à gauche, maquette à droite.
+ * Sous 1024 px, une seule colonne : le texte puis l'écran, empilés.
  */
 .chapter-inner--split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: clamp(1.5rem, 4vw, 3rem);
+  gap: clamp(2rem, 5vw, 4rem);
 }
 
 .screen-block {
