@@ -199,7 +199,14 @@ body {
   }
 }
 
-body {
+/*
+ * La surface publique (scrollytelling) porte le fond et l'encre adaptatifs.
+ * Les dashboards, formulaires et pages d'authentification restent en thème
+ * clair (charte §13.2) : fond blanc, texte noir. On ne peint donc JAMAIS le
+ * `body` avec l'encre de la scène, sinon le mode sombre du système rend le
+ * texte blanc sur les cartes blanches des dashboards.
+ */
+.surface-public {
   background: var(--scene-bg);
   color: var(--ink);
 }

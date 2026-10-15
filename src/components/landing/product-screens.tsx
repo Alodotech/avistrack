@@ -85,7 +85,7 @@ function ScreenShell({
 export function QrStandScreen() {
   return (
     <ScreenShell caption="Aperçu · Votre QR code, à imprimer">
-      <article className="w-full max-w-[22rem] rounded-2xl border border-black/15 bg-white p-7 text-center shadow-2xl shadow-black/25">
+      <article className="w-full max-w-[22rem] rounded-2xl border border-black/15 bg-white p-7 text-center text-black shadow-2xl shadow-black/25">
         <div className="flex items-center justify-center gap-2">
           <span className="logo-mark" aria-hidden />
           <span className="text-sm font-semibold tracking-[0.22em]">
@@ -129,7 +129,7 @@ export function PhoneFormScreen() {
   return (
     <ScreenShell caption="Aperçu · Le formulaire, sans compte">
       <div className="w-full max-w-[17.5rem] rounded-[2.75rem] border border-black/20 bg-black p-2.5 shadow-2xl shadow-black/30">
-        <div className="relative overflow-hidden rounded-[2.25rem] bg-white">
+        <div className="relative overflow-hidden rounded-[2.25rem] bg-white text-black">
           {/* Encoche + barre d'accueil */}
           <div
             className="absolute left-1/2 top-2.5 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-black"
@@ -221,7 +221,7 @@ export function PhoneFormScreen() {
 export function DashboardScreen() {
   return (
     <ScreenShell caption="Aperçu · Votre tableau de bord">
-      <div className="w-full rounded-xl border border-black/15 bg-white shadow-2xl shadow-black/25">
+      <div className="w-full rounded-xl border border-black/15 bg-white text-black shadow-2xl shadow-black/25">
         {/* Chrome de fenêtre */}
         <div className="flex items-center gap-2 border-b border-black/10 px-4 py-2.5">
           <span className="flex gap-1.5" aria-hidden>
