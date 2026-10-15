@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
-import { DashboardIcon, QrIcon, UserIcon } from "@/components/ui/icons";
+import { DashboardIcon, FormIcon, QrIcon, UserIcon } from "@/components/ui/icons";
 import { getCurrentCompany } from "@/server/auth/guards";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
     exact: true,
   },
   { href: "/dashboard/qr", label: "QR code", icon: <QrIcon /> },
+  { href: "/dashboard/formulaire", label: "Form studio", icon: <FormIcon /> },
   { href: "/dashboard/profil", label: "Profil", icon: <UserIcon /> },
 ];
 

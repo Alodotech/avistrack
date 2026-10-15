@@ -120,6 +120,20 @@ export const ShieldIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const FormIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="4" y="3" width="16" height="18" rx="2" />
+    <path d="M8 8h2v2H8zM13 8.5h3M8 13h2v2H8zM13 13.5h3M8 18h8" />
+  </Icon>
+);
+
+export const CalendarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 9h18M8 3v4M16 3v4" />
+  </Icon>
+);
+
 /** Étoile de notation : pleine ou vide, la valeur est toujours doublée en texte. */
 export function StarIcon({
   filled,
