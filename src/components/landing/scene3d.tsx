@@ -347,6 +347,17 @@ async function initScene(
       img.src = "/assets/landing/qr-code-avistrack.png";
     });
 
+    const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous";
+    logoImg.onload = () => {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(40, 34, 32, 28);
+      ctx.drawImage(logoImg, 42, 36, 26, 20);
+      boardTexture.needsUpdate = true;
+      queueRender();
+    };
+    logoImg.src = "/assets/logo.png";
+
     // Commerce + réassurance.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 24px Inter, Arial, sans-serif";

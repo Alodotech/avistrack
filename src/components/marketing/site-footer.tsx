@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const LEGAL = [
@@ -15,9 +16,12 @@ export function SiteFooter() {
       <div className="grid w-full gap-8 px-6 py-12 lg:grid-cols-3 lg:px-16">
         <div className="flex flex-col gap-3">
           <p className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span
-              aria-hidden
-              className="inline-block size-2.5 rounded-full bg-accent"
+            <Image
+              src="/assets/logo.png"
+              alt=""
+              width={28}
+              height={22}
+              className="h-6 w-auto shrink-0 object-contain"
             />
             AvisTrack
           </p>

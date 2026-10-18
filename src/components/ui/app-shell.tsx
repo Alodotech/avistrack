@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { NavLink } from "./nav-link";
@@ -45,9 +46,16 @@ export function AppShell({
         <div className="px-4 py-4 lg:px-6 lg:py-6">
           <Link
             href={homeHref}
-            className="flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-semibold tracking-tight"
+            className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
           >
-            AvisTrack
+            <Image
+              src="/assets/logo.png"
+              alt=""
+              width={28}
+              height={22}
+              className="h-6 w-auto shrink-0 object-contain"
+            />
+            <span>AvisTrack</span>
             {isAdmin ? (
               <span className="rounded bg-red px-1.5 py-0.5 text-xs font-semibold tracking-wide uppercase">
                 Administration

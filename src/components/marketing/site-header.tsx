@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { buttonClass } from "@/components/ui/button";
@@ -57,7 +58,14 @@ export function SiteHeader() {
             className="site-logo"
             aria-label="AvisTrack, accueil"
           >
-            <span aria-hidden className="logo-mark" />
+            <Image
+              src="/assets/logo.png"
+              alt=""
+              width={38}
+              height={30}
+              className="h-8 w-auto shrink-0 object-contain"
+              priority
+            />
             <span>AVISTRACK</span>
           </Link>
 
