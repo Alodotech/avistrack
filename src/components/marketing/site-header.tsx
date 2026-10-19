@@ -66,7 +66,7 @@ export function SiteHeader() {
               className="h-8 w-auto shrink-0 object-contain"
               priority
             />
-            <span>AVISTRACK</span>
+            <span>AvisTrack</span>
           </Link>
 
           <nav aria-label="Navigation principale" className="site-nav">

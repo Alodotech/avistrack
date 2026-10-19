@@ -95,8 +95,8 @@ export function QrStandScreen() {
             height={19}
             className="h-5 w-auto shrink-0 object-contain"
           />
-          <span className="text-sm font-semibold tracking-[0.22em]">
-            AVISTRACK
+          <span className="text-sm font-bold tracking-tight">
+            AvisTrack
           </span>
         </div>
 

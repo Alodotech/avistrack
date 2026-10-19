@@ -32,7 +32,7 @@ export default function LandingPage() {
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="ink-dot" aria-hidden />
-              AvisTrack
+              {/* AvisTrack */}
               <span>Avis clients par QR code</span>
             </p>
             <h1 className="heading display" id="hero-title">

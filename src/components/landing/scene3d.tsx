@@ -281,9 +281,9 @@ async function initScene(
     roundRectPath(ctx, 44, 38, 22, 22, 7);
     ctx.fill();
     ctx.fillStyle = "#0a0a0a";
-    ctx.font = "600 21px Inter, Arial, sans-serif";
+    ctx.font = "700 22px Inter, Arial, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("AVISTRACK", 78, 55);
+    ctx.fillText("AvisTrack", 78, 55);
 
     // Accroche.
     ctx.textAlign = "center";
