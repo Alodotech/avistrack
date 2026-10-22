@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { ADMIN_HOME_PATH } from "@/server/auth/guards";
+import { getAccountState } from "@/server/auth/account-state";
 import { AdminLoginForm } from "./admin-login-form";
 
 export const metadata: Metadata = {
@@ -6,7 +9,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function AdminLoginPage() {
+export default async function AdminLoginPage() {
+  const state = await getAccountState();
+  if (state.kind === "admin") redirect(ADMIN_HOME_PATH);
+
   return (
     <div className="flex flex-col gap-4">
       <AdminLoginForm />

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { createAccount, type OnboardingState } from "./actions";
 
@@ -76,6 +77,24 @@ export function OnboardingForm() {
           ) : null}
         </div>
 
+        <div className="flex flex-col gap-1">
+          <label htmlFor="password" className="text-sm font-semibold">
+            Mot de passe
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="8 caractères minimum"
+            aria-invalid={Boolean(state.errors?.password)}
+            className={inputClass}
+          />
+          {state.errors?.password ? (
+            <p className="text-sm text-red">{state.errors.password}</p>
+          ) : null}
+        </div>
+
         <Button type="submit" disabled={pending}>
           {pending ? "Création…" : "Créer mon compte"}
         </Button>
@@ -96,6 +115,14 @@ export function OnboardingForm() {
           Se connecter
         </Link>
       </p>
+
+      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-500">
+        <span className="h-px flex-1 bg-black/15" />
+        ou
+        <span className="h-px flex-1 bg-black/15" />
+      </div>
+
+      <GoogleSignInButton label="Continuer avec Google" />
     </div>
   );
 }

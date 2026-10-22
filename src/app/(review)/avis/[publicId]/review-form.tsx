@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { CalendarIcon, StarIcon } from "@/components/ui/icons";
 import type { ReviewFormConfig } from "@/server/domain";
 import { submitReview, type PublicReviewState } from "./actions";
@@ -10,17 +10,29 @@ const inputClass =
 
 const initialState: PublicReviewState = { status: "idle" };
 
+const RATING_VALUES = [1, 2, 3, 4, 5] as const;
+
 export function ReviewForm({
   companyName,
   publicId,
   config,
+  maxDate,
 }: {
   companyName: string;
   publicId: string;
   config: ReviewFormConfig;
+  maxDate: string;
 }) {
   const [state, action, pending] = useActionState(submitReview, initialState);
   const [rating, setRating] = useState(0);
+  /*
+   * `focusedRating` porte le tabindex glissant (« roving tabindex ») : seul
+   * l' étoile courante est atteignable au Tab, les flèches clavier changent
+   * d'étoile. Sans cela, un lecteur d'écran ou un clavier doit parcourir les
+   * cinq boutons.
+   */
+  const [focusedRating, setFocusedRating] = useState(1);
+  const ratingRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   if (state.status === "submitted") {
     return (
@@ -75,17 +87,50 @@ export function ReviewForm({
                 {question.label}
               </legend>
               <input type="hidden" name={question.id} value={rating || ""} />
-              <div className="flex gap-2" role="radiogroup" aria-labelledby={labelId}>
-                {[1, 2, 3, 4, 5].map((value) => {
+              <div
+                className="flex gap-2"
+                role="radiogroup"
+                aria-labelledby={labelId}
+              >
+                {RATING_VALUES.map((value) => {
                   const active = value <= rating;
                   return (
                     <button
                       key={value}
+                      ref={(node) => {
+                        ratingRefs.current[value - 1] = node;
+                      }}
                       type="button"
                       role="radio"
                       aria-checked={rating === value}
                       aria-label={`${value} étoile${value > 1 ? "s" : ""}`}
-                      onClick={() => setRating(value)}
+                      tabIndex={focusedRating === value ? 0 : -1}
+                      onClick={() => {
+                        setRating(value);
+                        setFocusedRating(value);
+                      }}
+                      onFocus={() => setFocusedRating(value)}
+                      onKeyDown={(event) => {
+                        let next = focusedRating;
+                        if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+                          next = Math.min(RATING_VALUES.length, focusedRating + 1);
+                        } else if (
+                          event.key === "ArrowLeft" ||
+                          event.key === "ArrowDown"
+                        ) {
+                          next = Math.max(1, focusedRating - 1);
+                        } else if (event.key === "Home") {
+                          next = 1;
+                        } else if (event.key === "End") {
+                          next = RATING_VALUES.length;
+                        } else {
+                          return;
+                        }
+                        event.preventDefault();
+                        setFocusedRating(next);
+                        setRating(next);
+                        ratingRefs.current[next - 1]?.focus();
+                      }}
                       className={`grid size-11 cursor-pointer place-items-center rounded-full border transition-colors ${
                         active
                           ? "border-accent text-accent"
@@ -118,7 +163,7 @@ export function ReviewForm({
                   id={labelId}
                   type="date"
                   name={question.id}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={maxDate}
                   aria-invalid={Boolean(error)}
                   className={inputClass}
                 />

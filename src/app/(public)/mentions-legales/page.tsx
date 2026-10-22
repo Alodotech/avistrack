@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   description: "Informations légales du service AvisTrack.",
 };
 
+/**
+ * Mentions légales.
+ *
+ * Les champs réglementaires (raison sociale, immatriculation, hébergeur,
+ * contact) ne peuvent pas être inventés : ils sont explicitement signalés
+ * comme restant à renseigner avant la mise en production.
+ */
 export default function LegalNoticePage() {
   return (
     <article className="mx-auto w-full max-w-3xl px-6 py-16 lg:py-24">
@@ -33,7 +40,7 @@ export default function LegalNoticePage() {
               Pour toute question :{" "}
               <a
                 href="mailto:contact@avistrack.com"
-                className="font-semibold text-black underline-offset-4 hover:underline"
+                className="py-3.5 font-semibold text-black underline-offset-4 hover:underline"
               >
                 contact@avistrack.com
               </a>
@@ -44,9 +51,10 @@ export default function LegalNoticePage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-semibold">Hébergement</h2>
             <p className="text-gray-600">
-              Nom, adresse et téléphone de l&apos;hébergeur à renseigner
-              (prestataire d&apos;hébergement des serveurs et de la base de
-              données).
+              Les données du service (base de données, authentification, fichiers)
+              sont hébergées sur l&apos;infrastructure Supabase. Les coordonnées
+              complètes de l&apos;hébergeur (raison sociale, adresse, téléphone)
+              ainsi que l&apos;hébergeur du site sont à renseigner.
             </p>
           </section>
 
@@ -65,6 +73,16 @@ export default function LegalNoticePage() {
               AvisTrack met à disposition un outil de collecte et d&apos;analyse
               d&apos;avis. L&apos;éditeur ne saurait être tenu responsable de
               l&apos;usage fait des données par les commerces utilisateurs.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-base font-semibold">Médiation</h2>
+            <p className="text-gray-600">
+              Conformément à l&apos;article L.612-1 du code de la consommation,
+              tout consommateur a le droit de recourir gratuitement à un
+              médiateur de la consommation en vue de la résolution amiable d&apos;un
+              litige. Les coordonnées du médiateur désigné sont à renseigner.
             </p>
           </section>
         </div>

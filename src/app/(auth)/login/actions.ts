@@ -1,25 +1,14 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DEV_COMPANY_COOKIE } from "@/server/auth/session";
-import { findCompanyByEmail } from "@/server/repositories/company-repository";
+import { createClient } from "@/utils/supabase/server";
 
 export type LoginState = { status: "idle" | "error"; message?: string };
-
-const cookieOptions = { httpOnly: true, sameSite: "lax", path: "/" } as const;
 
 export async function signInCompany(
   _previous: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  if (process.env.NODE_ENV === "production") {
-    return {
-      status: "error",
-      message: "La connexion sera disponible prochainement.",
-    };
-  }
-
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) {
@@ -29,14 +18,14 @@ export async function signInCompany(
     };
   }
 
-  const company = await findCompanyByEmail(email);
-  if (!company) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
     return {
       status: "error",
-      message: "Aucun compte ne correspond à cette adresse e-mail.",
+      message: "E-mail ou mot de passe incorrect.",
     };
   }
 
-  (await cookies()).set(DEV_COMPANY_COOKIE, company.id, cookieOptions);
   redirect("/dashboard");
 }

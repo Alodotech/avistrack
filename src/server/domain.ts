@@ -53,7 +53,7 @@ export type ReviewFormQuestion = {
 };
 
 /**
- * Personnalisation du formulaire d'avis public (Form studio). L'entreprise
+ * Personnalisation du formulaire d'avis public (Studio du formulaire). L'entreprise
  * compose jusqu'à `MAX_FORM_QUESTIONS` questions ; une seule note (étoiles)
  * est imposée pour que les statistiques du tableau de bord restent calculables.
  */

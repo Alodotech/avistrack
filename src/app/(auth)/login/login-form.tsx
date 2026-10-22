@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { signInCompany, type LoginState } from "./actions";
 
 const inputClass =
@@ -12,6 +14,7 @@ const initialState: LoginState = { status: "idle" };
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(signInCompany, initialState);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-black/15 bg-white p-6 sm:p-8">
@@ -41,13 +44,22 @@ export function LoginForm() {
           <label htmlFor="password" className="text-sm font-semibold">
             Mot de passe
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            className={inputClass}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-sm text-gray-500 hover:text-black focus:outline-none focus:text-black"
+            >
+              {showPassword ? "Masquer" : "Afficher"}
+            </button>
+          </div>
         </div>
 
         <Button type="submit" disabled={pending}>
@@ -60,6 +72,14 @@ export function LoginForm() {
           </p>
         ) : null}
       </form>
+
+      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-500">
+        <span className="h-px flex-1 bg-black/15" />
+        ou
+        <span className="h-px flex-1 bg-black/15" />
+      </div>
+
+      <GoogleSignInButton label="Continuer avec Google" />
 
       <p className="border-t border-black/15 pt-5 text-sm text-gray-600">
         Pas encore de compte ?{" "}

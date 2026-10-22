@@ -104,7 +104,7 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
               return (
                 <li
                   key={rating}
-                  className="grid grid-cols-[2.5rem_1fr_6.5rem] items-center gap-4 text-sm"
+                  className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-sm sm:gap-4"
                 >
                   <span className="flex items-center gap-1 font-semibold tabular-nums">
                     {rating}
