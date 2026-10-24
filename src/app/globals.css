@@ -1,0 +1,665 @@
+@import "tailwindcss";
+
+/*
+ * Charte AvisTrack (cahier des charges §13.2) : la palette est volontairement
+ * restreinte. `--color-*: initial` retire les couleurs par défaut de Tailwind,
+ * seules les valeurs ci-dessous sont utilisables dans les classes utilitaires.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #0a0a0a;
+  --color-red: #d71920;
+  --color-accent: #d71920;
+  --color-accent-deep: #b31217;
+  --color-gray-100: #f4f4f4;
+  --color-gray-500: #8a8a8a;
+  --color-gray-600: #555555;
+
+  --font-sans: var(--font-inter), Inter, Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-inter), ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-white);
+  color: var(--color-black);
+  /*
+   * L'application est en thème clair quel que soit le thème du système
+   * (charte §13.2). Sans cette propriété, un OS en mode sombre fait rendre
+   * champs, listes et barres de défilement par défaut en sombre — d'où des
+   * textes illisibles sur nos fonds blancs.
+   */
+  color-scheme: light;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Animations de la surface publique. Elles sont purement décoratives :
+ * `prefers-reduced-motion` (règle ci-dessous) les neutralise intégralement.
+ */
+@keyframes avistrack-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes avistrack-grow {
+  from {
+    transform: scaleY(0.05);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes avistrack-ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-rise {
+  animation: avistrack-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-grow {
+  transform-origin: bottom;
+  animation: avistrack-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-ping-slow {
+  animation: avistrack-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* --- Écran de chargement --- */
+@keyframes avistrack-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes avistrack-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.loading-ring {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 3px solid var(--color-gray-100);
+  border-top-color: var(--color-accent);
+  animation: avistrack-spin 0.8s linear infinite;
+}
+
+.loading-bar {
+  position: relative;
+  overflow: hidden;
+  width: 9rem;
+  height: 3px;
+  border-radius: 9999px;
+  background: var(--color-gray-100);
+}
+
+.loading-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  animation: avistrack-sweep 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ring {
+    animation: none;
+    border-top-color: var(--color-accent);
+  }
+
+  .loading-bar::after {
+    animation: none;
+    width: 100%;
+  }
+}
+
+
+/* Trame technique discrète : grille légère sur les fonds blancs. */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(10, 10, 10, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(10, 10, 10, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/*
+ * Révélation 3D au défilement. Le composant `ScrollReveal` bascule
+ * `data-state` à l'entrée dans le champ de vision ; la transformation est
+ * pilotée ici par une transition, ce qui fonctionne dans tous les
+ * navigateurs (contrairement aux scroll-driven animations seules).
+ */
+.scene {
+  perspective: 1600px;
+  perspective-origin: 50% 25%;
+}
+
+/*
+ * Révélation : simple opacité + légère translation. Pas de flou, pas de 3D :
+ * le contenu doit rester net et discret.
+ */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal[data-state="in"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Sans script, rien ne doit rester invisible. */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Scrollytelling 3D. La caméra WebGL (composant Scene3D) est fixe derrière le
+ * contenu : les chapitres restent en DOM, pleine hauteur, le défilement pilote
+ * la caméra. Couleur du fond, encre et voile s'adaptent au thème système.
+ */
+:root {
+  --scene-bg: #ffffff;
+  --ink: #0a0a0a;
+  --ink-muted: #555555;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scene-bg: #0a0a0a;
+    --ink: #ffffff;
+    --ink-muted: #9a9a9a;
+  }
+}
+
+/*
+ * La surface publique (scrollytelling) porte le fond et l'encre adaptatifs.
+ * Les dashboards, formulaires et pages d'authentification restent en thème
+ * clair (charte §13.2) : fond blanc, texte noir. On ne peint donc JAMAIS le
+ * `body` avec l'encre de la scène, sinon le mode sombre du système rend le
+ * texte blanc sur les cartes blanches des dashboards.
+ */
+.surface-public {
+  background: var(--scene-bg);
+  color: var(--ink);
+  /* Le halo des maquettes peut déborder des colonnes : on rogne sur l'axe
+     horizontal pour éviter tout défilement latéral. */
+  overflow-x: hidden;
+}
+
+.scene-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+
+.webgl-ready .scene-canvas {
+  opacity: 1;
+}
+
+.no-webgl .scene-canvas {
+  display: none;
+}
+
+/* Studio QR : le repli statique n'apparaît que sans WebGL, l'indice qu'avec. */
+.qr-studio-fallback {
+  display: none;
+}
+
+.no-webgl .qr-studio-fallback {
+  display: block;
+}
+
+.qr-studio-hint {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.webgl-ready .qr-studio-hint {
+  opacity: 1;
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 70;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.3s ease;
+}
+
+.site-header.on {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  .site-header.on {
+    background: rgba(10, 10, 10, 0.68);
+  }
+}
+
+.site-header.hide {
+  transform: translateY(-100%);
+}
+
+.site-header-inner {
+  width: 100%;
+  height: 4rem;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-logo {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.site-nav a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--color-accent);
+}
+
+@media (max-width: 760px) {
+  .site-nav > a:not(.inline-flex) {
+    display: none;
+  }
+}
+
+/* --- Chapitres --- */
+.chapter {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+}
+
+.chapter-inner {
+  position: relative;
+  width: 100%;
+  padding: 6.5rem clamp(1.5rem, 6vw, 6rem) 5.5rem;
+}
+
+/*
+ * Chapitres avec écran produit : copie à gauche, maquette à droite.
+ * Sous 1024 px, une seule colonne : le texte puis l'écran, empilés.
+ */
+.chapter-inner--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4rem);
+}
+
+.screen-block {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+}
+
+/* Halo de fond : détache la maquette de la scène 3D en mouvement. */
+.screen-block::before {
+  content: "";
+  position: absolute;
+  inset: -12% -6%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 68% 68% at 50% 50%,
+    var(--scene-bg) 46%,
+    transparent 72%
+  );
+}
+
+/*
+ * Dès que la 3D est disponible, c'est elle qui porte les produits : on masque
+ * les maquettes HTML à toutes les tailles pour éviter tout doublon. Sans WebGL
+ * (`.no-webgl`), les maquettes HTML restent le repli lisible et net.
+ */
+.webgl-ready .screen-block {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .chapter-inner--split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .chapter-inner--split .copy-block {
+    max-width: 34rem;
+    justify-self: start;
+  }
+
+  .chapter-inner--split > .screen-block {
+    justify-self: end;
+  }
+
+  /* Texte à gauche, écran à droite. */
+  .chapter-inner--wide {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .chapter-inner--wide .copy-block {
+    max-width: 34rem;
+    justify-self: start;
+  }
+
+  .chapter-inner--wide > .screen-block {
+    justify-self: end;
+  }
+}
+
+/*
+ * Sous 1024 px, le texte passe en haut de chaque chapitre : la caméra 3D
+ * abaisse la scène dans la moitié basse, les deux ne se chevauchent plus.
+ */
+@media (max-width: 1023px) {
+  .chapter:not(.finale) {
+    align-items: flex-start;
+  }
+
+  .chapter:not(.finale) .chapter-inner {
+    padding-top: 7rem;
+    padding-bottom: 2rem;
+  }
+
+  .chapter-inner--split .copy-block {
+    max-width: 100%;
+  }
+}
+
+.copy-block {
+  position: relative;
+  padding: 1.5rem 0;
+  background: transparent;
+}
+
+@media (max-width: 680px) {
+  .copy-block {
+    background: transparent;
+    border-radius: 0;
+    padding: 1rem;
+  }
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.ink-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.chapter-number {
+  color: var(--color-accent);
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(1.9rem, 4.5vw, 3.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.045em;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.heading.display {
+  font-size: clamp(2.4rem, 6vw, 5.25rem);
+}
+
+.heading-muted {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.lead {
+  margin: 1.5rem 0 0;
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--ink-muted);
+}
+
+.cta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cta-row.centered {
+  justify-content: center;
+}
+
+/* --- Finale : le bloc fond dans le noir du footer. --- */
+.chapter.finale {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(10, 10, 10, 0.85) 40%,
+    var(--color-black) 62%
+  );
+  color: #ffffff;
+}
+
+.chapter.finale .chapter-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.finale-block {
+  width: 100%;
+  padding: 1.5rem clamp(1rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.finale-block .eyebrow {
+  justify-content: center;
+}
+
+.chapter.finale .eyebrow,
+.chapter.finale .finale-foot {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.chapter.finale .heading,
+.chapter.finale .finale-lead {
+  color: #ffffff;
+}
+
+.chapter.finale .heading-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.heading.finale {
+  font-size: clamp(2.4rem, 7vw, 6rem);
+  line-height: 1.02;
+}
+
+.finale-lead {
+  font-size: 1.1rem;
+}
+
+.finale-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  color: var(--color-accent);
+}
+
+.hero-note {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.feature-list {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.feature-list li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  transform: translateY(-0.05rem);
+}
+
+.proof {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
