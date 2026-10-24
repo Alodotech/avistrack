@@ -35,10 +35,18 @@ export function isQuestionType(value: unknown): value is QuestionType {
 
 /**
  * Contenu par défaut du formulaire d'avis : un socle de trois questions qui
- * correspond au parcours historique (note, commentaire, date de visite).
+ * correspond au parcours historique (date de visite, note, commentaire).
+ * L'ordre a été repensé pour suivre le flux naturel : on commence par la date,
+ * puis la note, puis le commentaire libre.
  */
 export const DEFAULT_REVIEW_FORM_CONFIG: ReviewFormConfig = {
   questions: [
+    {
+      id: "visit",
+      type: "date",
+      label: "Date de votre visite",
+      required: false,
+    },
     {
       id: "rating",
       type: "rating",
@@ -51,32 +59,28 @@ export const DEFAULT_REVIEW_FORM_CONFIG: ReviewFormConfig = {
       label: "Votre commentaire",
       required: false,
     },
-    {
-      id: "visit",
-      type: "date",
-      label: "Date de votre visite",
-      required: false,
-    },
   ],
   thanksTitle: "Merci pour votre avis !",
   thanksMessage:
     "Votre retour aide le commerce à mieux vous accueillir la prochaine fois.",
 };
 
+/** Nettoie les questions en conservant leur ordre d'origine. */
 function sanitizeQuestions(
   questions: readonly ReviewFormQuestion[] | undefined,
 ): ReviewFormQuestion[] {
-  const clean = (questions ?? []).filter(
-    (question) =>
-      question &&
-      typeof question.id === "string" &&
-      question.id.length > 0 &&
-      isQuestionType(question.type) &&
-      typeof question.label === "string" &&
-      question.label.length > 0,
-  );
-  const limited = clean.slice(0, MAX_FORM_QUESTIONS);
-  return limited.length > 0 ? limited : DEFAULT_REVIEW_FORM_CONFIG.questions;
+  const clean = (questions ?? [])
+    .filter(
+      (question) =>
+        question &&
+        typeof question.id === "string" &&
+        question.id.length > 0 &&
+        isQuestionType(question.type) &&
+        typeof question.label === "string" &&
+        question.label.length > 0,
+    )
+    .slice(0, MAX_FORM_QUESTIONS);
+  return clean.length > 0 ? clean : DEFAULT_REVIEW_FORM_CONFIG.questions;
 }
 
 /** Complète une configuration partielle avec les valeurs par défaut. */

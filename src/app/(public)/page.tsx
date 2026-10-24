@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
+import { OpenAuthButton } from "@/components/auth/open-auth-button";
 import {
   DashboardScreen,
   PhoneFormScreen,
@@ -32,8 +33,7 @@ export default function LandingPage() {
           <ScrollReveal className="copy-block">
             <p className="eyebrow">
               <span className="ink-dot" aria-hidden />
-              {/* AvisTrack */}
-              <span>Avis clients par QR code</span>
+              <span>AvisTrack · Avis clients par QR code</span>
             </p>
             <h1 className="heading display" id="hero-title">
               Des avis clients.
@@ -45,17 +45,12 @@ export default function LandingPage() {
               sur votre tableau de bord.
             </p>
             <div className="cta-row">
-              <Link href="/onboarding" className={buttonClass("primary")}>
+              <OpenAuthButton mode="signup">
                 Créer mon QR code
-              </Link>
+              </OpenAuthButton>
               <a href="#s1" className="text-link">
                 Comment ça marche ↓
               </a>
-              {process.env.NODE_ENV !== "production" && (
-                <Link href="/dev/session" className={buttonClass("ghost")}>
-                  Test
-                </Link>
-              )}
             </div>
             <p className="hero-note">Prêt en 2 minutes, dès maintenant.</p>
           </ScrollReveal>
@@ -197,9 +192,9 @@ export default function LandingPage() {
               vos clients attendent de vous.
             </p>
             <div className="cta-row centered">
-              <Link href="/onboarding" className={buttonClass("primary")}>
+              <OpenAuthButton mode="signup">
                 Créer mon QR code ↗
-              </Link>
+              </OpenAuthButton>
               <a
                 className={buttonClass("secondary")}
                 href="mailto:contact@avistrack.com?subject=AvisTrack%20-%20Demande%20de%20renseignements"

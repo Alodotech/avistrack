@@ -14,6 +14,15 @@ export const metadata: Metadata = {
   },
   description:
     "Collecte et analyse des avis clients par QR code, avec isolation stricte des données par entreprise.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

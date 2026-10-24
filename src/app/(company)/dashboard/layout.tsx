@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
+import { InactivityHandler } from "@/components/admin/InactivityHandler";
 import { DashboardIcon, FormIcon, QrIcon, UserIcon } from "@/components/ui/icons";
 import { getCurrentCompany } from "@/server/auth/guards";
 
@@ -11,14 +12,17 @@ const NAV = [
     exact: true,
   },
   { href: "/dashboard/qr", label: "QR code", icon: <QrIcon /> },
-  { href: "/dashboard/formulaire", label: "Form studio", icon: <FormIcon /> },
+  { href: "/dashboard/formulaire", label: "Studio du formulaire", icon: <FormIcon /> },
   { href: "/dashboard/profil", label: "Profil", icon: <UserIcon /> },
 ];
 
 async function CompanyIdentity() {
   const company = await getCurrentCompany();
   return company ? (
-    <ShellIdentity label="Connecté en tant que" value={company.name} />
+    <ShellIdentity
+      label="Connecté en tant que"
+      value={company.email || company.name}
+    />
   ) : null;
 }
 
@@ -36,7 +40,7 @@ export default function CompanyLayout({
         </Suspense>
       }
     >
-      {children}
+      <InactivityHandler redirectTo="/?auth=login">{children}</InactivityHandler>
     </AppShell>
   );
 }

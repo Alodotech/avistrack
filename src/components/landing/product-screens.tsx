@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   MessageIcon,
@@ -87,15 +88,14 @@ export function QrStandScreen() {
     <ScreenShell caption="Aperçu · Votre QR code, à imprimer">
       <article className="w-full max-w-[22rem] rounded-2xl border border-black/15 bg-white p-7 text-center text-black shadow-2xl shadow-black/25">
         <div className="flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/logo.png"
-            alt=""
+          <Image
+            src="/assets/logoavistrack.png"
+            alt="Logo AvisTrack"
             width={24}
             height={19}
             className="h-5 w-auto shrink-0 object-contain"
           />
-          <span className="text-sm font-bold tracking-tight">
+          <span className="text-sm font-bold tracking-tight text-black">
             AvisTrack
           </span>
         </div>
@@ -108,12 +108,12 @@ export function QrStandScreen() {
         </p>
 
         <div className="mt-5 rounded-xl border border-black/10 bg-gray-100 p-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/landing/qr-code-avistrack.png"
             alt="QR code menant au formulaire d'avis"
-            width={208}
-            height={208}
+            width={1024}
+            height={1024}
+            sizes="(max-width: 640px) 12rem, 12rem"
             decoding="async"
             className="mx-auto aspect-square w-full max-w-[12rem] rounded-md bg-white object-contain"
           />

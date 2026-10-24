@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import qrcode from "qrcode-generator";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 
 const ACCENT = 0xd71920;
 const SHELL = 0x111113;
@@ -140,21 +140,40 @@ export function Scene3D() {
     const root = document.documentElement;
     if (!canvas || !document.getElementById("hero")) return;
 
+    // Sous 1024 px, la caméra ne peut pas garder les maquettes hors du texte :
+    // on rend les maquettes HTML à la place de la scène.
+    const sceneAllowed = window.matchMedia("(min-width: 1024px)");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
     let cleanup: Cleanup | undefined;
+    let scheduled = 0;
 
-    const scheduled = window.setTimeout(() => {
-      void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
-        cleanup = done;
-      });
-    }, 40);
-
-    return () => {
+    const stop = () => {
       window.clearTimeout(scheduled);
       cleanup?.();
+      cleanup = undefined;
     };
+
+    const sync = () => {
+      if (!sceneAllowed.matches) {
+        stop();
+        return;
+      }
+      if (cleanup || scheduled) return;
+      scheduled = window.setTimeout(() => {
+        scheduled = 0;
+        void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
+          if (sceneAllowed.matches) cleanup = done;
+          else done();
+        });
+      }, 40);
+    };
+
+    sync();
+    sceneAllowed.addEventListener("change", sync);
+
+    return stop;
   }, []);
 
   return <canvas ref={canvasRef} aria-hidden className="scene-canvas" />;
@@ -176,6 +195,7 @@ async function initScene(
   const colors = getColors();
 
   let renderer: THREE.WebGLRenderer;
+  let queueRender = () => {};
   try {
     renderer = new THREE.WebGLRenderer({
       canvas,
@@ -203,7 +223,7 @@ async function initScene(
   renderer.toneMappingExposure = 1.05;
   if (isSceneWide) {
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
   }
 
   // Les textures 3D (QR, formulaire, dashboard) utilisent la vraie Inter :
@@ -220,7 +240,7 @@ async function initScene(
   const hdriUrl = "/assets/landing/studio_small_09_1k.hdr";
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  new RGBELoader()
+  new HDRLoader()
     .loadAsync(hdriUrl)
     .then((equirectangular) => {
       scene.environment = pmrem.fromEquirectangular(equirectangular).texture;
@@ -276,14 +296,25 @@ async function initScene(
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, 512, 670);
 
-    // Marque.
-    ctx.fillStyle = "#d71920";
-    roundRectPath(ctx, 44, 38, 22, 22, 7);
-    ctx.fill();
+    // Marque : logo officiel AvisTrack transparent + nom agrandi.
+    await new Promise<void>((resolve) => {
+      const logoImg = new window.Image();
+      logoImg.onload = () => {
+        ctx.drawImage(logoImg, 44, 28, 34, 34);
+        resolve();
+      };
+      logoImg.onerror = () => {
+        ctx.fillStyle = "#d71920";
+        roundRectPath(ctx, 44, 34, 24, 24, 7);
+        ctx.fill();
+        resolve();
+      };
+      logoImg.src = "/assets/logoavistrack.png";
+    });
     ctx.fillStyle = "#0a0a0a";
-    ctx.font = "700 22px Inter, Arial, sans-serif";
+    ctx.font = "700 26px Inter, Arial, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("AvisTrack", 78, 55);
+    ctx.fillText("AvisTrack", 88, 54);
 
     // Accroche.
     ctx.textAlign = "center";
@@ -346,17 +377,6 @@ async function initScene(
       };
       img.src = "/assets/landing/qr-code-avistrack.png";
     });
-
-    const logoImg = new Image();
-    logoImg.crossOrigin = "anonymous";
-    logoImg.onload = () => {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(40, 34, 32, 28);
-      ctx.drawImage(logoImg, 42, 36, 26, 20);
-      boardTexture.needsUpdate = true;
-      queueRender();
-    };
-    logoImg.src = "/assets/logo.png";
 
     // Commerce + réassurance.
     ctx.fillStyle = "#0a0a0a";
@@ -793,7 +813,7 @@ async function initScene(
   };
 
   let renderScheduled = false;
-  const queueRender = () => {
+  queueRender = () => {
     if (renderScheduled) return;
     renderScheduled = true;
     window.requestAnimationFrame((frameTime) => {

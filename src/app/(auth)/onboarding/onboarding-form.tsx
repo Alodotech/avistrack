@@ -1,99 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import { createAccount, type OnboardingState } from "./actions";
-
-const inputClass =
-  "min-h-11 w-full rounded-md border border-black/30 bg-white px-3 text-sm aria-invalid:border-red";
-
-const initialState: OnboardingState = { status: "idle" };
+import Image from "next/image";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export function OnboardingForm() {
-  const [state, action, pending] = useActionState(createAccount, initialState);
-
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-black/15 bg-white p-6 sm:p-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Créer mon compte</h1>
-        <p className="text-sm text-gray-600">
-          Quelques informations, puis votre QR code est prêt à imprimer.
+    <div className="flex flex-col gap-7 rounded-3xl border border-black/10 bg-white p-7 sm:p-10 text-black shadow-xl max-w-md mx-auto w-full">
+      <header className="flex flex-col items-center text-center">
+        <div className="mb-4 flex items-center justify-center gap-2.5">
+          <Image
+            src="/assets/logoavistrack.png"
+            alt="Logo AvisTrack"
+            width={36}
+            height={30}
+            className="h-8 w-auto object-contain"
+          />
+          <span className="text-xl font-bold tracking-tight text-black">
+            AvisTrack
+          </span>
+        </div>
+        <h1 className="text-xl font-bold tracking-tight text-black">
+          Créer mon compte
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Votre QR code et votre tableau de bord prêts en 1 clic avec votre compte Google.
         </p>
       </header>
 
-      <form action={action} noValidate className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-semibold">
-            Nom du commerce
-          </label>
-          <input
-            id="name"
-            name="name"
-            autoComplete="organization"
-            placeholder="Pharmacie du Centre"
-            aria-invalid={Boolean(state.errors?.name)}
-            className={inputClass}
-          />
-          {state.errors?.name ? (
-            <p className="text-sm text-red">{state.errors.name}</p>
-          ) : null}
-        </div>
+      <div className="flex flex-col gap-4">
+        <GoogleSignInButton label="Continuer avec Google" />
+      </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-semibold">
-            E-mail professionnel
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="contact@mon-commerce.fr"
-            aria-invalid={Boolean(state.errors?.email)}
-            className={inputClass}
-          />
-          {state.errors?.email ? (
-            <p className="text-sm text-red">{state.errors.email}</p>
-          ) : null}
-        </div>
+      <div className="border-t border-black/10 pt-5 text-center text-sm text-gray-600">
+        <p>
+          Vous avez déjà un compte ?{" "}
+          <Link
+            href="/login"
+            className="font-bold text-accent hover:underline"
+          >
+            Se connecter
+          </Link>
+        </p>
+      </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="phone" className="text-sm font-semibold">
-            Téléphone
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="+22901970000"
-            aria-invalid={Boolean(state.errors?.phone)}
-            className={inputClass}
-          />
-          {state.errors?.phone ? (
-            <p className="text-sm text-red">{state.errors.phone}</p>
-          ) : null}
-        </div>
-
-        <Button type="submit" disabled={pending}>
-          {pending ? "Création…" : "Créer mon compte"}
-        </Button>
-
-        {state.status === "error" && state.message ? (
-          <p role="alert" className="text-sm text-red">
-            {state.message}
-          </p>
-        ) : null}
-      </form>
-
-      <p className="border-t border-black/15 pt-5 text-sm text-gray-600">
-        Vous avez déjà un compte ?{" "}
+      <p className="border-t border-black/10 pt-4 text-center text-xs text-gray-500">
         <Link
-          href="/login"
+          href="/"
           className="font-semibold text-black underline-offset-4 hover:underline"
         >
-          Se connecter
+          ← Retour à l&apos;accueil
         </Link>
       </p>
     </div>

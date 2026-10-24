@@ -58,7 +58,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
       ) : (
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          className="h-56 w-full sm:h-64"
+          className="h-auto w-full sm:h-64"
           role="img"
           aria-label={`Avis reçus par jour sur 30 jours : ${formatCount(total)} avis au total, maximum ${formatCount(max)} sur une journée.`}
         >
@@ -84,8 +84,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           <text
             x={PAD_X}
             y={PAD_TOP - 12}
-            className="fill-gray-600"
-            fontSize={13}
+            className="fill-gray-600 text-[13px] max-sm:text-[22px]"
           >
             max. {formatCount(max)}/jour
           </text>
@@ -128,8 +127,11 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                 x={x(index)}
                 y={HEIGHT - 10}
                 textAnchor={index === 0 ? "start" : index === lastIndex ? "end" : "middle"}
-                className="fill-gray-600"
-                fontSize={13}
+                className={`fill-gray-600 text-[13px] max-sm:text-[20px] ${
+                  index !== 0 && index !== lastIndex && index % 10 !== 0
+                    ? "max-sm:hidden"
+                    : ""
+                }`}
               >
                 {dayLabel(point.date)}
               </text>

@@ -21,19 +21,40 @@ const ratingFormatter = new Intl.NumberFormat("fr-FR", {
 
 const countFormatter = new Intl.NumberFormat("fr-FR");
 
-/** Accepte une `Date` ou une date ISO `AAAA-MM-JJ`. */
+/** Placeholder affiché quand une valeur est absente ou illisible. */
+const EMPTY_VALUE = "—";
+
+/**
+ * Accepte une `Date`, une date ISO `AAAA-MM-JJ` ou un horodatage ISO complet
+ * (`AAAA-MM-JJTHH:MM:SS[.sss]Z`). Une valeur illisible ne lève pas d'exception :
+ * l'export ne doit pas échouer sur une date manquante.
+ */
 export function formatDate(value: Date | string): string {
-  const date = typeof value === "string" ? new Date(`${value}T00:00:00Z`) : value;
-  return dateFormatter.format(date);
+  const date = toDate(value);
+  return date === null ? EMPTY_VALUE : dateFormatter.format(date);
+}
+
+/** Convertit une date ou une chaîne ISO en `Date`, ou `null` si illisible. */
+export function toDate(value: Date | string): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (!value) return null;
+  // `AAAA-MM-JJ` : date sans heure, ancrée sur UTC pour rester stable.
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T00:00:00Z`)
+    : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export function formatDateTime(value: Date): string {
-  return `${dateTimeFormatter.format(value)} UTC`;
+  const date = toDate(value);
+  return date === null ? EMPTY_VALUE : `${dateTimeFormatter.format(date)} UTC`;
 }
 
 /** Note moyenne sur 5 avec une décimale ; tiret tant qu'il n'y a aucun avis. */
 export function formatAverage(average: number | null): string {
-  return average === null ? "—" : ratingFormatter.format(average);
+  return average === null ? EMPTY_VALUE : ratingFormatter.format(average);
 }
 
 export function formatCount(value: number): string {

@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { findCompanyByPublicId } from "@/server/repositories/company-repository";
-import { getReviewFormConfig } from "@/server/repositories/form-repository";
+import { findPublicCompanyByPublicId } from "@/server/repositories/company-repository";
+import { getPublicReviewFormConfig } from "@/server/repositories/form-repository";
 import { ReviewForm } from "./review-form";
 
 export const metadata: Metadata = {
   title: "Votre avis",
   description: "Partagez votre expérience en quelques secondes.",
+  /*
+   * La page est atteinte par QR code ou lien direct : elle n'a pas vocation à
+   * être indexée. `robots.txt` l'exclut déjà de l'exploration ; on ajoute
+   * l'`noindex` au cas où le robot passerait par un lien externe.
+   */
+  robots: { index: false, follow: false },
 };
 
 function UnavailableScreen({ title, message }: { title: string; message: string }) {
@@ -22,7 +28,7 @@ export default async function ReviewPage({
   params,
 }: PageProps<"/avis/[publicId]">) {
   const { publicId } = await params;
-  const company = await findCompanyByPublicId(decodeURIComponent(publicId));
+  const company = await findPublicCompanyByPublicId(decodeURIComponent(publicId));
   if (!company) notFound();
 
   if (company.status !== "ACTIVE") {
@@ -34,7 +40,21 @@ export default async function ReviewPage({
     );
   }
 
-  const config = await getReviewFormConfig(company.id);
+  const config = await getPublicReviewFormConfig(company.publicId);
 
-  return <ReviewForm companyName={company.name} publicId={company.publicId} config={config} />;
+  /*
+   * La date maximale est calculée ici, côté serveur : la calculer dans le
+   * composant client provoquerait un écart d'hydratation entre la date du
+   * serveur et celle du navigateur.
+   */
+  const maxDate = new Date().toISOString().slice(0, 10);
+
+  return (
+    <ReviewForm
+      companyName={company.name}
+      publicId={company.publicId}
+      config={config}
+      maxDate={maxDate}
+    />
+  );
 }

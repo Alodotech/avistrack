@@ -1,5 +1,6 @@
 import "server-only";
 import QRCode from "qrcode";
+import { siteUrl } from "@/lib/site-url";
 
 /**
  * Génération déterministe du QR code, sans stockage d'image (§10.1).
@@ -8,18 +9,8 @@ import QRCode from "qrcode";
 
 const QR_OPTIONS = { margin: 2, errorCorrectionLevel: "M" } as const;
 
-function appBaseUrl(): string {
-  const configured = process.env.APP_URL?.replace(/\/+$/, "");
-  if (configured) return configured;
-  if (process.env.NODE_ENV === "production") {
-    // Un QR code imprimé avec un mauvais domaine est irrécupérable (PO-06).
-    throw new Error("APP_URL doit être défini en production.");
-  }
-  return "http://localhost:3000";
-}
-
 export function publicReviewUrl(publicId: string): string {
-  return `${appBaseUrl()}/avis/${encodeURIComponent(publicId)}`;
+  return `${siteUrl()}/avis/${encodeURIComponent(publicId)}`;
 }
 
 export function renderQrPng(url: string): Promise<Buffer> {

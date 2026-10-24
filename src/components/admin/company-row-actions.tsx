@@ -1,9 +1,9 @@
 import {
   changeCompanyStatusAction,
   deleteCompanyAction,
-} from "@/app/(admin)/admin/actions";
+} from "@/app/(admin)/admin/entreprises/actions";
 import type { CompanyStatus } from "@/server/domain";
-import { ConfirmDialog } from "./confirm-dialog";
+import { ConfirmModal } from "./ConfirmModal";
 
 export function CompanyRowActions({
   id,
@@ -17,7 +17,7 @@ export function CompanyRowActions({
   return (
     <div className="flex items-center gap-2">
       {status === "ACTIVE" ? (
-        <ConfirmDialog
+        <ConfirmModal
           triggerLabel="Suspendre"
           triggerContext={name}
           title={`Suspendre ${name} ?`}
@@ -25,10 +25,12 @@ export function CompanyRowActions({
           confirmLabel="Suspendre"
           action={changeCompanyStatusAction}
           fields={{ companyId: id, change: "SUSPEND" }}
+          reasonLabel="Motif de la suspension"
+          reasonPlaceholder="Ex. : avis frauduleux répétés, demande de l'entreprise…"
         />
       ) : null}
       {status === "SUSPENDED" ? (
-        <ConfirmDialog
+        <ConfirmModal
           triggerLabel="Réactiver"
           triggerContext={name}
           title={`Réactiver ${name} ?`}
@@ -36,9 +38,11 @@ export function CompanyRowActions({
           confirmLabel="Réactiver"
           action={changeCompanyStatusAction}
           fields={{ companyId: id, change: "REACTIVATE" }}
+          reasonLabel="Motif de la réactivation"
+          reasonPlaceholder="Ex. : régularisation de la situation, demande de l'entreprise…"
         />
       ) : null}
-      <ConfirmDialog
+      <ConfirmModal
         triggerLabel="Supprimer"
         triggerContext={name}
         title={`Supprimer ${name} ?`}
@@ -48,6 +52,8 @@ export function CompanyRowActions({
         action={deleteCompanyAction}
         fields={{ companyId: id }}
         typedConfirmation={name}
+        reasonLabel="Motif de la suppression"
+        reasonPlaceholder="Ex. : demande de l'entreprise, compte créé par erreur…"
       />
     </div>
   );

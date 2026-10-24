@@ -1,9 +1,15 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import type { ReactNode } from "react";
+import { useActionState, useRef, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { Button, buttonClass } from "@/components/ui/button";
-import { CalendarIcon, StarIcon } from "@/components/ui/icons";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CalendarIcon,
+  StarIcon,
+  TrashIcon,
+} from "@/components/ui/icons";
 import { Panel } from "@/components/ui/panel";
 import {
   MAX_FORM_QUESTIONS,
@@ -19,7 +25,7 @@ import type {
 import { saveFormConfig, type FormStudioState } from "./actions";
 
 const inputClass =
-  "min-h-11 w-full rounded-md border border-black/30 bg-white px-3 text-sm aria-invalid:border-red";
+  "min-h-11 w-full rounded-lg border border-black/20 bg-white px-3 text-sm transition-colors hover:border-black/40 focus:border-black aria-invalid:border-red aria-invalid:ring-1 aria-invalid:ring-red";
 
 const initialState: FormStudioState = { status: "idle" };
 
@@ -39,6 +45,24 @@ export function FormStudio({
   const [thanksTitle, setThanksTitle] = useState(config.thanksTitle);
   const [thanksMessage, setThanksMessage] = useState(config.thanksMessage);
   const [view, setView] = useState<"form" | "thanks">("form");
+  const [attempted, setAttempted] = useState(false);
+  const labelRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const isLabelInvalid = (question: ReviewFormQuestion) =>
+    question.label.trim().length < 2;
+
+  /*
+   * Le serveur revalide tout : ce garde-fou évite seulement un aller-retour
+   * réseau et garde le focus sur la première question incomplète.
+   */
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    setAttempted(true);
+    const firstInvalid = questions.find(isLabelInvalid);
+    if (firstInvalid) {
+      event.preventDefault();
+      labelRefs.current[firstInvalid.id]?.focus();
+    }
+  };
 
   const updateQuestion = (id: string, patch: Partial<ReviewFormQuestion>) =>
     setQuestions((current) =>
@@ -49,6 +73,15 @@ export function FormStudio({
 
   const removeQuestion = (id: string) =>
     setQuestions((current) => current.filter((question) => question.id !== id));
+
+  const moveQuestion = (fromIndex: number, toIndex: number) => {
+    setQuestions((current) => {
+      const newQuestions = [...current];
+      const [moved] = newQuestions.splice(fromIndex, 1);
+      newQuestions.splice(toIndex, 0, moved);
+      return newQuestions;
+    });
+  };
 
   const addQuestion = () => {
     if (questions.length >= MAX_FORM_QUESTIONS) return;
@@ -63,6 +96,7 @@ export function FormStudio({
   return (
     <form
       action={action}
+      onSubmit={handleSubmit}
       className="grid items-start gap-6 lg:gap-8 xl:grid-cols-2"
       noValidate
     >
@@ -85,36 +119,75 @@ export function FormStudio({
               return (
                 <li
                   key={question.id}
-                  className="flex flex-col gap-3 rounded-lg border border-black/15 p-4"
+                  className="flex flex-col gap-4 rounded-lg border border-black/15 p-4"
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-600 uppercase">
                       <span className="grid size-6 place-items-center rounded-full bg-black text-[0.7rem] text-white">
                         {index + 1}
                       </span>
                       {QUESTION_TYPE_LABELS[question.type]}
                     </span>
-                    {isRating ? (
-                      <span className="text-xs text-gray-600">Toujours incluse</span>
-                    ) : (
+
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => removeQuestion(question.id)}
-                        className="text-xs font-semibold text-red underline-offset-4 hover:underline"
+                        onClick={() => moveQuestion(index, index - 1)}
+                        disabled={index === 0}
+                        aria-label={`Monter la question ${index + 1}`}
+                        title="Monter d'une position"
+                        className="grid size-10 cursor-pointer place-items-center rounded-full border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
                       >
-                        Supprimer
+                        <ArrowUpIcon className="size-4" />
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(index, index + 1)}
+                        disabled={index === questions.length - 1}
+                        aria-label={`Descendre la question ${index + 1}`}
+                        title="Descendre d'une position"
+                        className="grid size-10 cursor-pointer place-items-center rounded-full border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <ArrowDownIcon className="size-4" />
+                      </button>
+
+                      {isRating ? (
+                        <span className="ml-1 rounded-full bg-gray-100 px-2.5 py-1 text-[0.7rem] font-semibold text-gray-600">
+                          Toujours incluse
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeQuestion(question.id)}
+                          aria-label={`Supprimer la question ${index + 1}`}
+                          className="ml-1 inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold text-red transition-colors hover:bg-red/10"
+                        >
+                          <TrashIcon className="size-4" />
+                          Supprimer
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label
-                      htmlFor={`label-${question.id}`}
-                      className="text-sm font-semibold"
-                    >
-                      Question posée au client
-                    </label>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <label
+                        htmlFor={`label-${question.id}`}
+                        className="text-sm font-semibold"
+                      >
+                        Question posée au client
+                        {isRating ? (
+                          <span className="ml-0.5 text-accent">*</span>
+                        ) : null}
+                      </label>
+                      <span className="text-xs text-gray-500">
+                        {question.label.length}/140
+                      </span>
+                    </div>
                     <input
+                      ref={(node) => {
+                        labelRefs.current[question.id] = node;
+                      }}
                       id={`label-${question.id}`}
                       value={question.label}
                       onChange={(event) =>
@@ -122,18 +195,33 @@ export function FormStudio({
                       }
                       maxLength={140}
                       placeholder="Ex. Qu'avez-vous pensé de l'accueil ?"
+                      aria-invalid={
+                        attempted && isLabelInvalid(question) ? true : undefined
+                      }
                       className={inputClass}
                     />
+                    {attempted && isLabelInvalid(question) ? (
+                      <p role="alert" className="text-sm text-red">
+                        Saisissez une question d&apos;au moins 2 caractères.
+                      </p>
+                    ) : null}
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-end justify-between gap-4">
                     {isRating ? (
                       <p className="text-xs text-gray-600">
                         {QUESTION_TYPE_HINTS.rating}
                       </p>
                     ) : (
-                      <label className="flex items-center gap-2 text-sm">
+                      <div className="flex flex-col gap-1">
+                        <label
+                          htmlFor={`type-${question.id}`}
+                          className="text-xs font-semibold text-gray-600"
+                        >
+                          Type de réponse
+                        </label>
                         <select
+                          id={`type-${question.id}`}
                           value={question.type}
                           onChange={(event) =>
                             updateQuestion(question.id, {
@@ -148,11 +236,11 @@ export function FormStudio({
                             </option>
                           ))}
                         </select>
-                      </label>
+                      </div>
                     )}
 
                     {!isRating ? (
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
                         <input
                           type="checkbox"
                           checked={question.required}
@@ -163,7 +251,7 @@ export function FormStudio({
                           }
                           className="size-4 accent-accent"
                         />
-                        Obligatoire
+                        Réponse obligatoire
                       </label>
                     ) : null}
                   </div>
@@ -298,7 +386,7 @@ function ViewTabs({
             type="button"
             onClick={() => onChange(option.id)}
             aria-pressed={active}
-            className={`min-h-8 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors ${
+            className={`min-h-11 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors ${
               active ? "bg-black text-white" : "text-gray-600 hover:text-black"
             }`}
           >
@@ -322,10 +410,21 @@ function PhoneFrame({ children }: { children: ReactNode }) {
   );
 }
 
-function FieldLabel({ children }: { children: ReactNode }) {
+function FieldLabel({
+  children,
+  required = false,
+}: {
+  children: ReactNode;
+  required?: boolean;
+}) {
   return (
     <span className="text-xs font-semibold text-black">
       {children || <span className="text-gray-600">Question sans intitulé</span>}
+      {required ? (
+        <span aria-hidden className="ml-0.5 text-accent">
+          *
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -361,8 +460,10 @@ function FormPreview({
         if (question.type === "date") {
           return (
             <div key={question.id} className="flex flex-col gap-1">
-              <FieldLabel>{question.label}</FieldLabel>
-              <div className="flex min-h-10 items-center justify-between rounded-md border border-black/30 px-3 text-xs text-gray-600">
+              <FieldLabel required={question.required}>
+                {question.label}
+              </FieldLabel>
+              <div className="flex min-h-10 items-center justify-between rounded-md border border-black/20 px-3 text-xs text-gray-600">
                 <span>jj/mm/aaaa</span>
                 <CalendarIcon className="size-4" />
               </div>
@@ -371,8 +472,10 @@ function FormPreview({
         }
         return (
           <div key={question.id} className="flex flex-col gap-1">
-            <FieldLabel>{question.label}</FieldLabel>
-            <div className="h-16 rounded-md border border-black/30 bg-gray-100" />
+            <FieldLabel required={question.required}>
+              {question.label}
+            </FieldLabel>
+            <div className="h-16 rounded-md border border-black/20 bg-gray-100" />
           </div>
         );
       })}

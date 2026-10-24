@@ -1,10 +1,16 @@
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
-import { BuildingIcon, JournalIcon } from "@/components/ui/icons";
+import {
+  BuildingIcon,
+  DashboardIcon,
+  JournalIcon,
+} from "@/components/ui/icons";
 import { getCurrentAdmin } from "@/server/auth/guards";
+import { InactivityHandler } from "@/components/admin/InactivityHandler";
 
 const NAV = [
-  { href: "/admin", label: "Entreprises", icon: <BuildingIcon />, exact: true },
+  { href: "/admin", label: "Tableau de bord", icon: <DashboardIcon />, exact: true },
+  { href: "/admin/entreprises", label: "Entreprises", icon: <BuildingIcon /> },
   { href: "/admin/journal", label: "Journal d'audit", icon: <JournalIcon /> },
 ];
 
@@ -27,7 +33,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </Suspense>
       }
     >
-      {children}
+      <InactivityHandler redirectTo="/?auth=login">
+        {children}
+      </InactivityHandler>
     </AppShell>
   );
 }

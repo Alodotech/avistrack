@@ -6,18 +6,19 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // Le jeu de données de développement ne se lit qu'à travers les repositories.
+    // Le client à privilèges (`service_role`) contourne les politiques RLS :
+    // il ne s'utilise que dans la couche d'accès aux données.
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/server/repositories/**", "src/server/dev/**", "src/app/dev/**"],
+    ignores: ["src/server/repositories/**", "src/utils/supabase/**"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: ["@/server/dev/*"],
+              group: ["@/utils/supabase/admin"],
               message:
-                "Passez par un repository (src/server/repositories) : aucun accès direct aux données.",
+                "Client service_role réservé aux repositories : passez par src/server/repositories.",
             },
           ],
         },
@@ -33,7 +34,7 @@ const eslintConfig = defineConfig([
         {
           patterns: [
             {
-              group: ["@/server/repositories/review-repository", "@/server/dev/*"],
+              group: ["@/server/repositories/review-repository"],
               message:
                 "L'espace Admin ne lit pas les avis : utilisez les agrégats de company-repository.",
             },
