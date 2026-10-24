@@ -50,6 +50,15 @@ export function FormStudio({
   const removeQuestion = (id: string) =>
     setQuestions((current) => current.filter((question) => question.id !== id));
 
+  const moveQuestion = (fromIndex: number, toIndex: number) => {
+    setQuestions((current) => {
+      const newQuestions = [...current];
+      const [moved] = newQuestions.splice(fromIndex, 1);
+      newQuestions.splice(toIndex, 0, moved);
+      return newQuestions;
+    });
+  };
+
   const addQuestion = () => {
     if (questions.length >= MAX_FORM_QUESTIONS) return;
     setQuestions((current) => [
@@ -105,6 +114,26 @@ export function FormStudio({
                         Supprimer
                       </button>
                     )}
+                    {index > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(index, index - 1)}
+                        className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-blue underline-offset-4 hover:underline"
+                        title="Déplacer en haut"
+                      >
+                        ↑
+                      </button>
+                    ) : null}
+                    {index < questions.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(index, index + 1)}
+                        className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-blue underline-offset-4 hover:underline"
+                        title="Déplacer en bas"
+                      >
+                        ↓
+                      </button>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-col gap-1">
