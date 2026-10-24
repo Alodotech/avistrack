@@ -19,7 +19,10 @@ const NAV = [
 async function CompanyIdentity() {
   const company = await getCurrentCompany();
   return company ? (
-    <ShellIdentity label="Connecté en tant que" value={company.name} />
+    <ShellIdentity
+      label="Connecté en tant que"
+      value={company.email || company.name}
+    />
   ) : null;
 }
 
@@ -37,7 +40,7 @@ export default function CompanyLayout({
         </Suspense>
       }
     >
-      <InactivityHandler redirectTo="/login">{children}</InactivityHandler>
+      <InactivityHandler redirectTo="/?auth=login">{children}</InactivityHandler>
     </AppShell>
   );
 }

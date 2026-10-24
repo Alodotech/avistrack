@@ -14,9 +14,9 @@ import { getAccountState } from "./account-state";
  * (boucle de redirection).
  */
 
-export const COMPANY_LOGIN_PATH = "/login";
+export const COMPANY_LOGIN_PATH = "/?auth=login";
 export const ADMIN_LOGIN_PATH = "/admin/login";
-export const ONBOARDING_PATH = "/onboarding";
+export const ONBOARDING_PATH = "/?auth=signup";
 export const COMPANY_HOME_PATH = "/dashboard";
 export const ADMIN_HOME_PATH = "/admin";
 

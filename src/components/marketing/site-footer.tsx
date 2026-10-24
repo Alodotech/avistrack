@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const LEGAL = [
@@ -14,13 +15,16 @@ export function SiteFooter() {
     <footer id="contact" className="bg-black text-white">
       <div className="grid w-full gap-6 px-6 py-9 lg:grid-cols-3 lg:gap-8 lg:px-16 lg:py-12">
         <div className="flex flex-col gap-3">
-          <p className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span
-              aria-hidden
-              className="inline-block size-2.5 rounded-full bg-accent"
+          <div className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
+            <Image
+              src="/assets/logoavistrack.png"
+              alt="Logo AvisTrack"
+              width={32}
+              height={25}
+              className="h-7 w-auto shrink-0 object-contain"
             />
-            AvisTrack
-          </p>
+            <span>AvisTrack</span>
+          </div>
           <p className="pr-8 text-sm leading-6 text-white/70">
             Collecte et analyse des avis clients par QR code, avec isolation
             stricte des données par entreprise.

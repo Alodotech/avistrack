@@ -4,10 +4,8 @@ import { DeletedAccountScreen } from "@/components/auth/deleted-account-screen";
 import {
   ADMIN_HOME_PATH,
   COMPANY_HOME_PATH,
-  ONBOARDING_PATH,
 } from "@/server/auth/guards";
 import { getAccountState } from "@/server/auth/account-state";
-import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Connexion" };
 
@@ -24,8 +22,8 @@ export default async function LoginPage() {
 
   if (state.kind === "company") redirect(COMPANY_HOME_PATH);
   if (state.kind === "admin") redirect(ADMIN_HOME_PATH);
-  if (state.kind === "onboarding") redirect(ONBOARDING_PATH);
   if (state.kind === "deleted") return <DeletedAccountScreen />;
 
-  return <LoginForm />;
+  // Plus de page isolée : ouverture directe de la modale de connexion
+  redirect("/?auth=login");
 }

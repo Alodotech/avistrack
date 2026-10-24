@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </Suspense>
       }
     >
-      <InactivityHandler redirectTo="/admin/login">
+      <InactivityHandler redirectTo="/?auth=login">
         {children}
       </InactivityHandler>
     </AppShell>

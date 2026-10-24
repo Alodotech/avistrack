@@ -1,20 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { buttonClass } from "@/components/ui/button";
+
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 const NAV = [
   { href: "#s1", label: "Fonctionnement" },
   { href: "#s4", label: "Sécurité" },
   { href: "#contact", label: "Contact" },
-  { href: "/login", label: "Connexion" },
 ] as const;
 
 /** Barre de navigation : se masque au défilement vers le bas, revient vers le haut. */
 export function SiteHeader() {
   const headerRef = useRef<HTMLElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
+  const { openLogin, openSignup } = useAuthModal();
 
   useEffect(() => {
     const header = headerRef.current;
@@ -57,8 +60,15 @@ export function SiteHeader() {
             className="site-logo"
             aria-label="AvisTrack, accueil"
           >
-            <span aria-hidden className="logo-mark" />
-            <span>AVISTRACK</span>
+            <Image
+              src="/assets/logoavistrack.png"
+              alt="Logo AvisTrack"
+              width={38}
+              height={30}
+              className="h-8 w-auto shrink-0 object-contain"
+              priority
+            />
+            <span>AvisTrack</span>
           </Link>
 
           <nav aria-label="Navigation principale" className="site-nav">
@@ -67,9 +77,20 @@ export function SiteHeader() {
                 {item.label}
               </a>
             ))}
-            <Link href="/onboarding" className={buttonClass("primary")}>
+            <button
+              type="button"
+              onClick={openLogin}
+              className="cursor-pointer text-sm font-semibold transition-colors hover:text-accent"
+            >
+              Connexion
+            </button>
+            <button
+              type="button"
+              onClick={openSignup}
+              className={buttonClass("primary")}
+            >
               Créer mon compte
-            </Link>
+            </button>
           </nav>
         </div>
       </header>

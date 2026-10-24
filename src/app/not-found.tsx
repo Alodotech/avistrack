@@ -21,7 +21,7 @@ export default function NotFound() {
             Retour à l&apos;accueil
           </Link>
           <Link
-            href="/login"
+            href="/?auth=login"
             className="inline-flex min-h-11 items-center rounded-full border border-black/30 px-5 text-sm font-semibold transition-colors hover:bg-gray-100"
           >
             Espace entreprise

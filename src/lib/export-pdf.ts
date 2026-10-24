@@ -55,7 +55,7 @@ function statusLabel(status: string): string {
 /** Récupère le logo officiel en PNG afin que jsPDF puisse l'insérer. */
 async function logoDataUrl(): Promise<string | null> {
   try {
-    const response = await fetch("/assets/logo.png");
+    const response = await fetch("/assets/logoavistrack.png");
     if (!response.ok) return null;
     const blob = await response.blob();
     return await new Promise<string | null>((resolve) => {

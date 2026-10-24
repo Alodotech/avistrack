@@ -14,14 +14,31 @@ function toAdmin(row: { user_id: string; email: string }): Admin {
 
 /** Vérifie qu'un compte authentifié est administrateur. */
 export async function findAdminById(id: string): Promise<Admin | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("admins")
-    .select("user_id, email")
-    .eq("user_id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? toAdmin(data) : null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("admins")
+      .select("user_id, email")
+      .eq("user_id", id)
+      .maybeSingle();
+    if (!error && data) return toAdmin(data);
+  } catch {
+    // Si la session anonyme échoue sur la politique RLS
+  }
+
+  try {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from("admins")
+      .select("user_id, email")
+      .eq("user_id", id)
+      .maybeSingle();
+    if (!error && data) return toAdmin(data);
+  } catch {
+    // Ignorer en cas d'erreur de connexion
+  }
+
+  return null;
 }
 
 export const findAdminByUserId = findAdminById;

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ADMIN_HOME_PATH } from "@/server/auth/guards";
@@ -15,7 +16,9 @@ export default async function AdminLoginPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AdminLoginForm />
+      <Suspense fallback={null}>
+        <AdminLoginForm />
+      </Suspense>
     </div>
   );
 }

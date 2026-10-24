@@ -4,10 +4,8 @@ import { DeletedAccountScreen } from "@/components/auth/deleted-account-screen";
 import {
   ADMIN_HOME_PATH,
   COMPANY_HOME_PATH,
-  COMPANY_LOGIN_PATH,
 } from "@/server/auth/guards";
 import { getAccountState } from "@/server/auth/account-state";
-import { OnboardingForm } from "./onboarding-form";
 
 export const metadata: Metadata = { title: "Créer mon compte" };
 
@@ -21,10 +19,10 @@ export const metadata: Metadata = { title: "Créer mon compte" };
 export default async function OnboardingPage() {
   const state = await getAccountState();
 
-  if (state.kind === "anonymous") redirect(COMPANY_LOGIN_PATH);
   if (state.kind === "company") redirect(COMPANY_HOME_PATH);
   if (state.kind === "admin") redirect(ADMIN_HOME_PATH);
   if (state.kind === "deleted") return <DeletedAccountScreen />;
 
-  return <OnboardingForm />;
+  // Plus de page isolée : ouverture directe de la modale de création de compte
+  redirect("/?auth=signup");
 }

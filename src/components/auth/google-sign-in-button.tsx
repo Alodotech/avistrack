@@ -38,7 +38,13 @@ function GoogleLogo() {
  * Connexion Google (T13) : déclenche le consentement OAuth puis revient sur
  * `/auth/callback` avec le code à échanger contre une session.
  */
-export function GoogleSignInButton({ label }: { label: string }) {
+export function GoogleSignInButton({
+  label,
+  next = "/dashboard",
+}: {
+  label: string;
+  next?: string;
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +55,7 @@ export function GoogleSignInButton({ label }: { label: string }) {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (oauthError) {
@@ -64,13 +70,13 @@ export function GoogleSignInButton({ label }: { label: string }) {
         type="button"
         onClick={signInWithGoogle}
         disabled={pending}
-        className={buttonClass("secondary", "w-full", "md")}
+        className="group relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-black/15 bg-white px-5 py-3 text-sm font-bold text-black shadow-xs transition-all duration-200 hover:border-black/30 hover:bg-gray-50/80 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <GoogleLogo />
-        {pending ? "Redirection…" : label}
+        <span className="truncate">{pending ? "Connexion en cours…" : label}</span>
       </button>
       {error ? (
-        <p role="alert" className="text-sm text-red">
+        <p role="alert" className="text-center text-xs font-medium text-red">
           {error}
         </p>
       ) : null}

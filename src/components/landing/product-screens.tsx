@@ -88,9 +88,15 @@ export function QrStandScreen() {
     <ScreenShell caption="Aperçu · Votre QR code, à imprimer">
       <article className="w-full max-w-[22rem] rounded-2xl border border-black/15 bg-white p-7 text-center text-black shadow-2xl shadow-black/25">
         <div className="flex items-center justify-center gap-2">
-          <span className="logo-mark" aria-hidden />
-          <span className="text-sm font-semibold tracking-[0.22em]">
-            AVISTRACK
+          <Image
+            src="/assets/logoavistrack.png"
+            alt="Logo AvisTrack"
+            width={24}
+            height={19}
+            className="h-5 w-auto shrink-0 object-contain"
+          />
+          <span className="text-sm font-bold tracking-tight text-black">
+            AvisTrack
           </span>
         </div>
 

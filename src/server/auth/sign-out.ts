@@ -15,11 +15,11 @@ import { createClient } from "@/utils/supabase/server";
 export async function signOutCompany(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/");
 }
 
 export async function signOutAdmin(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/admin/login");
+  redirect("/");
 }
