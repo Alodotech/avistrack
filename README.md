@@ -102,14 +102,6 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    ils vérifient qu'un visiteur non authentifié ne peut ni énumérer les
    entreprises ni déposer d'avis sur une entreprise suspendue ou supprimée.
 
-9. **Charger un jeu de données de démonstration (optionnel) :**
-   ```bash
-   npm run db:seed
-   ```
-   Crée trois entreprises de démonstration (avec compte, formulaire et avis).
-   Le script est idempotent : le relancer ne duplique rien. Les comptes créés
-   utilisent le mot de passe `Demo1234!`.
-
 ### 3. Configuration de l'authentification Google
 1. Supabase → **Authentication → Providers → Google** : activer le
    fournisseur, renseigner le `Client ID` et le `Client Secret` de la console

@@ -21,12 +21,21 @@ const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
 async function reachable(): Promise<boolean> {
   if (!url || !anonKey || !serviceRoleKey) return false;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
   try {
-    const client = createClient(url, anonKey);
-    const { error } = await client.from("companies").select("id").limit(1);
-    return !error || error.code !== "PGRST205";
+    // `supabase-js` convertit les erreurs réseau en objet `error` sans code :
+    // on interroge donc l'API REST directement pour distinguer « instance
+    // injoignable » (skip) de « schéma absent » (instance joignable).
+    await fetch(`${url}/rest/v1/companies?select=id&limit=1`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+      signal: controller.signal,
+    });
+    return true;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

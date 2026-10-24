@@ -11,8 +11,7 @@
     "test": "vitest run",
     "test:rls": "vitest run tests/rls",
     "db:purge": "node scripts/purge-companies.mjs",
-    "update-types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > src/types/supabase.ts",
-    "db:seed": "node scripts/seed.mjs"
+    "update-types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > src/types/supabase.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
