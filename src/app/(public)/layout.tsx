@@ -3,12 +3,11 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { Scene3DLoader } from "@/components/landing/scene3d-loader";
+import { siteUrlOrFallback } from "@/lib/site-url";
 
 /** Surface publique : landing, formulaire d'avis et inscription. */
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://avistrack.fr",
-  ),
+  metadataBase: new URL(siteUrlOrFallback()),
 };
 
 export default function PublicLayout({ children }: { children: ReactNode }) {

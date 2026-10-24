@@ -20,7 +20,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   DELETE: "Suppression",
 };
 
-const COLUMNS = ["Date", "Administrateur", "Action", "Entreprise"];
+const COLUMNS = ["Date", "Administrateur", "Action", "Entreprise", "Motif"];
 
 const journalHref = (page: number) =>
   page > 1 ? `/admin/journal?page=${page}` : "/admin/journal";
@@ -73,7 +73,36 @@ async function AuditLogContent({
         </EmptyState>
       ) : (
         <>
-          <div className={t.wrapper}>
+          <ul className="md:hidden">
+            {entries.items.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex flex-col gap-1 border-t border-black/10 px-4 py-4 first:border-t-0"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold">
+                    {ACTION_LABELS[entry.action]}
+                  </span>
+                  <span className="text-xs text-gray-600 tabular-nums">
+                    {formatDateTime(entry.createdAt)}
+                  </span>
+                </div>
+                <p className="wrap-break-word text-sm">
+                  {entry.companyName ?? "—"}
+                </p>
+                <p className="wrap-anywhere text-xs text-gray-600">
+                  {entry.adminEmail}
+                </p>
+                {entry.reason ? (
+                  <p className="text-sm text-gray-600 italic">
+                    « {entry.reason} »
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+
+          <div className={`${t.wrapper} hidden md:block`}>
             <table className={`${t.table} min-w-176`}>
               <thead className={t.head}>
                 <tr>
@@ -96,6 +125,9 @@ async function AuditLogContent({
                     </td>
                     <td className={`${t.td} w-full`}>
                       {entry.companyName ?? "—"}
+                    </td>
+                    <td className={`${t.td} max-w-80 text-gray-600`}>
+                      {entry.reason ?? "—"}
                     </td>
                   </tr>
                 ))}

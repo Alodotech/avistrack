@@ -51,11 +51,6 @@ export default function LandingPage() {
               <a href="#s1" className="text-link">
                 Comment ça marche ↓
               </a>
-              {process.env.NODE_ENV !== "production" && (
-                <Link href="/dev/session" className={buttonClass("ghost")}>
-                  Test
-                </Link>
-              )}
             </div>
             <p className="hero-note">Prêt en 2 minutes, dès maintenant.</p>
           </ScrollReveal>

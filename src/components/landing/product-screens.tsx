@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   MessageIcon,
@@ -101,12 +102,12 @@ export function QrStandScreen() {
         </p>
 
         <div className="mt-5 rounded-xl border border-black/10 bg-gray-100 p-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/landing/qr-code-avistrack.png"
             alt="QR code menant au formulaire d'avis"
-            width={208}
-            height={208}
+            width={1024}
+            height={1024}
+            sizes="(max-width: 640px) 12rem, 12rem"
             decoding="async"
             className="mx-auto aspect-square w-full max-w-[12rem] rounded-md bg-white object-contain"
           />

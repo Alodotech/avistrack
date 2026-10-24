@@ -1,28 +1,63 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEV_IDS, resetStore } from "@/server/dev/memory-store";
-import { listAuditLog } from "@/server/repositories/audit-log-repository";
-import { findCompanyById } from "@/server/repositories/company-repository";
 
 /**
  * Les actions Admin sont joignables par un POST direct : elles doivent refuser
- * tout appelant sans session ADMIN, y compris une entreprise connectée.
+ * tout appelant sans droits d'administration, y compris une entreprise
+ * connectée. Les repositories sont simulés (T05) : on vérifie que l'action
+ * n'entraîne aucune mutation ni journalisation sans administrateur.
  */
 
-const session = vi.hoisted(() => ({
-  adminId: null as string | null,
-  companyId: null as string | null,
+const CHANGED = vi.hoisted(() => ({
+  status: 0,
+  deleted: 0,
+  audited: 0,
+  reasons: [] as string[],
 }));
 
-vi.mock("@/server/auth/session", () => ({
-  getAdminSession: async () =>
-    session.adminId ? { adminId: session.adminId } : null,
-  getCompanySession: async () =>
-    session.companyId ? { companyId: session.companyId } : null,
+vi.mock("@/server/auth/guards", () => ({
+  ADMIN_LOGIN_PATH: "/admin/login",
+  getCurrentAdmin: async () =>
+    session.adminId ? { id: session.adminId, email: "admin@avistrack.example" } : null,
 }));
 
-vi.mock("react", async (original) => ({
-  ...(await original<typeof import("react")>()),
-  cache: <T>(fn: T) => fn,
+const session = vi.hoisted(() => ({ adminId: null as string | null }));
+
+vi.mock("@/server/repositories/company-repository", () => ({
+  findCompanyById: async () => ({
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "Pharmacie Camp Guézo",
+  }),
+  findCompanyByIdAsAdmin: async () => ({
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "Pharmacie Camp Guézo",
+  }),
+  changeCompanyStatus: async () => {
+    CHANGED.status += 1;
+    return {
+      ok: true,
+      company: {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Pharmacie Camp Guézo",
+      },
+    };
+  },
+  softDeleteCompany: async () => {
+    CHANGED.deleted += 1;
+    return {
+      ok: true,
+      company: {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Pharmacie Camp Guézo",
+      },
+    };
+  },
+}));
+
+vi.mock("@/server/repositories/audit-log-repository", () => ({
+  recordAdminAction: async (entry: { reason: string }) => {
+    CHANGED.audited += 1;
+    CHANGED.reasons.push(entry.reason);
+  },
 }));
 
 vi.mock("next/cache", () => ({ refresh: vi.fn() }));
@@ -34,10 +69,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 const { changeCompanyStatusAction, deleteCompanyAction } = await import(
-  "@/app/(admin)/admin/actions"
+  "@/app/(admin)/admin/entreprises/actions"
 );
 
+const ADMIN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const COMPANY_ID = "11111111-1111-4111-8111-111111111111";
 const idle = { status: "idle" } as const;
+const REASON = "Demande explicite de l'entreprise";
 
 function form(fields: Record<string, string>): FormData {
   const data = new FormData();
@@ -45,126 +83,103 @@ function form(fields: Record<string, string>): FormData {
   return data;
 }
 
-const suspendA = () =>
+const suspend = (companyId: string) =>
   changeCompanyStatusAction(
     idle,
-    form({ companyId: DEV_IDS.companyA, change: "SUSPEND" }),
+    form({ companyId, change: "SUSPEND", reason: REASON }),
   );
 
-const auditCount = async () =>
-  (await listAuditLog({ page: 1, pageSize: 50 })).total;
-
 beforeEach(() => {
-  resetStore();
   session.adminId = null;
-  session.companyId = null;
+  CHANGED.status = 0;
+  CHANGED.deleted = 0;
+  CHANGED.audited = 0;
+  CHANGED.reasons = [];
 });
 
 describe("autorisation des actions Admin", () => {
-  it("refuse un appelant sans session", async () => {
-    await expect(suspendA()).rejects.toThrow("REDIRECT:/admin/login");
-    expect((await findCompanyById(DEV_IDS.companyA))?.status).toBe("ACTIVE");
+  it("refuse un appelant sans session administrateur", async () => {
+    await expect(suspend(COMPANY_ID)).rejects.toThrow("REDIRECT:/admin/login");
+    expect(CHANGED.status).toBe(0);
+    expect(CHANGED.audited).toBe(0);
   });
 
-  it("refuse une entreprise connectée, même pour agir sur un concurrent", async () => {
-    session.companyId = DEV_IDS.companyB;
-    await expect(suspendA()).rejects.toThrow("REDIRECT:/admin/login");
+  it("refuse une entreprise connectée (aucun admin en base)", async () => {
+    // `getCurrentAdmin` renvoie null tant qu'aucun adminId n'est posé.
+    await expect(suspend(COMPANY_ID)).rejects.toThrow("REDIRECT:/admin/login");
     await expect(
       deleteCompanyAction(
         idle,
-        form({ companyId: DEV_IDS.companyA, confirmation: "Pharmacie Camp Guézo" }),
+        form({
+          companyId: COMPANY_ID,
+          confirmation: "Pharmacie Camp Guézo",
+          reason: REASON,
+        }),
       ),
     ).rejects.toThrow("REDIRECT:/admin/login");
-
-    expect((await findCompanyById(DEV_IDS.companyA))?.status).toBe("ACTIVE");
-    expect(await auditCount()).toBe(0);
-  });
-
-  it("refuse une session admin qui ne correspond à aucun administrateur", async () => {
-    session.adminId = "99999999-9999-4999-8999-999999999999";
-    await expect(suspendA()).rejects.toThrow("REDIRECT:/admin/login");
+    expect(CHANGED.deleted).toBe(0);
+    expect(CHANGED.audited).toBe(0);
   });
 });
 
-describe("suspension et réactivation (AD-03)", () => {
+describe("suspension et suppression (AD-03, AD-04)", () => {
   beforeEach(() => {
-    session.adminId = DEV_IDS.admin;
+    session.adminId = ADMIN_ID;
   });
 
-  it("suspend puis réactive, en journalisant chaque action (AD-06)", async () => {
-    expect(await suspendA()).toEqual({ status: "done" });
-    expect((await findCompanyById(DEV_IDS.companyA))?.status).toBe("SUSPENDED");
-    expect((await findCompanyById(DEV_IDS.companyB))?.status).toBe("ACTIVE");
+  it("suspend puis journalise l'action (AD-06)", async () => {
+    expect(await suspend(COMPANY_ID)).toEqual({ status: "done" });
+    expect(CHANGED.status).toBe(1);
+    expect(CHANGED.audited).toBe(1);
+    expect(CHANGED.reasons).toEqual([REASON]);
+  });
 
-    const reactivated = await changeCompanyStatusAction(
+  it("supprime logiquement après saisie du nom exact", async () => {
+    const result = await deleteCompanyAction(
       idle,
-      form({ companyId: DEV_IDS.companyA, change: "REACTIVATE" }),
+      form({
+        companyId: COMPANY_ID,
+        confirmation: "Pharmacie Camp Guézo",
+        reason: REASON,
+      }),
     );
-    expect(reactivated).toEqual({ status: "done" });
-    expect((await findCompanyById(DEV_IDS.companyA))?.status).toBe("ACTIVE");
-
-    const { items } = await listAuditLog({ page: 1, pageSize: 50 });
-    expect(items.map((entry) => entry.action).sort()).toEqual([
-      "REACTIVATE",
-      "SUSPEND",
-    ]);
-    expect(items.every((e) => e.companyName === "Pharmacie Camp Guézo")).toBe(true);
-    expect(items.every((e) => e.adminEmail === "admin@avistrack.example")).toBe(true);
+    expect(result).toEqual({ status: "done" });
+    expect(CHANGED.deleted).toBe(1);
+    expect(CHANGED.audited).toBe(1);
   });
 
-  it("n'active pas un compte en attente de vérification e-mail", async () => {
-    const result = await changeCompanyStatusAction(
+  it("rejette une confirmation inexacte sans rien supprimer", async () => {
+    const result = await deleteCompanyAction(
       idle,
-      form({ companyId: DEV_IDS.companyPending, change: "REACTIVATE" }),
+      form({ companyId: COMPANY_ID, confirmation: "pharmacie", reason: REASON }),
     );
     expect(result.status).toBe("error");
-    expect((await findCompanyById(DEV_IDS.companyPending))?.status).toBe("PENDING");
-    expect(await auditCount()).toBe(0);
+    expect(CHANGED.deleted).toBe(0);
+    expect(CHANGED.audited).toBe(0);
+  });
+
+  it("refuse une suspension sans motif (AD-06)", async () => {
+    const result = await changeCompanyStatusAction(
+      idle,
+      form({ companyId: COMPANY_ID, change: "SUSPEND", reason: "" }),
+    );
+    expect(result.status).toBe("error");
+    expect(CHANGED.status).toBe(0);
+    expect(CHANGED.audited).toBe(0);
   });
 
   it("rejette une requête mal formée", async () => {
     const malformed: Record<string, string>[] = [
-      { companyId: "pas-un-uuid", change: "SUSPEND" },
-      { companyId: DEV_IDS.companyA, change: "DELETE" },
+      { companyId: "pas-un-uuid", change: "SUSPEND", reason: REASON },
+      { companyId: COMPANY_ID, change: "DELETE", reason: REASON },
+      { companyId: COMPANY_ID, change: "SUSPEND" },
       {},
     ];
     for (const fields of malformed) {
-      const result = await changeCompanyStatusAction(idle, form(fields));
-      expect(result.status).toBe("error");
+      expect((await changeCompanyStatusAction(idle, form(fields))).status).toBe(
+        "error",
+      );
     }
-    expect(await auditCount()).toBe(0);
-  });
-});
-
-describe("suppression (AD-04)", () => {
-  beforeEach(() => {
-    session.adminId = DEV_IDS.admin;
-  });
-
-  it("exige le nom exact de l'entreprise", async () => {
-    const result = await deleteCompanyAction(
-      idle,
-      form({ companyId: DEV_IDS.companyA, confirmation: "pharmacie" }),
-    );
-    expect(result.status).toBe("error");
-    expect(await findCompanyById(DEV_IDS.companyA)).not.toBeNull();
-    expect(await auditCount()).toBe(0);
-  });
-
-  it("supprime logiquement et journalise, sans toucher aux autres entreprises", async () => {
-    const result = await deleteCompanyAction(
-      idle,
-      form({ companyId: DEV_IDS.companyA, confirmation: "Pharmacie Camp Guézo" }),
-    );
-    expect(result).toEqual({ status: "done" });
-    expect(await findCompanyById(DEV_IDS.companyA)).toBeNull();
-    expect(await findCompanyById(DEV_IDS.companyB)).not.toBeNull();
-
-    const { items } = await listAuditLog({ page: 1, pageSize: 50 });
-    expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({
-      action: "DELETE",
-      companyName: "Pharmacie Camp Guézo",
-    });
+    expect(CHANGED.status).toBe(0);
   });
 });

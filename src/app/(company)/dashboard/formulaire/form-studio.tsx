@@ -100,7 +100,7 @@ export function FormStudio({
                       <button
                         type="button"
                         onClick={() => removeQuestion(question.id)}
-                        className="text-xs font-semibold text-red underline-offset-4 hover:underline"
+                        className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-red underline-offset-4 hover:underline"
                       >
                         Supprimer
                       </button>
@@ -298,7 +298,7 @@ function ViewTabs({
             type="button"
             onClick={() => onChange(option.id)}
             aria-pressed={active}
-            className={`min-h-8 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors ${
+            className={`min-h-11 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors ${
               active ? "bg-black text-white" : "text-gray-600 hover:text-black"
             }`}
           >

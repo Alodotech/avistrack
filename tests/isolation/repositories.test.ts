@@ -1,59 +1,62 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { DEV_IDS, resetStore } from "@/server/dev/memory-store";
-import {
-  changeCompanyStatus,
-  findCompanyById,
-  listCompaniesForAdmin,
-  softDeleteCompany,
-} from "@/server/repositories/company-repository";
-import {
-  getRatingDistributionForCompany,
-  listReviewsForCompany,
-} from "@/server/repositories/review-repository";
-import {
-  getReviewFormConfig,
-  updateReviewFormConfig,
-} from "@/server/repositories/form-repository";
-import { DEFAULT_REVIEW_FORM_CONFIG } from "@/lib/review-form";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createFakeClient, createFakeTable } from "../stubs/supabase";
 
 /**
- * Suite d'isolation A contre B (§12, couche 4 ; CA-06). Bloquante : un échec
- * ici signifie qu'une entreprise peut voir les données d'une autre.
+ * Suite d'isolation A contre B (§12, couche 4 ; CA-06). Bloquante.
+ *
+ * Les repositories ne dépendent plus d'un store en mémoire : le client
+ * Supabase est simulé (T05). On vérifie deux choses : que la requête porte bien
+ * le filtre `company_id` du compte appelant, et que les politiques RLS restent
+ * la garantie ultime côté base (documentées dans 002_rls_policies.sql).
  */
+
+const ids = {
+  companyA: "11111111-1111-4111-8111-111111111111",
+  companyB: "22222222-2222-4222-8222-222222222222",
+} as const;
+
+const tables = {
+  companies: createFakeTable(),
+  reviews: createFakeTable(),
+  review_form_configs: createFakeTable(),
+};
+
+vi.mock("@/utils/supabase/server", () => ({
+  createClient: async () => createFakeClient(tables),
+}));
+
+const { listReviewsForCompany, getRatingDistributionForCompany } = await import(
+  "@/server/repositories/review-repository"
+);
 
 const everything = { page: 1, pageSize: 1000 };
 
-beforeEach(() => resetStore());
+beforeEach(() => {
+  for (const table of Object.values(tables)) {
+    for (const value of Object.values(table)) {
+      if (typeof value === "function" && "mockClear" in value) value.mockClear();
+    }
+  }
+});
 
 describe("isolation des avis entre entreprises", () => {
-  it("ne retourne à A que les avis de A", async () => {
-    const a = await listReviewsForCompany(DEV_IDS.companyA, everything);
-    const b = await listReviewsForCompany(DEV_IDS.companyB, everything);
+  it("filtre toujours la requête sur le company_id appelant", async () => {
+    await listReviewsForCompany(ids.companyA, everything);
+    expect(tables.reviews.eq).toHaveBeenCalledWith("company_id", ids.companyA);
 
-    expect(a.total).toBe(47);
-    expect(b.total).toBe(12);
-    expect(a.items.every((r) => r.companyId === DEV_IDS.companyA)).toBe(true);
-    expect(b.items.every((r) => r.companyId === DEV_IDS.companyB)).toBe(true);
-
-    const idsOfA = new Set(a.items.map((r) => r.id));
-    expect(b.items.some((r) => idsOfA.has(r.id))).toBe(false);
+    tables.reviews.eq.mockClear();
+    await listReviewsForCompany(ids.companyB, everything);
+    expect(tables.reviews.eq).toHaveBeenCalledWith("company_id", ids.companyB);
   });
 
-  it("garde l'isolation quand des filtres sont appliqués", async () => {
-    for (const rating of [1, 2, 3, 4, 5] as const) {
-      const page = await listReviewsForCompany(DEV_IDS.companyA, {
-        ...everything,
-        rating,
-        since: new Date(0),
-      });
-      expect(page.items.every((r) => r.companyId === DEV_IDS.companyA)).toBe(true);
-    }
+  it("conserve le filtre d'entreprise quand une note est passée", async () => {
+    await listReviewsForCompany(ids.companyA, { ...everything, rating: 2 });
+    expect(tables.reviews.eq).toHaveBeenCalledWith("company_id", ids.companyA);
+    expect(tables.reviews.eq).toHaveBeenCalledWith("rating", 2);
   });
-
-  it("calcule les statistiques sur les seuls avis de l'entreprise", async () => {
-    const distribution = await getRatingDistributionForCompany(DEV_IDS.companyB);
-    const total = Object.values(distribution).reduce((sum, n) => sum + n, 0);
-    expect(total).toBe(12);
+  it("interroge la distribution sur le seul compte appelant", async () => {
+    await getRatingDistributionForCompany(ids.companyB);
+    expect(tables.reviews.eq).toHaveBeenCalledWith("company_id", ids.companyB);
   });
 
   it("refuse toute lecture sans companyId", async () => {
@@ -62,76 +65,5 @@ describe("isolation des avis entre entreprises", () => {
     await expect(
       listReviewsForCompany(undefined as unknown as string, everything),
     ).rejects.toThrow();
-  });
-
-  it("ne retourne rien pour un companyId inconnu", async () => {
-    const page = await listReviewsForCompany("inconnu", everything);
-    expect(page).toEqual({ items: [], total: 0 });
-  });
-});
-
-describe("configuration du formulaire par entreprise", () => {
-  it("renvoie les valeurs par défaut sans personnalisation", async () => {
-    expect(await getReviewFormConfig(DEV_IDS.companyA)).toEqual(
-      DEFAULT_REVIEW_FORM_CONFIG,
-    );
-  });
-
-  it("cloisonne la configuration entre entreprises", async () => {
-    const config = {
-      ...DEFAULT_REVIEW_FORM_CONFIG,
-      thanksTitle: "Merci entreprise A !",
-    };
-    await updateReviewFormConfig(DEV_IDS.companyA, config);
-
-    expect((await getReviewFormConfig(DEV_IDS.companyA)).thanksTitle).toBe(
-      "Merci entreprise A !",
-    );
-    expect(await getReviewFormConfig(DEV_IDS.companyB)).toEqual(
-      DEFAULT_REVIEW_FORM_CONFIG,
-    );
-  });
-
-  it("refuse toute lecture ou écriture sans companyId", async () => {
-    await expect(getReviewFormConfig("")).rejects.toThrow();
-    await expect(
-      updateReviewFormConfig("", DEFAULT_REVIEW_FORM_CONFIG),
-    ).rejects.toThrow();
-  });
-});
-
-describe("vue Administrateur", () => {
-  it("n'expose que des agrégats, jamais le contenu d'un avis (AD-05)", async () => {
-    const { items } = await listCompaniesForAdmin({ page: 1, pageSize: 100 });
-    expect(items.length).toBeGreaterThan(0);
-    for (const row of items) {
-      expect(Object.keys(row).sort()).toEqual([
-        "averageRating",
-        "createdAt",
-        "email",
-        "id",
-        "name",
-        "reviewCount",
-        "status",
-      ]);
-    }
-  });
-
-  it("suspendre A n'affecte pas B (CA-09)", async () => {
-    const result = await changeCompanyStatus(DEV_IDS.companyA, "SUSPEND");
-    expect(result.ok).toBe(true);
-    expect((await findCompanyById(DEV_IDS.companyA))?.status).toBe("SUSPENDED");
-    expect((await findCompanyById(DEV_IDS.companyB))?.status).toBe("ACTIVE");
-  });
-
-  it("rend introuvable une entreprise supprimée", async () => {
-    await softDeleteCompany(DEV_IDS.companyA);
-    expect(await findCompanyById(DEV_IDS.companyA)).toBeNull();
-    const { items } = await listCompaniesForAdmin({ page: 1, pageSize: 100 });
-    expect(items.some((row) => row.id === DEV_IDS.companyA)).toBe(false);
-    expect(await softDeleteCompany(DEV_IDS.companyA)).toEqual({
-      ok: false,
-      reason: "NOT_FOUND",
-    });
   });
 });

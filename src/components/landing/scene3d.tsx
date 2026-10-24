@@ -140,21 +140,40 @@ export function Scene3D() {
     const root = document.documentElement;
     if (!canvas || !document.getElementById("hero")) return;
 
+    // Sous 1024 px, la caméra ne peut pas garder les maquettes hors du texte :
+    // on rend les maquettes HTML à la place de la scène.
+    const sceneAllowed = window.matchMedia("(min-width: 1024px)");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
     let cleanup: Cleanup | undefined;
+    let scheduled = 0;
 
-    const scheduled = window.setTimeout(() => {
-      void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
-        cleanup = done;
-      });
-    }, 40);
-
-    return () => {
+    const stop = () => {
       window.clearTimeout(scheduled);
       cleanup?.();
+      cleanup = undefined;
     };
+
+    const sync = () => {
+      if (!sceneAllowed.matches) {
+        stop();
+        return;
+      }
+      if (cleanup || scheduled) return;
+      scheduled = window.setTimeout(() => {
+        scheduled = 0;
+        void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
+          if (sceneAllowed.matches) cleanup = done;
+          else done();
+        });
+      }, 40);
+    };
+
+    sync();
+    sceneAllowed.addEventListener("change", sync);
+
+    return stop;
   }, []);
 
   return <canvas ref={canvasRef} aria-hidden className="scene-canvas" />;
