@@ -6,9 +6,11 @@ import { KPICard } from "@/components/admin/kpi-card";
 import { PlatformTrendChart } from "@/components/admin/platform-trend-chart";
 import { RecentActivity } from "@/components/admin/recent-activity";
 import { RecentCompanies } from "@/components/admin/recent-companies";
+import { FinancialOverview } from "@/components/admin/financial-overview";
 import { buttonClass } from "@/components/ui/button";
 import {
   BuildingIcon,
+  CreditCardIcon,
   JournalIcon,
   MessageIcon,
   PauseIcon,
@@ -23,6 +25,7 @@ import { deltaChip } from "@/lib/kpi-delta";
 import { requireAdmin } from "@/server/auth/guards";
 import { listAuditLog } from "@/server/repositories/audit-log-repository";
 import { getPlatformStats, listRecentCompanies } from "@/server/repositories/company-repository";
+import { getSerializedCompanySubscriptions } from "@/server/repositories/subscription-repository";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -38,11 +41,17 @@ export default function AdminDashboardPage() {
     <>
       <PageHeader
         title="Tableau de bord"
-        description="L'activité de la plateforme AvisTrack : inscriptions, avis collectés et comptes suspendus."
+        description="L'activité de la plateforme AvisTrack : abonnements, finances, inscriptions et avis collectés."
         actions={
-          <Link href="/admin/entreprises" className={buttonClass("secondary")}>
-            Gérer les entreprises
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/finances" className={buttonClass("secondary")}>
+              <CreditCardIcon className="size-4" />
+              Finances & Abonnements
+            </Link>
+            <Link href="/admin/entreprises" className={buttonClass("ghost")}>
+              Gérer les entreprises
+            </Link>
+          </div>
         }
       />
       <Suspense fallback={<DashboardSkeleton />}>
@@ -62,6 +71,9 @@ async function DashboardContent() {
     listRecentCompanies(5),
     listAuditLog({ page: 1, pageSize: 5 }),
   ]);
+
+  const companyIds = recentCompanies.map((c) => c.id);
+  const subscriptions = await getSerializedCompanySubscriptions(companyIds);
 
   return (
     <>
@@ -126,6 +138,12 @@ async function DashboardContent() {
           <RecentActivity entries={auditLog.items} />
         </Panel>
       </div>
+
+      <FinancialOverview
+        companies={recentCompanies}
+        totalCompaniesCount={stats.companyCount}
+        subscriptions={subscriptions}
+      />
 
       <Panel
         id="tendance"

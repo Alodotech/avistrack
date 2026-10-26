@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { buttonClass } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 /** Logo Google officiel (quatre couleurs), tel que fourni par Google Identity. */

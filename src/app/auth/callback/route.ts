@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { checkAndSyncAdminOAuth } from "@/server/repositories/admin-repository";
 import { ensureCompanyForUser } from "@/server/services/company-onboarding";
-import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 /**
@@ -30,33 +30,9 @@ export async function GET(request: Request) {
   const { user } = data;
 
   // 1. Vérification prioritaire si l'utilisateur est administrateur.
-  // On utilise le client admin (service_role) pour contourner les restrictions RLS
-  // et les latences de session cookies lors du premier échange OAuth.
   let isAdmin = false;
   try {
-    const adminClient = createAdminClient();
-    const query = adminClient
-      .from("admins")
-      .select("user_id, email");
-
-    if (user.email) {
-      query.or(`user_id.eq.${user.id},email.ilike.${user.email}`);
-    } else {
-      query.eq("user_id", user.id);
-    }
-
-    const { data: adminRecord } = await query.maybeSingle();
-
-    if (adminRecord) {
-      isAdmin = true;
-      // Si l'admin était enregistré par e-mail sans user_id ou avec un ancien user_id
-      if (adminRecord.user_id !== user.id && user.email) {
-        await adminClient
-          .from("admins")
-          .update({ user_id: user.id })
-          .ilike("email", user.email);
-      }
-    }
+    isAdmin = await checkAndSyncAdminOAuth(user.id, user.email);
   } catch (err) {
     console.error("Erreur lors de la vérification admin dans auth/callback:", err);
   }

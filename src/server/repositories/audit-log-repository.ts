@@ -52,6 +52,35 @@ export async function recordAdminAction(entry: {
   if (error) throw error;
 }
 
+export async function recordAdminTeamAction(entry: {
+  adminId: string;
+  action: "INVITE_ADMIN" | "UPDATE_ADMIN_ROLE" | "REMOVE_ADMIN";
+  targetEmail: string;
+  role?: string;
+  reason?: string;
+}): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { data: admin } = await supabase
+    .from("admins")
+    .select("email")
+    .eq("user_id", entry.adminId)
+    .maybeSingle();
+
+  const { error } = await supabase.from("audit_logs").insert({
+    actor_id: entry.adminId,
+    action: entry.action,
+    target_type: "admin",
+    target_id: entry.targetEmail,
+    details: {
+      companyName: `Équipe AvisTrack (${entry.targetEmail})`,
+      adminEmail: admin?.email ?? null,
+      reason: entry.reason ?? (entry.role ? `Rôle : ${entry.role === "dirigeant" ? "Dirigeant AvisTrack" : "Administrateur"}` : null),
+    },
+  });
+  if (error) throw error;
+}
+
 export async function listAuditLog(options: {
   page: number;
   pageSize: number;

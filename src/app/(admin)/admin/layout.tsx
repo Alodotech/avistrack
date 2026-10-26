@@ -2,8 +2,10 @@ import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
 import {
   BuildingIcon,
+  CreditCardIcon,
   DashboardIcon,
   JournalIcon,
+  UserIcon,
 } from "@/components/ui/icons";
 import { getCurrentAdmin } from "@/server/auth/guards";
 import { InactivityHandler } from "@/components/admin/InactivityHandler";
@@ -11,13 +13,18 @@ import { InactivityHandler } from "@/components/admin/InactivityHandler";
 const NAV = [
   { href: "/admin", label: "Tableau de bord", icon: <DashboardIcon />, exact: true },
   { href: "/admin/entreprises", label: "Entreprises", icon: <BuildingIcon /> },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", icon: <UserIcon /> },
+  { href: "/admin/finances", label: "Finances", icon: <CreditCardIcon /> },
   { href: "/admin/journal", label: "Journal d'audit", icon: <JournalIcon /> },
 ];
 
 async function AdminIdentity() {
   const admin = await getCurrentAdmin();
   return admin ? (
-    <ShellIdentity label="Administrateur" value={admin.email} />
+    <ShellIdentity
+      label={admin.role === "dirigeant" ? "Dirigeant AvisTrack" : "Administrateur"}
+      value={admin.email}
+    />
   ) : null;
 }
 

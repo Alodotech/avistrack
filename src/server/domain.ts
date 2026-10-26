@@ -34,9 +34,21 @@ export type Review = {
   answers?: Record<string, string>;
 };
 
+export type AdminRole = "admin" | "dirigeant";
+
 export type Admin = {
   id: string;
   email: string;
+  role?: AdminRole;
+  createdAt?: Date;
+};
+
+export type AdminMember = {
+  id: string;
+  userId: string;
+  email: string;
+  role: AdminRole;
+  createdAt: Date;
 };
 
 export const QUESTION_TYPES = ["rating", "text", "date"] as const;
@@ -65,8 +77,37 @@ export type ReviewFormConfig = {
   thanksMessage: string;
 };
 
-export const AUDIT_ACTIONS = ["SUSPEND", "REACTIVATE", "DELETE"] as const;
+export const AUDIT_ACTIONS = [
+  "SUSPEND",
+  "REACTIVATE",
+  "DELETE",
+  "INVITE_ADMIN",
+  "UPDATE_ADMIN_ROLE",
+  "REMOVE_ADMIN",
+  "UPDATE_SUBSCRIPTION",
+] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export type SubscriptionPlan = "trial" | "pro" | "enterprise";
+export type SubscriptionPeriod = "monthly" | "annual" | "trial";
+
+export type CompanySubscription = {
+  companyId: string;
+  plan: SubscriptionPlan;
+  period: SubscriptionPeriod;
+  amount: number;
+  updatedAt: Date;
+  adminEmail?: string;
+};
+
+export type SerializedSubscription = {
+  companyId: string;
+  plan: SubscriptionPlan;
+  period: SubscriptionPeriod;
+  amount: number;
+  updatedAt: string;
+  adminEmail?: string;
+};
 
 export type AuditLogEntry = {
   id: string;

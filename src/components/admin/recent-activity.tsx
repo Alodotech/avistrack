@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/format";
+import type { AuditAction } from "@/server/domain";
 import type { AuditLogRowView } from "@/server/repositories/audit-log-repository";
 
-const ACTION_LABELS = {
+const ACTION_LABELS: Record<AuditAction, string> = {
   SUSPEND: "Suspension",
   REACTIVATE: "Réactivation",
   DELETE: "Suppression",
-} as const;
+  INVITE_ADMIN: "Ajout utilisateur",
+  UPDATE_ADMIN_ROLE: "Changement rôle",
+  REMOVE_ADMIN: "Retrait utilisateur",
+  UPDATE_SUBSCRIPTION: "Mise à jour abonnement",
+};
 
 function timeAgo(date: Date): string {
   const now = Date.now();

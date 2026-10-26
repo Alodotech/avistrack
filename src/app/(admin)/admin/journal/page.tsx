@@ -18,6 +18,10 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   SUSPEND: "Suspension",
   REACTIVATE: "Réactivation",
   DELETE: "Suppression",
+  INVITE_ADMIN: "Ajout utilisateur",
+  UPDATE_ADMIN_ROLE: "Changement rôle",
+  REMOVE_ADMIN: "Retrait utilisateur",
+  UPDATE_SUBSCRIPTION: "Mise à jour abonnement",
 };
 
 const COLUMNS = ["Date", "Administrateur", "Action", "Entreprise", "Motif"];

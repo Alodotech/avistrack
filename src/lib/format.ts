@@ -70,3 +70,11 @@ const percentFormatter = new Intl.NumberFormat("fr-FR", {
 export function formatPercent(share: number): string {
   return percentFormatter.format(share);
 }
+
+const currencyFormatter = new Intl.NumberFormat("fr-FR", {
+  maximumFractionDigits: 0,
+});
+
+export function formatCurrency(value: number): string {
+  return `${currencyFormatter.format(value)} FCFA`;
+}
