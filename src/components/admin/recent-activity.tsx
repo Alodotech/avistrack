@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { formatDate } from "@/lib/format";
 import type { AuditAction } from "@/server/domain";

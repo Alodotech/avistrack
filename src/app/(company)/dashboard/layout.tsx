@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
 import { InactivityHandler } from "@/components/admin/InactivityHandler";
@@ -17,6 +18,7 @@ const NAV = [
 ];
 
 async function CompanyIdentity() {
+  await connection();
   const company = await getCurrentCompany();
   return company ? (
     <ShellIdentity

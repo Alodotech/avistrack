@@ -111,10 +111,10 @@ export function AppShell({
             isAdmin ? "border-t-4 border-red lg:border-t-0 lg:border-r-4" : ""
           }`}
         >
-          <div className="min-w-0 px-4 py-3 lg:px-6 lg:py-6">
+          <div className="min-w-0 border-b border-white/10 px-4 py-3 lg:px-5 lg:pt-5 lg:pb-4">
             <Link
               href={homeHref}
-              className="flex flex-col gap-1.5"
+              className="flex flex-col gap-2 transition-opacity hover:opacity-90"
             >
               <div className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-white">
                 <Image
@@ -128,7 +128,7 @@ export function AppShell({
               </div>
               {isAdmin ? (
                 <div>
-                  <span className="inline-block rounded bg-accent px-2 py-0.5 text-[0.65rem] font-bold tracking-wider text-white uppercase">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-0.5 text-[0.65rem] font-bold tracking-wider text-white uppercase shadow-2xs">
                     Administration
                   </span>
                 </div>
@@ -169,7 +169,7 @@ export function AppShell({
 
           <nav
             aria-label={navLabel}
-            className="hidden lg:mt-8 lg:flex lg:flex-col lg:gap-1 lg:px-3"
+            className="hidden lg:mt-1 lg:flex lg:flex-col lg:gap-1 lg:px-3"
           >
             {items.map((item) => (
               <NavLink

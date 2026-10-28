@@ -198,26 +198,7 @@ export function FinancialOverview({
             </div>
           </div>
 
-          {/* Guide visuel : comment distinguer Annuel vs Mensuel */}
-          <div className="rounded-xl border border-purple-500/20 bg-purple-50/30 p-4 text-xs text-gray-700 leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white font-bold text-xs shadow-xs">
-                <ZapIcon className="size-4" />
-              </div>
-              <div>
-                <span className="font-bold text-black block mb-0.5">
-                  Distinguer les abonnements Annuels et Mensuels en un coup d&apos;œil
-                </span>
-                Repérez instantanément l&apos;icône violette <span className="inline-flex items-center gap-1 font-bold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded text-[0.7rem]"><ZapIcon className="size-3 text-purple-700" /> Annuel (12 mois)</span> pour les règlements annuels (2 mois offerts) et l&apos;icône bleue <span className="inline-flex items-center gap-1 font-bold text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded text-[0.7rem]"><RefreshIcon className="size-3 text-sky-700" /> Mensuel</span> pour les règlements par mois.
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[0.7rem] font-semibold text-gray-500">Devise :</span>
-              <span className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-black border border-black/10 shadow-xs">
-                FCFA (Franc CFA)
-              </span>
-            </div>
-          </div>
+
 
           {/* Grille tarifaire unique AvisTrack en FCFA */}
           <div className="rounded-xl border border-black/10 bg-white p-4">

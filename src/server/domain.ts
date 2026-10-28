@@ -97,6 +97,8 @@ export type CompanySubscription = {
   period: SubscriptionPeriod;
   amount: number;
   updatedAt: Date;
+  /** Date de fin de l'essai gratuit, fixée manuellement par l'admin (si period === 'trial'). */
+  trialEndDate?: Date;
   adminEmail?: string;
 };
 
@@ -106,6 +108,8 @@ export type SerializedSubscription = {
   period: SubscriptionPeriod;
   amount: number;
   updatedAt: string;
+  /** Date de fin de l'essai gratuit (ISO string), fixée manuellement par l'admin. */
+  trialEndDate?: string;
   adminEmail?: string;
 };
 

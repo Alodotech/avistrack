@@ -2,8 +2,8 @@ import type { SubscriptionPeriod } from "@/server/domain";
 
 export const AVIS_TRACK_PRICING = {
   trial: 0,
-  monthly: 19_000,
-  annual: 190_000,
+  monthly: 3_500,
+  annual: 30_000,
 } as const;
 
 export function getSubscriptionPrice(period: SubscriptionPeriod): number {
@@ -11,3 +11,4 @@ export function getSubscriptionPrice(period: SubscriptionPeriod): number {
   if (period === "monthly") return AVIS_TRACK_PRICING.monthly;
   return AVIS_TRACK_PRICING.trial;
 }
+

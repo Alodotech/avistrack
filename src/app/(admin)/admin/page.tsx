@@ -29,6 +29,8 @@ import { getSerializedCompanySubscriptions } from "@/server/repositories/subscri
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
+
+
 const STAT_LABELS = {
   companies: "Entreprises inscrites",
   reviews: "Avis collectés",
@@ -36,7 +38,12 @@ const STAT_LABELS = {
   suspended: "Comptes suspendus",
 } as const;
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  // Garantit un rendu à la requête (pas de pré-rendu statique).
+  // Nécessaire car Date.now() / new Date() sont utilisés dans les composants
+  // fils (getPlatformStats, timeAgo…). Compatible avec nextConfig.cacheComponents.
+  await connection();
+
   return (
     <>
       <PageHeader
@@ -60,6 +67,7 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
 
 async function DashboardContent() {
   await requireAdmin();

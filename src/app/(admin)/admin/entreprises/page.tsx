@@ -20,6 +20,7 @@ import { formatAverage, formatCount, formatDate } from "@/lib/format";
 import { pageCount, parsePage } from "@/lib/pagination";
 import { requireAdmin } from "@/server/auth/guards";
 import { listCompaniesForAdmin } from "@/server/repositories/company-repository";
+import { getSerializedCompanySubscriptions } from "@/server/repositories/subscription-repository";
 
 export const metadata: Metadata = { title: "Entreprises" };
 
@@ -72,6 +73,9 @@ async function EntreprisesContent({
     page,
     pageSize: PAGE_SIZE,
   });
+
+  const companyIds = companies.items.map((c) => c.id);
+  const subscriptions = await getSerializedCompanySubscriptions(companyIds);
 
   const lastPage = pageCount(companies.total, PAGE_SIZE);
 
@@ -194,6 +198,8 @@ async function EntreprisesContent({
                     id={company.id}
                     name={company.name}
                     status={company.status}
+                    createdAt={company.createdAt}
+                    subscription={subscriptions[company.id]}
                   />
                 </li>
               ))}
@@ -246,6 +252,8 @@ async function EntreprisesContent({
                           id={company.id}
                           name={company.name}
                           status={company.status}
+                          createdAt={company.createdAt}
+                          subscription={subscriptions[company.id]}
                         />
                       </td>
                     </tr>

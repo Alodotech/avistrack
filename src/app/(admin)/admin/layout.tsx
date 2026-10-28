@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
 import {
@@ -19,6 +20,7 @@ const NAV = [
 ];
 
 async function AdminIdentity() {
+  await connection();
   const admin = await getCurrentAdmin();
   return admin ? (
     <ShellIdentity

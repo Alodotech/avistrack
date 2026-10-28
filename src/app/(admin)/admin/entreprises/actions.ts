@@ -41,6 +41,8 @@ async function authorizeAdmin(): Promise<Admin> {
 const statusSchema = z.object({
   companyId: z.uuid(),
   change: z.enum(["SUSPEND", "REACTIVATE"]),
+  /** Date de suspension choisie par l'administrateur (optionnelle). */
+  suspensionDate: z.string().optional(),
   /** Motif de la suspension : obligatoire, et consigné au journal d'audit. */
   reason: z
     .string()
@@ -59,6 +61,7 @@ export async function changeCompanyStatusAction(
   const parsed = statusSchema.safeParse({
     companyId: formData.get("companyId"),
     change: formData.get("change"),
+    suspensionDate: formData.get("suspensionDate") || undefined,
     reason: formData.get("reason"),
   });
   if (!parsed.success) {
@@ -82,12 +85,16 @@ export async function changeCompanyStatusAction(
         };
   }
 
+  const dateNote = parsed.data.suspensionDate
+    ? ` [Date d'effet : ${parsed.data.suspensionDate}]`
+    : "";
+
   await recordAdminAction({
     adminId: admin.id,
     action: parsed.data.change,
     targetCompanyId: result.company.id,
     companyName: result.company.name,
-    reason: parsed.data.reason,
+    reason: `${parsed.data.reason}${dateNote}`,
   });
   refresh();
   return { status: "done" };
