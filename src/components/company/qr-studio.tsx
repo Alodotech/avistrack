@@ -2,9 +2,17 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import QRCode from "qrcode";
 import { jsPDF } from "jspdf";
+import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import {
   CopyIcon,
@@ -17,14 +25,20 @@ import {
 /* ------------------------------------------------------------------ */
 
 const ACCENT_GREEN = "#0F5C47";
-const ACCENT_ORANGE = "#C2410C";
 const INK_BLACK = "#000000";
 const WHITE = "#FFFFFF";
 
-const PAGE_FORMATS: { id: string; label: string; w: number; h: number }[] = [
-  { id: "A6", label: "A6 (105 × 148 mm)", w: 105, h: 148 },
-  { id: "A5", label: "A5 (148 × 210 mm)", w: 148, h: 210 },
-  { id: "A4", label: "A4 (210 × 297 mm)", w: 210, h: 297 },
+const PAGE_FORMATS: {
+  id: string;
+  label: string;
+  w: number; // mm
+  h: number; // mm
+  logicalW: number; // px (96 DPI)
+  logicalH: number; // px (96 DPI)
+}[] = [
+  { id: "A6", label: "A6 (105 × 148 mm)", w: 105, h: 148, logicalW: 397, logicalH: 559 },
+  { id: "A5", label: "A5 (148 × 210 mm)", w: 148, h: 210, logicalW: 559, logicalH: 794 },
+  { id: "A4", label: "A4 (210 × 297 mm)", w: 210, h: 297, logicalW: 794, logicalH: 1123 },
 ];
 
 const QR_COLORS = [
@@ -39,13 +53,12 @@ const LINK_MODES = [
 
 const LOGO_AVISTRACK = "/assets/logoavistrack.png";
 
+const MARGIN_PCT = 0.08; // 8% de chaque côté
+const QR_WIDTH_PCT = 0.60; // 60% de la largeur logique
+
 /* ------------------------------------------------------------------ */
 /* Utilitaires                                                        */
 /* ------------------------------------------------------------------ */
-
-function mmToPx(mm: number, dpi: number): number {
-  return (mm / 25.4) * dpi;
-}
 
 function initials(name: string): string {
   return name
@@ -55,9 +68,17 @@ function initials(name: string): string {
     .join("");
 }
 
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 40) || "entreprise";
+}
+
 /** Charge une image et la retourne en data URL (évite le CORS à l'export). */
-function imageToDataUrl(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+function loadImageDataUrl(url: string): Promise<string> {
+  return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -68,13 +89,13 @@ function imageToDataUrl(url: string): Promise<string> {
       ctx.drawImage(img, 0, 0);
       resolve(canvas.toDataURL("image/png"));
     };
-    img.onerror = () => reject(new Error(`Impossible de charger ${url}`));
+    img.onerror = () => resolve(url);
     img.src = url;
   });
 }
 
 /** Génère le SVG du QR code (erreur H, marge 4 modules). */
-async function qrSvg(url: string, color: string): Promise<string> {
+async function generateQrSvg(url: string, color: string): Promise<string> {
   return QRCode.toString(url, {
     type: "svg",
     margin: 4,
@@ -84,193 +105,193 @@ async function qrSvg(url: string, color: string): Promise<string> {
   });
 }
 
-/** Génère une data URL PNG du QR code (erreur H, marge 4 modules). */
-async function generateQrDataUrl(
-  url: string,
-  color: string,
-  size = 1024,
-): Promise<string> {
-  return QRCode.toDataURL(url, {
-    type: "image/png",
-    margin: 4,
-    width: size,
-    color: { dark: color, light: WHITE },
-    errorCorrectionLevel: "H",
-  });
-}
-
 /* ------------------------------------------------------------------ */
-/* Dessin de l'affiche sur canvas (aperçu + exports)                  */
+/* QrPoster : rendu unique de l'affiche, utilisé pour l'aperçu ET les exports */
 /* ------------------------------------------------------------------ */
 
-type PosterDrawContext = {
-  ctx: CanvasRenderingContext2D;
-  w: number; // px
-  h: number; // px
-  dpi: number;
+type QrPosterProps = {
+  logicalW: number;
+  logicalH: number;
   companyName: string;
   avistrackLogoDataUrl: string;
   companyLogoDataUrl: string | null;
-  qrPngDataUrl: string;
+  qrSvgDataUrl: string;
   qrColor: string;
 };
 
-function mm(dpi: number, value: number): number {
-  return mmToPx(value, dpi);
-}
-
-/** Charge une image en data URL. */
-function loadImageDataUrl(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => reject(new Error(`Impossible de charger ${url}`));
-    img.src = url;
-  });
-}
-
-function drawPoster({
-  ctx,
-  w,
-  h,
-  dpi,
+/** Affiche QR à taille logique fixe, layout flex sans position absolue. */
+function QrPoster({
+  logicalW,
+  logicalH,
   companyName,
   avistrackLogoDataUrl,
   companyLogoDataUrl,
-  qrPngDataUrl,
+  qrSvgDataUrl,
   qrColor,
-}: PosterDrawContext): void {
-  const m = (v: number) => mm(dpi, v);
-  const margin = m(9); // 9% ≈ marge confortable
-  const headerH = m(22);
+}: QrPosterProps) {
+  const margin = Math.round(logicalW * MARGIN_PCT);
+  const contentW = logicalW - 2 * margin;
+  const headerH = Math.round(logicalH * 0.12);
+  const footerH = Math.round(logicalH * 0.08);
+  const logoSize = Math.round(headerH * 0.65);
+  const qrSize = Math.round(contentW * QR_WIDTH_PCT);
 
-  /* Fond blanc */
-  ctx.fillStyle = WHITE;
-  ctx.fillRect(0, 0, w, h);
+  const posterStyle: CSSProperties = {
+    width: logicalW,
+    height: logicalH,
+    background: WHITE,
+    color: INK_BLACK,
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    display: "flex",
+    flexDirection: "column",
+    boxSizing: "border-box",
+  };
 
-  /* ---- En-tête : logo AvisTrack à gauche, logo entreprise à droite ---- */
-  ctx.save();
-  ctx.translate(margin, margin);
-  ctx.rect(0, 0, w - 2 * margin, headerH);
-  ctx.clip();
+  const headerStyle: CSSProperties = {
+    height: headerH,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: `${Math.round(headerH * 0.25)}px ${margin}px`,
+    boxSizing: "border-box",
+    borderBottom: `1px solid #00000026`,
+  };
 
-  const logoSize = headerH * 0.7;
+  const logoImgStyle: CSSProperties = {
+    width: logoSize,
+    height: logoSize,
+    objectFit: "contain",
+    display: "block",
+  };
 
-  const avistrackLogo = new Image();
-  avistrackLogo.src = avistrackLogoDataUrl;
-  /* Logo AvisTrack à gauche */
-  ctx.drawImage(avistrackLogo, 0, 0, logoSize, logoSize);
+  const initialsStyle: CSSProperties = {
+    width: logoSize,
+    height: logoSize,
+    borderRadius: "50%",
+    backgroundColor: ACCENT_GREEN,
+    color: WHITE,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    fontSize: Math.round(logoSize * 0.5),
+    lineHeight: "1",
+  };
 
-  /* Logo entreprise ou initiales à droite */
-  const rightX = w - 2 * margin - logoSize;
-  if (companyLogoDataUrl) {
-    const logo = new Image();
-    logo.src = companyLogoDataUrl;
-    ctx.drawImage(logo, rightX, 0, logoSize, logoSize);
-  } else {
-    const init = initials(companyName);
-    const cx = rightX + logoSize / 2;
-    const cy = logoSize / 2;
-    const r = logoSize / 2 - 2;
-    ctx.fillStyle = ACCENT_GREEN;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.fillStyle = WHITE;
-    ctx.font = `${r * 0.8}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(init, cx, cy);
-  }
-  ctx.restore();
+  const bodyStyle: CSSProperties = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 32,
+    padding: `0 ${margin}px`,
+    boxSizing: "border-box",
+  };
 
-  /* Séparateur fin sous l'en-tête */
-  ctx.fillStyle = "#00000026";
-  ctx.fillRect(margin, margin + headerH, w - 2 * margin, m(0.5));
+  const titleStyle: CSSProperties = {
+    fontSize: Math.round(logicalW * 0.08),
+    fontWeight: "800",
+    textAlign: "center",
+    margin: 0,
+    color: INK_BLACK,
+  };
 
-  /* ---- QR code centré ---- */
-  const qrImg = new Image();
-  qrImg.src = qrPngDataUrl;
+  const qrContainerStyle: CSSProperties = {
+    width: qrSize,
+    height: qrSize,
+    borderRadius: Math.round(qrSize * 0.05),
+    border: `2px solid ${qrColor}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: WHITE,
+    boxSizing: "border-box",
+  };
 
-  const maxQrW = (w - 2 * margin) * 0.6;
-  const qrSize = maxQrW;
-  const qrX = (w - qrSize) / 2;
-  const qrY = margin + headerH + m(14);
+  const qrImgStyle: CSSProperties = {
+    width: `${QR_WIDTH_PCT * 100}%`, // 60% du cadre, laisse une marge blanche de 4 modules
+    height: "auto",
+    display: "block",
+  };
 
-  /* Cadre fin autour du QR (couleur du QR) */
-  const framePad = m(2);
-  ctx.strokeStyle = qrColor;
-  ctx.lineWidth = m(1);
-  ctx.strokeRect(
-    qrX - framePad,
-    qrY - framePad,
-    qrSize + 2 * framePad,
-    qrSize + 2 * framePad,
+  const subtitleStyle: CSSProperties = {
+    fontSize: Math.round(logicalW * 0.045),
+    color: "#444444",
+    textAlign: "center",
+    margin: 0,
+  };
+
+  const footerStyle: CSSProperties = {
+    height: footerH,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    padding: `0 ${margin}px`,
+    boxSizing: "border-box",
+  };
+
+  const companyNameStyle: CSSProperties = {
+    fontSize: Math.round(logicalW * 0.055),
+    fontWeight: "600",
+    color: INK_BLACK,
+    textAlign: "center",
+    margin: 0,
+  };
+
+  const poweredByStyle: CSSProperties = {
+    fontSize: Math.round(logicalW * 0.04),
+    color: "#666666",
+    textAlign: "center",
+    margin: 0,
+  };
+
+  return (
+    <div style={posterStyle}>
+      <header style={headerStyle}>
+        <img
+          src={avistrackLogoDataUrl}
+          alt="Logo AvisTrack"
+          style={logoImgStyle}
+          loading="eager"
+        />
+        {companyLogoDataUrl ? (
+          <img
+            src={companyLogoDataUrl}
+            alt="Logo de l'entreprise"
+            style={logoImgStyle}
+          />
+        ) : (
+          <div style={initialsStyle}>
+            {initials(companyName)}
+          </div>
+        )}
+      </header>
+
+      <main style={bodyStyle}>
+        <h1 style={titleStyle}>Scannez-moi</h1>
+        <div style={qrContainerStyle}>
+          <img
+            src={qrSvgDataUrl}
+            alt="QR code de votre fiche d'avis"
+            style={qrImgStyle}
+          />
+        </div>
+        <p style={subtitleStyle}>Donnez votre avis en 30 secondes</p>
+      </main>
+
+      <footer style={footerStyle}>
+        <span style={companyNameStyle}>{companyName}</span>
+        <span style={poweredByStyle}>Propulsé par AvisTrack</span>
+      </footer>
+    </div>
   );
-
-  /* Coins arrondis du QR via masque */
-  ctx.save();
-  const radius = m(4);
-  ctx.beginPath();
-  ctx.moveTo(qrX + radius, qrY);
-  ctx.lineTo(qrX + qrSize - radius, qrY);
-  ctx.quadraticCurveTo(qrX + qrSize, qrY, qrX + qrSize, qrY + radius);
-  ctx.lineTo(qrX + qrSize, qrY + qrSize - radius);
-  ctx.quadraticCurveTo(
-    qrX + qrSize,
-    qrY + qrSize,
-    qrX + qrSize - radius,
-    qrY + qrSize,
-  );
-  ctx.lineTo(qrX + radius, qrY + qrSize);
-  ctx.quadraticCurveTo(qrX, qrY + qrSize, qrX, qrY + qrSize - radius);
-  ctx.lineTo(qrX, qrY + radius);
-  ctx.quadraticCurveTo(qrX, qrY, qrX + radius, qrY);
-  ctx.clip();
-  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-  ctx.restore();
-
-  /* ---- "Scannez-moi" ---- */
-  const scanY = qrY + qrSize + m(10);
-  ctx.fillStyle = INK_BLACK;
-  ctx.font = `bold ${m(10)}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Scannez-moi", w / 2, scanY);
-
-  /* Flèche de scan */
-  ctx.fillStyle = ACCENT_ORANGE;
-  ctx.beginPath();
-  ctx.moveTo(w / 2 - m(3), scanY + m(4));
-  ctx.lineTo(w / 2, scanY + m(10));
-  ctx.lineTo(w / 2 + m(3), scanY + m(4));
-  ctx.fill();
-
-  /* Sous-texte */
-  ctx.fillStyle = "#444444";
-  ctx.font = `${m(4.5)}px sans-serif`;
-  ctx.fillText("Donnez votre avis en 30 secondes", w / 2, scanY + m(16));
-
-  /* ---- Pied de page ---- */
-  ctx.fillStyle = INK_BLACK;
-  ctx.font = `600 ${m(5)}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(companyName, w / 2, h - margin - m(6));
-
-  ctx.fillStyle = "#666666";
-  ctx.font = `${m(4)}px sans-serif`;
-  ctx.fillText("Propulsé par AvisTrack", w / 2, h - margin + m(4));
 }
 
 /* ------------------------------------------------------------------ */
-/* Composant                                                          */
+/* QrStudio : contrôles, état et exports                              */
 /* ------------------------------------------------------------------ */
 
 type QrStudioProps = {
@@ -284,27 +305,34 @@ export function QrStudio({
   companyName = "Mon entreprise",
   companyLogoUrl,
 }: QrStudioProps) {
-  const [pageFormat, setPageFormat] = useState<"A6" | "A5" | "A4">("A6");
-  const [qrColor, setQrColor] = useState<"black" | "green">("green");
+  const [pageFormatId, setPageFormatId] = useState<"A6" | "A5" | "A4">("A6");
+  const [qrColorId, setQrColorId] = useState<"black" | "green">("green");
   const [linkMode, setLinkMode] = useState<"official" | "custom">("official");
   const [customLink, setCustomLink] = useState("");
-  const [qrPngDataUrl, setQrPngDataUrl] = useState<string | null>(null);
+  const [qrSvgDataUrl, setQrSvgDataUrl] = useState<string | null>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [avistrackLogoDataUrl, setAvistrackLogoDataUrl] = useState<string | null>(null);
-  const [qrSvgString, setQrSvgString] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const posterRef = useRef<HTMLDivElement | null>(null);
+  const exportPosterRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+  const [containerWidth, setContainerWidth] = useState(0);
+
   const format = useMemo(
-    () => PAGE_FORMATS.find((f) => f.id === pageFormat)!,
-    [pageFormat],
+    () => PAGE_FORMATS.find((f) => f.id === pageFormatId)!,
+    [pageFormatId],
   );
 
-  /* Précache le logo AvisTrack en data URL (évite le CORS à l'export) */
+  const qrColor = useMemo(
+    () => QR_COLORS.find((c) => c.id === qrColorId)!.value,
+    [qrColorId],
+  );
+
+  /* Précache le logo AvisTrack */
   useEffect(() => {
-    loadImageDataUrl(LOGO_AVISTRACK)
-      .then((data) => setAvistrackLogoDataUrl(data))
-      .catch(() => setAvistrackLogoDataUrl(LOGO_AVISTRACK));
+    loadImageDataUrl(LOGO_AVISTRACK).then(setAvistrackLogoDataUrl);
   }, []);
 
   const qrUrl = useMemo(() => {
@@ -317,27 +345,27 @@ export function QrStudio({
     return officialUrl;
   }, [linkMode, customLink, officialUrl]);
 
-  /* Générer le QR et le logo en data URL à chaque changement pertinent */
+  /* Générer le QR SVG et charger le logo entreprise */
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const [qr, svg] = await Promise.all([
-          generateQrDataUrl(qrUrl, qrColor === "green" ? ACCENT_GREEN : INK_BLACK),
-          qrSvg(qrUrl, qrColor === "green" ? ACCENT_GREEN : INK_BLACK),
-        ]);
+        const svg = await generateQrSvg(
+          qrUrl,
+          qrColorId === "green" ? ACCENT_GREEN : INK_BLACK,
+        );
         if (cancelled) return;
-        setQrPngDataUrl(qr);
-        setQrSvgString(svg);
+        setQrSvgDataUrl(`data:image/svg+xml;base64,${btoa(svg)}`);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : String(err));
       }
 
       if (companyLogoUrl) {
         try {
-          const data = await imageToDataUrl(companyLogoUrl);
+          const data = await loadImageDataUrl(companyLogoUrl);
           if (!cancelled) setLogoDataUrl(data);
         } catch {
           if (!cancelled) setLogoDataUrl(null);
@@ -350,61 +378,45 @@ export function QrStudio({
     return () => {
       cancelled = true;
     };
-  }, [qrUrl, qrColor, companyLogoUrl]);
+  }, [qrUrl, qrColorId, companyLogoUrl]);
 
-  /* Construire l'affiche complète en data URL (aperçu + base des exports) */
-  const buildPoster = useCallback(async (dpi: number): Promise<string> => {
-    if (!avistrackLogoDataUrl || !qrPngDataUrl) {
-      throw new Error("Ressources non chargées");
-    }
-    const fmt = PAGE_FORMATS.find((f) => f.id === pageFormat)!;
-    const w = mmToPx(fmt.w, dpi);
-    const h = mmToPx(fmt.h, dpi);
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(w));
-    canvas.height = Math.max(1, Math.round(h));
-    const ctx = canvas.getContext("2d")!;
-
-    drawPoster({
-      ctx,
-      w: canvas.width,
-      h: canvas.height,
-      dpi,
-      companyName,
-      avistrackLogoDataUrl,
-      companyLogoDataUrl: logoDataUrl,
-      qrPngDataUrl,
-      qrColor: qrColor === "green" ? ACCENT_GREEN : INK_BLACK,
+  /* Mesure du conteneur d'aperçu pour le scale */
+  useEffect(() => {
+    const el = posterRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        setContainerWidth(w);
+        setScale(w / format.logicalW);
+      }
     });
-
-    return canvas.toDataURL("image/png");
-  }, [pageFormat, qrPngDataUrl, logoDataUrl, companyName, qrColor, avistrackLogoDataUrl]);
-
-  /* ---- Aperçu (HTML/CSS, fidèle au dessin canvas) ---- */
-  const previewStyle = useMemo(() => {
-    const fmt = PAGE_FORMATS.find((f) => f.id === pageFormat)!;
-    const ratio = fmt.h / fmt.w;
-    return {
-      width: "100%",
-      maxWidth: "160mm",
-      aspectRatio: `${1 / ratio}`,
-    } as React.CSSProperties;
-  }, [pageFormat]);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [format.logicalW]);
 
   /* ---- Exports ---- */
 
   const downloadPng = useCallback(async () => {
-    if (!qrPngDataUrl) return;
+    if (!exportPosterRef.current || !qrSvgDataUrl) return;
     setLoading(true);
     try {
-      /* Largeur cible >= 2000 px */
-      const dpi = Math.max(150, Math.ceil((2400 * 25.4) / format.w));
-      const dataUrl = await buildPoster(dpi);
+      const node = exportPosterRef.current;
+      const dataUrl = await toPng(node, {
+        quality: 1,
+        cacheBust: true,
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+          width: `${format.logicalW}px`,
+          height: `${format.logicalH}px`,
+        },
+      });
       const blob = await (await fetch(dataUrl)).blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `qr-${slugify(companyName)}-${pageFormat}.png`;
+      a.download = `qr-${slugify(companyName)}-${pageFormatId}.png`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -412,39 +424,80 @@ export function QrStudio({
     } finally {
       setLoading(false);
     }
-  }, [qrPngDataUrl, format, pageFormat, companyName, buildPoster]);
+  }, [exportPosterRef, qrSvgDataUrl, format, pageFormatId, companyName]);
 
   const downloadPdf = useCallback(async () => {
-    if (!qrPngDataUrl) return;
+    if (!exportPosterRef.current || !qrSvgDataUrl) return;
     setLoading(true);
     try {
-      const fmt = PAGE_FORMATS.find((f) => f.id === pageFormat)!;
+      const node = exportPosterRef.current;
+      const dataUrl = await toPng(node, {
+        quality: 1,
+        cacheBust: true,
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+          width: `${format.logicalW}px`,
+          height: `${format.logicalH}px`,
+        },
+      });
       const doc = new jsPDF({
         unit: "mm",
-        format: [fmt.w, fmt.h] as [number, number],
+        format: [format.w, format.h] as [number, number],
       });
-      const dataUrl = await buildPoster(150); /* 150 DPI suffit pour le PDF vectoriel-ish */
-      const imgW = fmt.w;
-      const imgH = (fmt.h / fmt.w) * imgW;
+      const imgProps = doc.getImageProperties(dataUrl);
+      const imgW = format.w;
+      const imgH = (imgProps.height / imgProps.width) * imgW;
       doc.addImage(dataUrl, "PNG", 0, 0, imgW, imgH);
-      doc.save(`qr-${slugify(companyName)}-${pageFormat}.pdf`);
+      doc.save(`qr-${slugify(companyName)}-${pageFormatId}.pdf`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'export PDF");
     } finally {
       setLoading(false);
     }
-  }, [qrPngDataUrl, pageFormat, companyName, buildPoster]);
+  }, [exportPosterRef, qrSvgDataUrl, format, pageFormatId, companyName]);
 
   const downloadSvg = useCallback(() => {
-    if (!qrSvgString) return;
-    const blob = new Blob([qrSvgString], { type: "image/svg+xml" });
+    if (!qrSvgDataUrl) return;
+    const blob = new Blob([atob(qrSvgDataUrl.split(",")[1]!)], {
+      type: "image/svg+xml",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `qr-${slugify(companyName)}.svg`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [qrSvgString, companyName]);
+  }, [qrSvgDataUrl, companyName]);
+
+  /* ---- Rendu ---- */
+
+  const posterProps = {
+    logicalW: format.logicalW,
+    logicalH: format.logicalH,
+    companyName,
+    avistrackLogoDataUrl: avistrackLogoDataUrl ?? LOGO_AVISTRACK,
+    companyLogoDataUrl: logoDataUrl,
+    qrSvgDataUrl: qrSvgDataUrl ?? "",
+    qrColor,
+  };
+
+  const previewScaleStyle: CSSProperties = {
+    transform: `scale(${scale})`,
+    transformOrigin: "top left",
+    transformBox: "border-box",
+    width: format.logicalW,
+    height: format.logicalH,
+  };
+
+  const previewContainerStyle: CSSProperties = {
+    width: "100%",
+    maxWidth: "160mm",
+    height: containerWidth > 0 ? containerWidth * (format.logicalH / format.logicalW) : undefined,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -458,78 +511,43 @@ export function QrStudio({
               Aperçu de l&apos;affiche
             </span>
             <span className="text-xs text-gray-600">
-              {pageFormat} • {fmtLabel(pageFormat)}
+              {pageFormatId} • {format.w} × {format.h} mm
             </span>
           </div>
           <div
-            className="relative w-full max-w-[160mm] aspect-[105/148] border border-black/20 bg-white overflow-hidden shadow-sm"
-            style={previewStyle}
+            ref={posterRef}
+            className="border border-black/20 bg-white overflow-hidden shadow-sm"
+            style={previewContainerStyle}
           >
-            <div className="flex w-full h-full items-center justify-center p-4">
-              {loading ? (
-                <p className="text-sm text-gray-600">Génération de l&apos;affiche…</p>
-              ) : qrPngDataUrl ? (
-                <div className="relative w-full h-full flex flex-col items-center justify-center">
-                  {/* En-tête aperçu */}
-                  <div className="flex w-full items-center justify-between mb-2">
-                    <img
-                      src={LOGO_AVISTRACK}
-                      alt="Logo AvisTrack"
-                      className="h-8 w-auto"
-                    />
-                    {logoDataUrl ? (
-                      <img
-                        src={logoDataUrl}
-                        alt="Logo de l'entreprise"
-                        className="h-8 w-auto object-contain"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-green-800 flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">
-                          {initials(companyName)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div
-                    className="w-px h-2 bg-black/20 mx-2 mt-1"
-                    style={{ alignSelf: "stretch" }}
-                  />
-                  {/* QR */}
-                  <div className="relative flex items-center justify-center">
-                    <img
-                      src={qrPngDataUrl}
-                      alt="QR code de votre fiche d'avis"
-                      className="rounded-md border border-black/10 bg-white p-2 shadow-sm"
-                      style={{
-                        width: "60%",
-                        maxWidth: "180px",
-                        height: "auto",
-                      }}
-                    />
-                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                      <span className="font-bold text-black text-lg">
-                        Scannez-moi
-                      </span>
-                      <span className="text-xs text-gray-600 mt-1">
-                        Donnez votre avis en 30 secondes
-                      </span>
-                    </div>
-                  </div>
-                  {/* Pied de page aperçu */}
-                  <div className="mt-2 flex flex-col items-center">
-                    <span className="font-semibold text-black">{companyName}</span>
-                    <span className="text-xs text-gray-600">
-                      Propulsé par AvisTrack
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-600">Préparation de l&apos;affiche…</p>
-              )}
-            </div>
+            {loading ? (
+              <p className="text-sm text-gray-600">Génération de l&apos;affiche…</p>
+            ) : qrSvgDataUrl ? (
+              <div style={previewScaleStyle}>
+                <QrPoster {...posterProps} />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">Préparation de l&apos;affiche…</p>
+            )}
           </div>
         </div>
+
+        {/* Version cachée pour les exports (taille logique, pas de scale) */}
+        {qrSvgDataUrl && (
+          <div
+            ref={exportPosterRef}
+            style={{
+              position: "fixed",
+              left: -9999,
+              top: 0,
+              width: format.logicalW,
+              height: format.logicalH,
+              overflow: "hidden",
+            }}
+            aria-hidden
+          >
+            <QrPoster {...posterProps} />
+          </div>
+        )}
 
         {/* Contrôles */}
         <div className="lg:col-span-5 flex flex-col gap-4">
@@ -537,12 +555,12 @@ export function QrStudio({
             <h3 className="text-sm font-semibold text-black">Format de page</h3>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Format de page">
               {PAGE_FORMATS.map((f) => {
-                const active = f.id === pageFormat;
+                const active = f.id === pageFormatId;
                 return (
                   <Button
                     key={f.id}
                     type="button"
-                    onClick={() => setPageFormat(f.id as "A6" | "A5" | "A4")}
+                    onClick={() => setPageFormatId(f.id as "A6" | "A5" | "A4")}
                     variant={active ? "primary" : "secondary"}
                     size="sm"
                     aria-pressed={active}
@@ -558,12 +576,12 @@ export function QrStudio({
             <h3 className="text-sm font-semibold text-black">Couleur du QR</h3>
             <div className="flex gap-3" role="group" aria-label="Couleur du QR">
               {QR_COLORS.map((c) => {
-                const active = qrColor === c.id;
+                const active = qrColorId === c.id;
                 return (
                   <Button
                     key={c.id}
                     type="button"
-                    onClick={() => setQrColor(c.id)}
+                    onClick={() => setQrColorId(c.id)}
                     variant={active ? "primary" : "secondary"}
                     size="sm"
                     aria-pressed={active}
@@ -640,7 +658,7 @@ export function QrStudio({
             type="button"
             variant="secondary"
             onClick={downloadSvg}
-            disabled={!qrSvgString}
+            disabled={!qrSvgDataUrl}
             size="sm"
           >
             <DownloadIcon className="size-4" /> SVG
@@ -649,7 +667,7 @@ export function QrStudio({
             type="button"
             variant="secondary"
             onClick={downloadPng}
-            disabled={loading || !qrPngDataUrl}
+            disabled={loading || !qrSvgDataUrl}
             size="sm"
           >
             <DownloadIcon className="size-4" /> PNG HD
@@ -658,10 +676,10 @@ export function QrStudio({
             type="button"
             variant="secondary"
             onClick={downloadPdf}
-            disabled={loading || !qrPngDataUrl}
+            disabled={loading || !qrSvgDataUrl}
             size="sm"
           >
-            <DownloadIcon className="size-4" /> PDF {pageFormat}
+            <DownloadIcon className="size-4" /> PDF {pageFormatId}
           </Button>
           <Button
             type="button"
@@ -676,17 +694,4 @@ export function QrStudio({
       </div>
     </div>
   );
-}
-
-function fmtLabel(id: string): string {
-  const f = PAGE_FORMATS.find((x) => x.id === id);
-  return f ? `${f.w} × ${f.h} mm` : "";
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40) || "entreprise";
 }
