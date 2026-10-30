@@ -114,7 +114,7 @@ function SuspendDialogBody({
               onChange={() => setActionChoice("REACTIVATE")}
               className="size-4 text-green-600"
             />
-            Réactiver l'entreprise immédiatement
+            Réactiver l&apos;entreprise immédiatement
           </label>
           <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
             <input

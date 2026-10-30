@@ -18,7 +18,7 @@ import {
 } from "@/lib/company-filters";
 import { formatAverage, formatCount, formatDate } from "@/lib/format";
 import { pageCount, parsePage } from "@/lib/pagination";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import { listCompaniesForAdmin } from "@/server/repositories/company-repository";
 import { getSerializedCompanySubscriptions } from "@/server/repositories/subscription-repository";
 
@@ -58,7 +58,7 @@ export default function EntreprisesPage({ searchParams }: PageProps<"/admin/entr
 async function EntreprisesContent({
   searchParams,
 }: Pick<PageProps<"/admin/entreprises">, "searchParams">) {
-  await requireAdmin();
+  await requireAdminPermission("companies");
 
   const params = await searchParams;
   const filters = parseCompanyFilters(params);

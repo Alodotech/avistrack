@@ -10,6 +10,7 @@ import { siteUrlOrFallback } from "@/lib/site-url";
  */
 const PUBLIC_ROUTES = [
   { path: "", priority: 1, changeFrequency: "weekly" as const },
+  { path: "/tarifs", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/mentions-legales", priority: 0.3, changeFrequency: "yearly" as const },
   { path: "/confidentialite", priority: 0.3, changeFrequency: "yearly" as const },
 ];

@@ -11,10 +11,15 @@
   --color-black: #0a0a0a;
   --color-red: #d71920;
   --color-accent: #d71920;
-  --color-accent-deep: #b31217;
+  --color-accent-deep: #b01319;
+  --color-orange: #c2410c;
+  --color-orange-deep: #9a3412;
   --color-gray-100: #f4f4f4;
   --color-gray-500: #8a8a8a;
   --color-gray-600: #555555;
+  --color-cream: #f8f6f0;
+  --color-forest: #0f5c47;
+  --color-forest-deep: #0b4938;
 
   --font-sans: var(--font-inter), Inter, Arial, Helvetica, sans-serif;
   --font-mono: var(--font-inter), ui-monospace, monospace;
@@ -73,6 +78,17 @@ body {
   }
 }
 
+@keyframes avistrack-price-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .animate-rise {
   animation: avistrack-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -84,6 +100,10 @@ body {
 
 .animate-ping-slow {
   animation: avistrack-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.pricing-price {
+  animation: avistrack-price-in 0.28s ease both;
 }
 
 /* --- Écran de chargement --- */
@@ -435,6 +455,12 @@ body {
 
   .chapter-inner--wide > .screen-block {
     justify-self: end;
+  }
+
+  /* Chapitre sécurité : le texte reste dans la colonne de gauche pour
+   * laisser la maquette 3D respirer à droite. */
+  .chapter.security .copy-block {
+    max-width: 30rem;
   }
 }
 

@@ -2,23 +2,52 @@
 
 import { useTransition, useState, useId, useRef } from "react";
 import {
+  assignAdminRoleAction,
+  updateAdminPermissionsAction,
   updateAdminRoleAction,
   removeAdminAction,
 } from "@/app/(admin)/admin/utilisateurs/actions";
-import type { AdminRole } from "@/server/domain";
+import type { RoleOption } from "@/components/admin/admin-roles-panel";
+import {
+  ADMIN_LEVEL_LABELS,
+  ADMIN_MODULE_DESCRIPTIONS,
+  ADMIN_MODULE_LABELS,
+  defaultAdminPermissions,
+} from "@/lib/admin-permissions";
+import {
+  ADMIN_MODULES,
+  ADMIN_PERMISSION_LEVELS,
+  type AdminPermissionLevel,
+  type AdminPermissions,
+  type AdminRole,
+} from "@/server/domain";
 
 export function AdminUserRowActions({
   adminId,
   currentRole,
+  currentRoleId,
+  roles,
+  currentPermissions,
   userEmail,
   isCurrentAdmin,
 }: {
   adminId: string;
   currentRole: AdminRole;
+  currentRoleId: string | null;
+  roles: RoleOption[];
+  currentPermissions: AdminPermissions;
   userEmail: string;
   isCurrentAdmin: boolean;
 }) {
   const [role, setRole] = useState<AdminRole>(currentRole);
+  const [roleId, setRoleId] = useState<string>(currentRoleId ?? "");
+  const [isAssigning, startAssignTransition] = useTransition();
+  const [permissions, setPermissions] = useState<AdminPermissions>(
+    currentPermissions,
+  );
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [isSavingPermissions, startPermissionsTransition] = useTransition();
+  const permissionsDialogRef = useRef<HTMLDialogElement>(null);
   const [isPendingRole, startRoleTransition] = useTransition();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -28,12 +57,37 @@ export function AdminUserRowActions({
 
   const handleRoleChange = (newRole: AdminRole) => {
     setRole(newRole);
+    setPermissions(defaultAdminPermissions(newRole));
     startRoleTransition(async () => {
       const res = await updateAdminRoleAction(adminId, newRole);
       if (!res.ok) {
         setRole(currentRole);
         alert(res.error ?? "Erreur lors du changement de rôle.");
       }
+    });
+  };
+
+  const handleCustomRoleChange = (nextRoleId: string) => {
+    const previous = roleId;
+    setRoleId(nextRoleId);
+    startAssignTransition(async () => {
+      const res = await assignAdminRoleAction(adminId, nextRoleId || null);
+      if (!res.ok) {
+        setRoleId(previous);
+        alert(res.error ?? "Erreur lors de l'assignation du rôle.");
+      }
+    });
+  };
+
+  const savePermissions = () => {
+    setPermissionError(null);
+    startPermissionsTransition(async () => {
+      const res = await updateAdminPermissionsAction(adminId, permissions);
+      if (!res.ok) {
+        setPermissionError(res.error ?? "Impossible d'enregistrer les permissions.");
+        return;
+      }
+      permissionsDialogRef.current?.close();
     });
   };
 
@@ -72,6 +126,37 @@ export function AdminUserRowActions({
           </svg>
         </div>
       </div>
+
+      {/* Rôle personnalisé : remplace les permissions individuelles */}
+      <div className="relative">
+        <select
+          value={roleId}
+          disabled={isAssigning || roles.length === 0}
+          onChange={(event) => handleCustomRoleChange(event.target.value)}
+          aria-label={`Rôle personnalisé pour ${userEmail}`}
+          className="h-8 max-w-40 appearance-none rounded-lg border border-black/15 bg-white px-2.5 pr-7 text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-accent/20 focus:outline-none disabled:opacity-50"
+        >
+          <option value="">Rôle standard</option>
+          {roles.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => permissionsDialogRef.current?.showModal()}
+        className="rounded-lg border border-black/15 bg-white px-2.5 py-1 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-100"
+      >
+        Permissions
+      </button>
 
       {/* Bouton de révocation */}
       {isCurrentAdmin ? (
@@ -143,6 +228,80 @@ export function AdminUserRowActions({
           </dialog>
         </>
       )}
+
+      <dialog
+        ref={permissionsDialogRef}
+        aria-label={`Permissions de ${userEmail}`}
+        className="m-auto w-[min(42rem,calc(100vw-2rem))] rounded-2xl border border-black/15 bg-white p-6 text-left text-black shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+      >
+        <div className="flex flex-col gap-5">
+          <div>
+            <h3 className="text-base font-bold text-black">
+              Permissions de {userEmail}
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+              Chaque module peut être masqué, consulté en lecture seule ou géré
+              complètement. Les actions d’écriture exigent la gestion complète.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ADMIN_MODULES.map((module) => (
+              <label
+                key={module}
+                className="flex flex-col gap-1.5 rounded-xl border border-black/10 bg-gray-50/60 p-3"
+              >
+                <span className="text-xs font-bold text-black">
+                  {ADMIN_MODULE_LABELS[module]}
+                </span>
+                <span className="text-[0.7rem] leading-4 text-gray-500">
+                  {ADMIN_MODULE_DESCRIPTIONS[module]}
+                </span>
+                <select
+                  value={permissions[module]}
+                  onChange={(event) =>
+                    setPermissions((current) => ({
+                      ...current,
+                      [module]: event.target.value as AdminPermissionLevel,
+                    }))
+                  }
+                  className="mt-1 h-9 rounded-lg border border-black/15 bg-white px-2 text-xs font-semibold"
+                >
+                  {ADMIN_PERMISSION_LEVELS.map((level) => (
+                    <option key={level} value={level}>
+                      {ADMIN_LEVEL_LABELS[level]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+
+          {permissionError ? (
+            <p role="alert" className="rounded-xl border border-red/20 bg-red/10 p-3 text-xs font-medium text-red">
+              {permissionError}
+            </p>
+          ) : null}
+
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => permissionsDialogRef.current?.close()}
+              className="rounded-xl border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              disabled={isSavingPermissions}
+              onClick={savePermissions}
+              className="rounded-xl bg-accent px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
+            >
+              {isSavingPermissions ? "Enregistrement…" : "Enregistrer"}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }

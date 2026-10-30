@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+export const instant = false;
+
 export default async function AdminLoginPage() {
+  await connection();
   const state = await getAccountState();
   if (state.kind === "admin") redirect(ADMIN_HOME_PATH);
 

@@ -79,6 +79,17 @@ vi.mock("@/server/repositories/company-repository", () => ({
   },
 }));
 
+/** L'abonnement est simulé : seul le verrou de statut est testé ici. */
+const access = vi.hoisted(() => ({ blocked: false }));
+
+vi.mock("@/server/services/company-access", () => ({
+  isCompanyAccessBlocked: async () => access.blocked,
+  getCompanySubscriptionView: async () => ({
+    subscription: null,
+    view: { isExpired: false, status: "ACTIVE", modeLabel: "Essai", statusLabel: "Actif" },
+  }),
+}));
+
 vi.mock("@/server/repositories/review-repository", () => ({
   listReviewsForCompany: async (companyId: string) => ({
     items: THIRTEEN.map((review) => ({ ...review, companyId })),
@@ -105,6 +116,7 @@ function request(path: string, headers?: Record<string, string>) {
 
 beforeEach(() => {
   session.companyId = null;
+  access.blocked = false;
 });
 
 describe("GET /api/company/reviews", () => {
@@ -143,6 +155,16 @@ describe("GET /api/company/reviews", () => {
       expect(response.status).toBe(403);
       expect(await response.json()).not.toHaveProperty("items");
     }
+  });
+
+  it("répond 403 quand l'abonnement a expiré", async () => {
+    session.companyId = IDS.a;
+    access.blocked = true;
+    const response = await getReviews(request("/api/company/reviews"));
+    expect(response.status).toBe(403);
+    expect(await response.json()).not.toHaveProperty("items");
+
+    expect((await getQr(request("/api/company/qr"))).status).toBe(403);
   });
 
   it("répond 401 quand la session désigne une entreprise inexistante", async () => {

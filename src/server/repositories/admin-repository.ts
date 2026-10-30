@@ -1,5 +1,15 @@
 import "server-only";
-import type { Admin, AdminMember, AdminRole } from "@/server/domain";
+import {
+  defaultAdminPermissions,
+  parseAdminPermissions,
+} from "@/lib/admin-permissions";
+import type {
+  Admin,
+  AdminMember,
+  AdminPermissions,
+  AdminRole,
+} from "@/server/domain";
+import type { Json } from "@/types/supabase";
 import { recordAdminTeamAction } from "./audit-log-repository";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
@@ -9,11 +19,19 @@ import { createClient } from "@/utils/supabase/server";
  * (`user_id`) : un administrateur ne peut lire que sa propre ligne via RLS.
  */
 
-function toAdmin(row: { user_id: string; email: string; role?: string; created_at?: string }): Admin {
+function toAdmin(row: {
+  user_id: string;
+  email: string;
+  role?: string;
+  permissions?: Json;
+  created_at?: string;
+}): Admin {
+  const role = (row.role as AdminRole) ?? "admin";
   return {
     id: row.user_id,
     email: row.email,
-    role: (row.role as AdminRole) ?? "admin",
+    role,
+    permissions: parseAdminPermissions(row.permissions, role),
     createdAt: row.created_at ? new Date(row.created_at) : undefined,
   };
 }
@@ -23,13 +41,18 @@ function toAdminMember(row: {
   user_id: string;
   email: string;
   role?: string;
+  role_id?: string | null;
+  permissions?: Json;
   created_at: string;
 }): AdminMember {
+  const role = (row.role as AdminRole) ?? "admin";
   return {
     id: row.id,
     userId: row.user_id,
     email: row.email,
-    role: (row.role as AdminRole) ?? "admin",
+    role,
+    roleId: row.role_id ?? null,
+    permissions: parseAdminPermissions(row.permissions, role),
     createdAt: new Date(row.created_at),
   };
 }
@@ -40,7 +63,7 @@ export async function findAdminById(id: string): Promise<Admin | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("admins")
-      .select("user_id, email, role, created_at")
+      .select("user_id, email, role, permissions, created_at")
       .eq("user_id", id)
       .maybeSingle();
     if (!error && data) return toAdmin(data);
@@ -52,7 +75,7 @@ export async function findAdminById(id: string): Promise<Admin | null> {
     const adminClient = createAdminClient();
     const { data, error } = await adminClient
       .from("admins")
-      .select("user_id, email, role, created_at")
+      .select("user_id, email, role, permissions, created_at")
       .eq("user_id", id)
       .maybeSingle();
     if (!error && data) return toAdmin(data);
@@ -73,7 +96,7 @@ export async function findAdminByEmail(email: string): Promise<Admin | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("admins")
-    .select("user_id, email, role, created_at")
+    .select("user_id, email, role, permissions, created_at")
     .ilike("email", email.trim())
     .maybeSingle();
   if (error) throw error;
@@ -117,7 +140,7 @@ export async function listAdmins(): Promise<AdminMember[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("admins")
-    .select("id, user_id, email, role, created_at")
+    .select("id, user_id, email, role, role_id, permissions, created_at")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -184,8 +207,9 @@ export async function addAdmin(options: {
       user_id: userId,
       email,
       role: options.role,
+      permissions: defaultAdminPermissions(options.role),
     })
-    .select("id, user_id, email, role, created_at")
+    .select("id, user_id, email, role, role_id, permissions, created_at")
     .single();
 
   if (insertErr || !inserted) {
@@ -221,7 +245,7 @@ export async function updateAdminRole(options: {
   // 1. Récupération de l'admin cible
   const { data: targetAdmin } = await supabase
     .from("admins")
-    .select("id, email, role")
+    .select("id, email, role, permissions")
     .eq("id", options.adminId)
     .maybeSingle();
 
@@ -232,7 +256,10 @@ export async function updateAdminRole(options: {
   // 2. Mise à jour du rôle
   const { error: updateErr } = await supabase
     .from("admins")
-    .update({ role: options.role })
+    .update({
+      role: options.role,
+      permissions: defaultAdminPermissions(options.role),
+    })
     .eq("id", options.adminId);
 
   if (updateErr) {
@@ -250,6 +277,51 @@ export async function updateAdminRole(options: {
     });
   } catch {
     // Ne bloque pas
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Met à jour les permissions module par module d'un administrateur.
+ */
+export async function updateAdminPermissions(options: {
+  adminId: string;
+  permissions: AdminPermissions;
+  actorId: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = createAdminClient();
+
+  const { data: targetAdmin } = await supabase
+    .from("admins")
+    .select("id, email, role")
+    .eq("id", options.adminId)
+    .maybeSingle();
+
+  if (!targetAdmin) {
+    return { ok: false, error: "Administrateur introuvable." };
+  }
+
+  const { error } = await supabase
+    .from("admins")
+    .update({ permissions: options.permissions })
+    .eq("id", options.adminId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  try {
+    await recordAdminTeamAction({
+      adminId: options.actorId,
+      action: "UPDATE_ADMIN_ROLE",
+      targetEmail: targetAdmin.email,
+      reason: `Permissions mises à jour : ${Object.entries(options.permissions)
+        .map(([module, level]) => `${module}=${level}`)
+        .join(", ")}`,
+    });
+  } catch {
+    // Le journal ne doit pas bloquer la modification des permissions.
   }
 
   return { ok: true };

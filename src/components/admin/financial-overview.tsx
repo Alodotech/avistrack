@@ -13,7 +13,11 @@ import {
 import { Panel } from "@/components/ui/panel";
 import { tableStyles as t } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { AVIS_TRACK_PRICING, getSubscriptionPrice } from "@/lib/pricing";
+import {
+  AVIS_TRACK_ANNUAL_SAVINGS,
+  AVIS_TRACK_PRICING,
+  getSubscriptionPrice,
+} from "@/lib/pricing";
 import type {
   CompanyStatus,
   SerializedSubscription,
@@ -259,7 +263,7 @@ export function FinancialOverview({
               {/* Option 3 : Formule Annuelle */}
               <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3.5 flex flex-col gap-1.5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 bg-emerald-600 text-[0.55rem] font-bold text-white px-2 py-0.5 rounded-bl">
-                  2 mois offerts !
+                  {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} offerts
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
@@ -271,7 +275,7 @@ export function FinancialOverview({
                   </span>
                 </div>
                 <p className="text-[0.7rem] text-gray-600">
-                  Règlement en une fois par an avec 2 mois offerts.
+                  Règlement en une fois par an, avec une remise annuelle.
                 </p>
                 <div className="mt-1">
                   <span className="text-sm font-bold text-purple-950">
@@ -279,7 +283,7 @@ export function FinancialOverview({
                     <span className="text-[0.65rem] font-normal text-gray-500">/ an</span>
                   </span>
                   <span className="text-[0.65rem] text-emerald-700 font-medium block">
-                    Économisez {formatCurrency(AVIS_TRACK_PRICING.monthly * 2)} par an
+                    Économisez {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} par an
                   </span>
                 </div>
               </div>
@@ -449,7 +453,7 @@ export function FinancialOverview({
                             Annuel (12 mois)
                           </span>
                           <span className="text-[0.65rem] font-semibold text-emerald-700">
-                            Facturé par an · 2 mois offerts
+                            Facturé par an · {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} économisés
                           </span>
                         </div>
                       ) : sub.period === "monthly" ? (

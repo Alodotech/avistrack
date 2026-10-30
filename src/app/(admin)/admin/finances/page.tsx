@@ -6,7 +6,7 @@ import { FinancialOverview } from "@/components/admin/financial-overview";
 import { buttonClass } from "@/components/ui/button";
 import { BuildingIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/panel";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import { getPlatformStats, listRecentCompanies } from "@/server/repositories/company-repository";
 import { getSerializedCompanySubscriptions } from "@/server/repositories/subscription-repository";
 
@@ -43,7 +43,7 @@ export default function AdminFinancesPage() {
 }
 
 async function FinancesContent() {
-  await requireAdmin();
+  await requireAdminPermission("finances");
   await connection();
 
   const [stats, companies] = await Promise.all([

@@ -8,8 +8,9 @@ import { buttonClass } from "@/components/ui/button";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 const NAV = [
-  { href: "#s1", label: "Fonctionnement" },
-  { href: "#s4", label: "Sécurité" },
+  { href: "/#s1", label: "Fonctionnement" },
+  { href: "/tarifs", label: "Tarifs" },
+  { href: "/#s4", label: "Sécurité" },
   { href: "#contact", label: "Contact" },
 ] as const;
 

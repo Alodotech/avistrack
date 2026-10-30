@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   },
   description:
     "Collecte et analyse des avis clients par QR code, avec isolation stricte des données par entreprise.",
+  other: {
+    // Empêche l'extension Dark Reader de réécrire le DOM avant l'hydratation.
+    "darkreader-lock": "true",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

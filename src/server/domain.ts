@@ -13,6 +13,7 @@ export type Company = {
   name: string;
   email: string;
   phone: string;
+  logoUrl: string | null;
   status: CompanyStatus;
   createdAt: Date;
 };
@@ -24,8 +25,12 @@ export type Review = {
   companyId: string;
   rating: Rating;
   comment: string | null;
+  customerFirstName: string | null;
+  customerLastName: string | null;
+  customerPhone: string | null;
   /** Date de visite au format ISO `AAAA-MM-JJ`. */
   visitDate: string;
+  reviewerType?: "anonymous" | "identified";
   createdAt: Date;
   /**
    * Réponses aux questions personnalisées du formulaire, indexées par
@@ -36,11 +41,34 @@ export type Review = {
 
 export type AdminRole = "admin" | "dirigeant";
 
+export const ADMIN_MODULES = [
+  "dashboard",
+  "companies",
+  "finances",
+  "users",
+  "audit",
+  "reports",
+] as const;
+export type AdminModule = (typeof ADMIN_MODULES)[number];
+
+export const ADMIN_PERMISSION_LEVELS = ["none", "read", "manage"] as const;
+export type AdminPermissionLevel = (typeof ADMIN_PERMISSION_LEVELS)[number];
+export type AdminPermissions = Record<AdminModule, AdminPermissionLevel>;
+
 export type Admin = {
   id: string;
   email: string;
   role?: AdminRole;
+  permissions: AdminPermissions;
   createdAt?: Date;
+};
+
+/** Rôle personnalisé : un nom et un niveau par module (module 6). */
+export type AdminRoleDefinition = {
+  id: string;
+  name: string;
+  permissions: AdminPermissions;
+  createdAt: Date;
 };
 
 export type AdminMember = {
@@ -48,6 +76,19 @@ export type AdminMember = {
   userId: string;
   email: string;
   role: AdminRole;
+  /** Rôle personnalisé assigné, s'il y en a un. */
+  roleId: string | null;
+  permissions: AdminPermissions;
+  createdAt: Date;
+};
+
+export type Remark = {
+  id: string;
+  companyId: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  message: string;
   createdAt: Date;
 };
 
@@ -75,6 +116,10 @@ export type ReviewFormConfig = {
   thanksTitle: string;
   /** Message de l'écran de remerciement. */
   thanksMessage: string;
+  /** Autorise le dépôt d'un avis sans donner son identité. */
+  allowAnonymous?: boolean;
+  /** Affiche le second choix « Laisser une remarque ». */
+  allowRemarks?: boolean;
 };
 
 export const AUDIT_ACTIONS = [
@@ -85,20 +130,34 @@ export const AUDIT_ACTIONS = [
   "UPDATE_ADMIN_ROLE",
   "REMOVE_ADMIN",
   "UPDATE_SUBSCRIPTION",
+  "DOWNLOAD_REPORT",
+  "PAYMENT",
+  "CREATE_ROLE",
+  "UPDATE_ROLE",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 export type SubscriptionPlan = "trial" | "pro" | "enterprise";
 export type SubscriptionPeriod = "monthly" | "annual" | "trial";
+export type SubscriptionStatus =
+  | "TRIALING"
+  | "ACTIVE"
+  | "CANCELED"
+  | "EXPIRED"
+  | "SUSPENDED";
 
 export type CompanySubscription = {
   companyId: string;
   plan: SubscriptionPlan;
   period: SubscriptionPeriod;
   amount: number;
-  updatedAt: Date;
-  /** Date de fin de l'essai gratuit, fixée manuellement par l'admin (si period === 'trial'). */
+  status: SubscriptionStatus;
+  startedAt: Date;
+  currentPeriodEnd: Date | null;
+  /** Date de fin de l'essai gratuit (si period === 'trial'). */
   trialEndDate?: Date;
+  canceledAt?: Date;
+  updatedAt: Date;
   adminEmail?: string;
 };
 
@@ -107,9 +166,13 @@ export type SerializedSubscription = {
   plan: SubscriptionPlan;
   period: SubscriptionPeriod;
   amount: number;
-  updatedAt: string;
-  /** Date de fin de l'essai gratuit (ISO string), fixée manuellement par l'admin. */
+  status: SubscriptionStatus;
+  startedAt: string;
+  currentPeriodEnd: string | null;
+  /** Date de fin de l'essai gratuit (ISO string). */
   trialEndDate?: string;
+  canceledAt?: string;
+  updatedAt: string;
   adminEmail?: string;
 };
 

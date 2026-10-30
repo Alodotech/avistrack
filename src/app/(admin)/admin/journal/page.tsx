@@ -6,7 +6,7 @@ import { EmptyState, PageHeader, Panel } from "@/components/ui/panel";
 import { tableStyles as t } from "@/components/ui/table";
 import { formatCount, formatDateTime } from "@/lib/format";
 import { pageCount, parsePage } from "@/lib/pagination";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import type { AuditAction } from "@/server/domain";
 import { listAuditLog } from "@/server/repositories/audit-log-repository";
 
@@ -22,12 +22,48 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   UPDATE_ADMIN_ROLE: "Changement rôle",
   REMOVE_ADMIN: "Retrait utilisateur",
   UPDATE_SUBSCRIPTION: "Mise à jour abonnement",
+  DOWNLOAD_REPORT: "Téléchargement rapport",
+  PAYMENT: "Paiement",
+  CREATE_ROLE: "Création rôle",
+  UPDATE_ROLE: "Mise à jour rôle",
 };
 
 const COLUMNS = ["Date", "Administrateur", "Action", "Entreprise", "Motif"];
 
-const journalHref = (page: number) =>
-  page > 1 ? `/admin/journal?page=${page}` : "/admin/journal";
+type JournalFilters = {
+  q: string;
+  action: string;
+  periode: string;
+};
+
+const PERIODS = [
+  ["semaine", "7 derniers jours", 7],
+  ["mois", "30 derniers jours", 30],
+  ["annee", "12 derniers mois", 365],
+  ["tout", "Tout l'historique", 0],
+] as const;
+
+function readParam(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
+}
+
+function journalHref(filters: JournalFilters, page = 1): string {
+  const params = new URLSearchParams();
+  if (filters.q) params.set("q", filters.q);
+  if (filters.action) params.set("action", filters.action);
+  if (filters.periode && filters.periode !== "tout") params.set("periode", filters.periode);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `/admin/journal?${query}` : "/admin/journal";
+}
+
+function exportHref(filters: JournalFilters, format: "csv" | "pdf"): string {
+  const params = new URLSearchParams({ format });
+  if (filters.q) params.set("q", filters.q);
+  if (filters.action) params.set("action", filters.action);
+  if (filters.periode) params.set("periode", filters.periode);
+  return `/api/admin/journal/export?${params.toString()}`;
+}
 
 /** AD-06 : qui a fait quoi, quand, sur quelle entreprise. */
 export default function AuditLogPage({
@@ -51,15 +87,97 @@ export default function AuditLogPage({
 async function AuditLogContent({
   searchParams,
 }: Pick<PageProps<"/admin/journal">, "searchParams">) {
-  await requireAdmin();
+  await requireAdminPermission("audit");
 
-  const page = parsePage((await searchParams).page);
-  const entries = await listAuditLog({ page, pageSize: PAGE_SIZE });
+  const params = await searchParams;
+  const page = parsePage(params.page);
+  const filters: JournalFilters = {
+    q: readParam(params.q),
+    action: readParam(params.action),
+    periode: readParam(params.periode) || "tout",
+  };
+  const action = (Object.keys(ACTION_LABELS) as AuditAction[]).find(
+    (value) => value === filters.action,
+  );
+  const days = PERIODS.find(([key]) => key === filters.periode)?.[2] ?? 0;
+
+  const entries = await listAuditLog({
+    page,
+    pageSize: PAGE_SIZE,
+    action,
+    query: filters.q || undefined,
+    periodDays: days || undefined,
+  });
 
   const lastPage = pageCount(entries.total, PAGE_SIZE);
-  if (page > lastPage) redirect(journalHref(lastPage));
+  if (page > lastPage) redirect(journalHref(filters, lastPage));
 
   return (
+    <>
+    <Panel
+      id="filtres"
+      title="Filtrer le journal"
+      description="Recherchez par entreprise ou administrateur, par action et par période."
+    >
+      <form method="get" className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
+          Entreprise ou administrateur
+          <input
+            type="search"
+            name="q"
+            defaultValue={filters.q}
+            placeholder="Nom ou e-mail"
+            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
+          Action
+          <select
+            name="action"
+            defaultValue={action ?? ""}
+            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+          >
+            <option value="">Toutes les actions</option>
+            {(Object.keys(ACTION_LABELS) as AuditAction[]).map((value) => (
+              <option key={value} value={value}>
+                {ACTION_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
+          Période
+          <select
+            name="periode"
+            defaultValue={filters.periode}
+            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+          >
+            {PERIODS.map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" className="min-h-10 rounded-md bg-black px-4 text-sm font-semibold text-white">
+            Filtrer
+          </button>
+          <a href="/admin/journal" className="min-h-10 rounded-md border border-black/25 px-4 py-2.5 text-sm font-semibold">
+            Réinitialiser
+          </a>
+        </div>
+      </form>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <a href={exportHref(filters, "csv")} className="text-sm font-semibold underline underline-offset-4">
+          Exporter en CSV
+        </a>
+        <a href={exportHref(filters, "pdf")} className="text-sm font-semibold underline underline-offset-4">
+          Exporter en PDF
+        </a>
+      </div>
+    </Panel>
+
     <Panel
       id="journal"
       title="Actions enregistrées"
@@ -143,10 +261,11 @@ async function AuditLogContent({
             page={page}
             total={entries.total}
             pageSize={PAGE_SIZE}
-            hrefForPage={journalHref}
+            hrefForPage={(target) => journalHref(filters, target)}
           />
         </>
       )}
     </Panel>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AccountStateScreen } from "@/components/company/account-state-screen";
+import { SubscriptionSummary } from "@/components/billing/subscription-summary";
 import { ReviewFilters } from "@/components/company/review-filters";
 import { ReviewsTable } from "@/components/company/reviews-table";
 import { SatisfactionOverview } from "@/components/company/satisfaction-overview";
@@ -31,6 +32,8 @@ import {
 import { statsFromDistribution } from "@/lib/review-stats";
 import { buildDailyTrend } from "@/lib/review-trend";
 import { requireCompany } from "@/server/auth/guards";
+import { defaultTrialSubscription } from "@/lib/subscription";
+import { getCompanySubscription } from "@/server/repositories/subscription-repository";
 import {
   getRatingDistributionForCompany,
   getReviewTimelineForCompany,
@@ -77,11 +80,15 @@ async function DashboardContent({
   const now = new Date();
   // La chronologie couvre les 30 jours de tendance et les 30 jours précédents
   // de comparaison, sans jamais charger l'historique complet des avis.
-  const [distribution, reviews, timeline] = await Promise.all([
+  const [distribution, reviews, timeline, storedSubscription] = await Promise.all([
     getRatingDistributionForCompany(company.id),
     listReviewsForDashboard(company, query),
     getReviewTimelineForCompany(company.id, 90, now),
+    getCompanySubscription(company.id),
   ]);
+  const subscription =
+    storedSubscription ??
+    defaultTrialSubscription(company.id, company.createdAt, now);
 
   const lastPage = pageCount(reviews.total, REVIEWS_PAGE_SIZE);
   if (query.page > lastPage) {
@@ -100,6 +107,8 @@ async function DashboardContent({
 
   return (
     <>
+      <SubscriptionSummary subscription={subscription} now={now} />
+
       <StatGrid>
         <StatCard
           label={STAT_LABELS.average}

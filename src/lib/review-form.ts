@@ -63,6 +63,8 @@ export const DEFAULT_REVIEW_FORM_CONFIG: ReviewFormConfig = {
   thanksTitle: "Merci pour votre avis !",
   thanksMessage:
     "Votre retour aide le commerce à mieux vous accueillir la prochaine fois.",
+  allowAnonymous: true,
+  allowRemarks: true,
 };
 
 /** Nettoie les questions en conservant leur ordre d'origine. */
@@ -93,6 +95,10 @@ export function withFormDefaults(
       config?.thanksTitle?.trim() || DEFAULT_REVIEW_FORM_CONFIG.thanksTitle,
     thanksMessage:
       config?.thanksMessage?.trim() || DEFAULT_REVIEW_FORM_CONFIG.thanksMessage,
+    allowAnonymous:
+      config?.allowAnonymous ?? DEFAULT_REVIEW_FORM_CONFIG.allowAnonymous,
+    allowRemarks:
+      config?.allowRemarks ?? DEFAULT_REVIEW_FORM_CONFIG.allowRemarks,
   };
 }
 

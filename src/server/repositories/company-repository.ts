@@ -1,4 +1,5 @@
 import "server-only";
+import { ensureTrialSubscription } from "./subscription-repository";
 import { nextStatus, type StatusChange } from "@/lib/company-status";
 import {
   emptyDistribution,
@@ -29,6 +30,7 @@ function toCompany(row: CompanyRow): Company {
     name: row.name,
     email: row.email,
     phone: row.phone ?? "",
+    logoUrl: row.logo_url ?? null,
     status: statusFromRow(row.status),
     createdAt: new Date(row.created_at),
   };
@@ -210,17 +212,49 @@ export async function createCompany(
     if (error.code === "23505") return { ok: false, reason: "EMAIL_TAKEN" };
     throw error;
   }
+  try {
+    await ensureTrialSubscription(data.id, new Date(data.created_at));
+  } catch {
+    // L'abonnement sera créé à la première lecture ; ne bloque pas l'inscription.
+  }
   return { ok: true, company: toCompany(data) };
+}
+
+export async function markQrGenerated(companyId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("companies")
+    .update({ qr_generated_at: new Date().toISOString() })
+    .eq("id", companyId)
+    .is("qr_generated_at", null);
+  if (error) throw error;
 }
 
 export async function updateCompanyProfile(
   companyId: string,
-  profile: { name: string; phone: string },
+  profile: {
+    phone: string;
+    email: string;
+    name?: string;
+    logoUrl?: string | null;
+  },
 ): Promise<Company | null> {
   const supabase = await createClient();
+  const update: {
+    phone: string;
+    email: string;
+    name?: string;
+    logo_url?: string | null;
+  } = {
+    phone: profile.phone,
+    email: profile.email,
+  };
+  if (profile.name !== undefined) update.name = profile.name;
+  if (profile.logoUrl !== undefined) update.logo_url = profile.logoUrl;
+
   const { data, error } = await supabase
     .from("companies")
-    .update({ name: profile.name, phone: profile.phone })
+    .update(update)
     .eq("id", companyId)
     .is("deleted_at", null)
     .select("*")
@@ -239,9 +273,11 @@ export async function updateCompanyProfile(
  */
 export type AdminCompanyRow = {
   id: string;
+  publicId: string;
   name: string;
   email: string;
   phone: string;
+  logoUrl: string | null;
   status: CompanyStatus;
   createdAt: Date;
   reviewCount: number;
@@ -334,9 +370,11 @@ async function withReviewAggregates(
     );
     return {
       id: company.id,
+      publicId: company.public_id,
       name: company.name,
       email: company.email,
       phone: company.phone ?? "",
+      logoUrl: company.logo_url ?? null,
       status: statusFromRow(company.status),
       createdAt: new Date(company.created_at),
       reviewCount: stats.total,
@@ -530,6 +568,39 @@ export async function changeCompanyStatus(
     .single();
   if (updateError) throw updateError;
   return { ok: true, company: toCompany(data) };
+}
+
+/**
+ * Suppression du compte par son propriétaire (« Supprimer mon compte »).
+ *
+ * La ligne est marquée `deleted_at` : les avis et la piste d'audit sont
+ * conservés jusqu'à la purge RGPD à 30 jours. L'identifiant vient de la
+ * session serveur, jamais du client.
+ */
+export async function deleteOwnCompany(companyId: string): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", companyId)
+    .is("deleted_at", null)
+    .select("id, name, email")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return false;
+
+  const { error: auditError } = await supabase.from("audit_logs").insert({
+    action: "DELETE",
+    target_type: "company",
+    target_id: companyId,
+    details: {
+      companyName: data.name,
+      adminEmail: data.email,
+      reason: "Suppression demandée par l'entreprise depuis son profil",
+    },
+  });
+  if (auditError) throw auditError;
+  return true;
 }
 
 /**

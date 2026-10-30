@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { checkAndSyncAdminOAuth } from "@/server/repositories/admin-repository";
-import { ensureCompanyForUser } from "@/server/services/company-onboarding";
+import {
+  ensureCompanyForUser,
+  needsCompanyOnboarding,
+} from "@/server/services/company-onboarding";
 import { createClient } from "@/utils/supabase/server";
 
 /**
@@ -9,7 +11,8 @@ import { createClient } from "@/utils/supabase/server";
  * Après l'échange du code :
  * - Si administrateur (vérifié en base sans RLS) : redirection directe vers `/admin`.
  * - Si tentative d'accès admin non autorisée : redirection vers `/admin/login?error=unauthorized`.
- * - Si entreprise : orientation vers `/dashboard` (fiche créée en 1 clic via profil Google).
+ * - Si entreprise : `/onboarding` tant que le téléphone manque, sinon `/dashboard`
+ *   (fiche créée en 1 clic via le profil Google).
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,43 +32,39 @@ export async function GET(request: Request) {
 
   const { user } = data;
 
-  // 1. Vérification prioritaire si l'utilisateur est administrateur.
-  let isAdmin = false;
   try {
-    isAdmin = await checkAndSyncAdminOAuth(user.id, user.email);
+    // Si tentative d'accès à l'administration avec un compte Google non admin
+    if (next.startsWith("/admin")) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/admin/login?error=unauthorized", request.url));
+    }
+
+    // Utilisateur entreprise : création / récupération de la fiche entreprise
+    const company = await ensureCompanyForUser({
+      id: user.id,
+      email: user.email ?? null,
+      fullName:
+        typeof user.user_metadata?.full_name === "string"
+          ? user.user_metadata.full_name
+          : typeof user.user_metadata?.name === "string"
+            ? user.user_metadata.name
+            : null,
+    });
+
+    const destination =
+      !company ||
+      company.status !== "ACTIVE" ||
+      (await needsCompanyOnboarding(company))
+        ? "/onboarding"
+        : next.startsWith("/admin")
+          ? "/dashboard"
+          : next;
+
+    return NextResponse.redirect(new URL(destination, request.url));
   } catch (err) {
-    console.error("Erreur lors de la vérification admin dans auth/callback:", err);
+    return new NextResponse(
+      `Callback error: ${err instanceof Error ? err.message : String(err)}`,
+      { status: 500 },
+    );
   }
-
-  // Si administrateur : redirection DIRECTE vers /admin, sans JAMAIS passer par le dashboard entreprise
-  if (isAdmin) {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
-
-  // Si tentative d'accès à l'administration avec un compte Google non admin
-  if (next.startsWith("/admin")) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/admin/login?error=unauthorized", request.url));
-  }
-
-  // 2. Utilisateur entreprise : création / récupération de la fiche entreprise
-  const company = await ensureCompanyForUser({
-    id: user.id,
-    email: user.email ?? null,
-    fullName:
-      typeof user.user_metadata?.full_name === "string"
-        ? user.user_metadata.full_name
-        : typeof user.user_metadata?.name === "string"
-          ? user.user_metadata.name
-          : null,
-  });
-
-  const destination =
-    !company || company.status !== "ACTIVE"
-      ? "/onboarding"
-      : next.startsWith("/admin")
-        ? "/dashboard"
-        : next;
-
-  return NextResponse.redirect(new URL(destination, request.url));
 }

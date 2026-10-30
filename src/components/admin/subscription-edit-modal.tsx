@@ -5,7 +5,10 @@ import { updateSubscriptionAction } from "@/app/(admin)/admin/finances/actions";
 import { buttonClass } from "@/components/ui/button";
 import { CheckIcon, ClockIcon, CreditCardIcon, RefreshIcon, XIcon, ZapIcon } from "@/components/ui/icons";
 import { formatCurrency } from "@/lib/format";
-import { AVIS_TRACK_PRICING } from "@/lib/pricing";
+import {
+  AVIS_TRACK_ANNUAL_SAVINGS,
+  AVIS_TRACK_PRICING,
+} from "@/lib/pricing";
 import type { SubscriptionPeriod } from "@/server/domain";
 
 type Props = {
@@ -168,11 +171,11 @@ export function SubscriptionEditModal({
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-black">Abonnement Annuel</span>
                       <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[0.6rem] font-bold text-emerald-800">
-                        2 mois offerts
+                        Remise annuelle
                       </span>
                     </div>
                     <span className="text-[0.65rem] text-emerald-700 font-medium">
-                      Économisez {formatCurrency(AVIS_TRACK_PRICING.monthly * 2)} par an
+                      Économisez {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} par an
                     </span>
                   </div>
                 </div>

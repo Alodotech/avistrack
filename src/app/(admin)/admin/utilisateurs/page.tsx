@@ -3,10 +3,12 @@ import { Suspense } from "react";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { tableStyles as t } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import { listAdmins } from "@/server/repositories/admin-repository";
+import { listAdminRoles } from "@/server/repositories/admin-role-repository";
 import { AddAdminForm } from "@/components/admin/add-admin-form";
 import { AdminRoleBadge } from "@/components/admin/admin-role-badge";
+import { AdminRolesPanel } from "@/components/admin/admin-roles-panel";
 import { AdminUserRowActions } from "@/components/admin/admin-user-row-actions";
 
 export const metadata: Metadata = {
@@ -42,10 +44,17 @@ export default function AdminUsersPage() {
 }
 
 async function AdminUsersTableContent() {
-  const currentAdmin = await requireAdmin();
-  const admins = await listAdmins();
+  const currentAdmin = await requireAdminPermission("users");
+  const [admins, roles] = await Promise.all([listAdmins(), listAdminRoles()]);
+  const roleOptions = roles.map((role) => ({
+    id: role.id,
+    name: role.name,
+    permissions: role.permissions,
+  }));
 
   return (
+    <>
+      <AdminRolesPanel roles={roleOptions} />
     <Panel
       id="utilisateurs"
       title="Équipe d'administration"
@@ -127,6 +136,9 @@ async function AdminUsersTableContent() {
                     <AdminUserRowActions
                       adminId={admin.id}
                       currentRole={admin.role}
+                      currentRoleId={admin.roleId}
+                      roles={roleOptions}
+                      currentPermissions={admin.permissions}
                       userEmail={admin.email}
                       isCurrentAdmin={isCurrent}
                     />
@@ -138,5 +150,6 @@ async function AdminUsersTableContent() {
         </table>
       </div>
     </Panel>
+    </>
   );
 }

@@ -3,28 +3,30 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { KPICard } from "@/components/admin/kpi-card";
-import { PlatformTrendChart } from "@/components/admin/platform-trend-chart";
+import { PlatformActivityChart } from "@/components/admin/platform-activity-chart";
 import { RecentActivity } from "@/components/admin/recent-activity";
 import { RecentCompanies } from "@/components/admin/recent-companies";
 import { FinancialOverview } from "@/components/admin/financial-overview";
 import { buttonClass } from "@/components/ui/button";
 import {
   BuildingIcon,
-  CreditCardIcon,
   JournalIcon,
   MessageIcon,
   PauseIcon,
   StarIcon,
   TrendIcon,
+  DownloadIcon,
 } from "@/components/ui/icons";
 import { EmptyState, PageHeader, Panel } from "@/components/ui/panel";
 import { StatCardSkeleton } from "@/components/ui/stat-card";
 import { StatGrid } from "@/components/ui/stat-card";
 import { formatAverage, formatCount } from "@/lib/format";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 import { deltaChip } from "@/lib/kpi-delta";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import { listAuditLog } from "@/server/repositories/audit-log-repository";
 import { getPlatformStats, listRecentCompanies } from "@/server/repositories/company-repository";
+import { getPlatformActivity } from "@/server/repositories/platform-activity-repository";
 import { getSerializedCompanySubscriptions } from "@/server/repositories/subscription-repository";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
@@ -38,7 +40,9 @@ const STAT_LABELS = {
   suspended: "Comptes suspendus",
 } as const;
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: PageProps<"/admin">) {
   // Garantit un rendu à la requête (pas de pré-rendu statique).
   // Nécessaire car Date.now() / new Date() sont utilisés dans les composants
   // fils (getPlatformStats, timeAgo…). Compatible avec nextConfig.cacheComponents.
@@ -49,39 +53,48 @@ export default async function AdminDashboardPage() {
       <PageHeader
         title="Tableau de bord"
         description="L'activité de la plateforme AvisTrack : abonnements, finances, inscriptions et avis collectés."
-        actions={
-          <div className="flex items-center gap-2.5">
-            <Link href="/admin/finances" className={buttonClass("secondary")}>
-              <CreditCardIcon className="size-4" />
-              Finances & Abonnements
-            </Link>
-            <Link href="/admin/entreprises" className={buttonClass("ghost")}>
-              Gérer les entreprises
-            </Link>
-          </div>
-        }
       />
       <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContent />
+        <DashboardContent searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
 
-async function DashboardContent() {
-  await requireAdmin();
+async function DashboardContent({
+  searchParams,
+}: Pick<PageProps<"/admin">, "searchParams">) {
+  const admin = await requireAdminPermission("dashboard");
   // Les inscriptions « sur 30 jours » dépendent de l'heure courante.
   await connection();
 
-  const [stats, recentCompanies, auditLog] = await Promise.all([
+  const canCompanies = hasAdminPermission(admin.permissions, "companies");
+  const canFinances = hasAdminPermission(admin.permissions, "finances");
+  const canAudit = hasAdminPermission(admin.permissions, "audit");
+
+  const rawPeriod = (await searchParams).periode;
+  const periodValue = Array.isArray(rawPeriod) ? rawPeriod[0] : rawPeriod;
+  const activityDays =
+    periodValue === "semaine" || periodValue === "7"
+      ? 7
+      : periodValue === "annee" || periodValue === "365"
+        ? 365
+        : 30;
+
+  const [stats, recentCompanies, auditLog, activity] = await Promise.all([
     getPlatformStats(),
-    listRecentCompanies(5),
-    listAuditLog({ page: 1, pageSize: 5 }),
+    canCompanies ? listRecentCompanies(5) : Promise.resolve([]),
+    canAudit
+      ? listAuditLog({ page: 1, pageSize: 5 })
+      : Promise.resolve({ items: [], total: 0 }),
+    getPlatformActivity(activityDays),
   ]);
 
   const companyIds = recentCompanies.map((c) => c.id);
-  const subscriptions = await getSerializedCompanySubscriptions(companyIds);
+  const subscriptions = canFinances
+    ? await getSerializedCompanySubscriptions(companyIds)
+    : {};
 
   return (
     <>
@@ -130,40 +143,63 @@ async function DashboardContent() {
         />
       </StatGrid>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          id="recent-companies"
-          title="Dernières inscriptions"
-          description="Les 5 entreprises les plus récentes"
-        >
-          <RecentCompanies items={recentCompanies} />
-        </Panel>
-        <Panel
-          id="recent-activity"
-          title="Activité récente"
-          description="Dernières actions administratives"
-        >
-          <RecentActivity entries={auditLog.items} />
-        </Panel>
-      </div>
+      {(canCompanies || canAudit) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {canCompanies ? (
+            <Panel
+              id="recent-companies"
+              title="Dernières inscriptions"
+              description="Les 5 entreprises les plus récentes"
+            >
+              <RecentCompanies items={recentCompanies} />
+            </Panel>
+          ) : null}
+          {canAudit ? (
+            <Panel
+              id="recent-activity"
+              title="Activité récente"
+              description="Dernières actions administratives"
+            >
+              <RecentActivity entries={auditLog.items} />
+            </Panel>
+          ) : null}
+        </div>
+      )}
 
-      <FinancialOverview
-        companies={recentCompanies}
-        totalCompaniesCount={stats.companyCount}
-        subscriptions={subscriptions}
-      />
+      {canFinances ? (
+        <FinancialOverview
+          companies={recentCompanies}
+          totalCompaniesCount={stats.companyCount}
+          subscriptions={subscriptions}
+        />
+      ) : null}
 
       <Panel
         id="tendance"
-        title="Évolution sur 12 mois"
-        description="Inscriptions d'entreprises et avis publiés, mois par mois"
+        title="Activité de la plateforme"
+        description={`Fenêtre glissante de ${activityDays} jours : inscriptions, abonnements et entreprises ayant reçu au moins un avis.`}
         flush
       >
-        <div className="p-5 lg:p-6">
-          <PlatformTrendChart
-            companies={stats.companiesLast12Months}
-            reviews={stats.reviewsLast12Months}
-          />
+        <div className="flex flex-col gap-5 p-5 lg:p-6">
+          <nav aria-label="Période du graphique" className="flex flex-wrap gap-2">
+            {([
+              [7, "semaine", "Semaine"],
+              [30, "mois", "Mois"],
+              [365, "annee", "Année"],
+            ] as const).map(([days, key, label]) => (
+              <Link
+                key={days}
+                href={days === 30 ? "/admin" : `/admin?periode=${key}`}
+                className={buttonClass(
+                  activityDays === days ? "primary" : "secondary",
+                  "min-h-9 px-3 py-1.5 text-xs",
+                )}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <PlatformActivityChart activity={activity} />
         </div>
       </Panel>
 
@@ -173,29 +209,32 @@ async function DashboardContent() {
         description={`${formatCount(stats.newCompaniesLast30Days)} entreprise${stats.newCompaniesLast30Days > 1 ? "s" : ""} inscrite${stats.newCompaniesLast30Days > 1 ? "s" : ""} sur les 30 derniers jours, contre ${formatCount(stats.newCompaniesPrevious30Days)} sur la période précédente.`}
       >
         <p className="text-sm leading-6 text-gray-600">
-          Le détail des entreprises, la suspension d&apos;un compte et la
-          suppression définitive se gèrent depuis la{" "}
-          <Link href="/admin/entreprises" className="font-semibold text-black underline underline-offset-4">
-            liste des entreprises
-          </Link>
-          . Chaque action d&apos;administration est consignée au{" "}
-          <Link href="/admin/journal" className="font-semibold text-black underline underline-offset-4">
-            journal d&apos;audit
-          </Link>
-          .
+          Le détail des entreprises et les actions d&apos;administration sont
+          accessibles selon les permissions de votre compte. Chaque action est
+          consignée au journal d&apos;audit.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/admin/entreprises" className={buttonClass("secondary")}>
-            <BuildingIcon />
-            Liste des entreprises
-          </Link>
-          <Link href="/admin/journal" className={buttonClass("ghost")}>
-            <JournalIcon />
-            Journal d&apos;audit
-          </Link>
-          <Link href="/admin/entreprises" className={buttonClass("ghost")}>
-            <TrendIcon />
-            Voir les tendances
+          {canCompanies ? (
+            <Link href="/admin/entreprises" className={buttonClass("secondary")}>
+              <BuildingIcon />
+              Liste des entreprises
+            </Link>
+          ) : null}
+          {canAudit ? (
+            <Link href="/admin/journal" className={buttonClass("ghost")}>
+              <JournalIcon />
+              Journal d&apos;audit
+            </Link>
+          ) : null}
+          {hasAdminPermission(admin.permissions, "reports") ? (
+            <Link href="/admin/rapports" className={buttonClass("ghost")}>
+              <TrendIcon />
+              Rapports
+            </Link>
+          ) : null}
+          <Link href="/admin/rapports" className={buttonClass("secondary")}>
+            <DownloadIcon />
+            Rapports PDF
           </Link>
         </div>
       </Panel>

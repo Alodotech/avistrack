@@ -54,7 +54,12 @@ export async function recordAdminAction(entry: {
 
 export async function recordAdminTeamAction(entry: {
   adminId: string;
-  action: "INVITE_ADMIN" | "UPDATE_ADMIN_ROLE" | "REMOVE_ADMIN";
+  action:
+    | "INVITE_ADMIN"
+    | "UPDATE_ADMIN_ROLE"
+    | "REMOVE_ADMIN"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE";
   targetEmail: string;
   role?: string;
   reason?: string;
@@ -70,7 +75,10 @@ export async function recordAdminTeamAction(entry: {
   const { error } = await supabase.from("audit_logs").insert({
     actor_id: entry.adminId,
     action: entry.action,
-    target_type: "admin",
+    target_type:
+      entry.action === "CREATE_ROLE" || entry.action === "UPDATE_ROLE"
+        ? "role"
+        : "admin",
     target_id: entry.targetEmail,
     details: {
       companyName: `Équipe AvisTrack (${entry.targetEmail})`,
@@ -81,16 +89,49 @@ export async function recordAdminTeamAction(entry: {
   if (error) throw error;
 }
 
+function cleanSearch(value: string): string {
+  return value.replace(/[,()%]/g, " ").trim();
+}
+
 export async function listAuditLog(options: {
   page: number;
   pageSize: number;
+  from?: Date;
+  to?: Date;
+  action?: AuditAction;
+  query?: string;
+  periodDays?: number;
+  now?: Date;
 }): Promise<Page<AuditLogRowView>> {
   const supabase = createAdminClient();
   const from = (options.page - 1) * options.pageSize;
 
-  const { data, error, count } = await supabase
+  const fromDate =
+    options.from ??
+    (options.periodDays
+      ? new Date(
+          (options.now ?? new Date()).getTime() -
+            (options.periodDays - 1) * 24 * 60 * 60 * 1000,
+        )
+      : undefined);
+  if (fromDate) fromDate.setUTCHours(0, 0, 0, 0);
+
+  let query = supabase
     .from("audit_logs")
-    .select("*", { count: "exact" })
+    .select("*", { count: "exact" });
+  if (fromDate) query = query.gte("created_at", fromDate.toISOString());
+  if (options.to) query = query.lte("created_at", options.to.toISOString());
+  if (options.action) query = query.eq("action", options.action);
+  if (options.query) {
+    const term = cleanSearch(options.query);
+    if (term) {
+      query = query.or(
+        `details->>companyName.ilike.%${term}%,details->>adminEmail.ilike.%${term}%`,
+      );
+    }
+  }
+
+  const { data, error, count } = await query
     .order("created_at", { ascending: false })
     .range(from, from + options.pageSize - 1);
   if (error) throw error;

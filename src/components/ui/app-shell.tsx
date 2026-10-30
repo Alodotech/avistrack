@@ -269,9 +269,15 @@ export function AppShell({
 export function ShellIdentity({
   label,
   value,
+  secondary,
+  logoUrl,
+  planLabel,
 }: {
   label: string;
   value: string;
+  secondary?: string;
+  logoUrl?: string | null;
+  planLabel?: string;
 }) {
   const signOut = useContext(ShellSignOutContext);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -316,6 +322,13 @@ export function ShellIdentity({
   }, [modalOpen, isSubmitting]);
 
   const initial = value ? value.charAt(0).toUpperCase() : "U";
+  const avatarStyle = logoUrl
+    ? {
+        backgroundImage: `url(${logoUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : undefined;
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -323,8 +336,11 @@ export function ShellIdentity({
       {menuOpen && (
         <div className="absolute bottom-full left-0 mb-2 w-full min-w-[220px] rounded-2xl border border-white/15 bg-[#151518] p-2.5 text-white shadow-2xl backdrop-blur-md z-30">
           <div className="flex items-center gap-2.5 px-2 py-1.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-white shadow-xs">
-              {initial}
+            <span
+              className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-white shadow-xs"
+              style={avatarStyle}
+            >
+              {logoUrl ? <span className="sr-only">Logo</span> : initial}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-white/50">
@@ -333,6 +349,16 @@ export function ShellIdentity({
               <p className="truncate text-xs font-semibold text-white" title={value}>
                 {value}
               </p>
+              {secondary ? (
+                <p className="truncate text-[0.65rem] text-white/60" title={secondary}>
+                  {secondary}
+                </p>
+              ) : null}
+              {planLabel ? (
+                <span className="mt-1 inline-flex rounded-full bg-orange/40 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-white">
+                  {planLabel}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -374,8 +400,11 @@ export function ShellIdentity({
         className="group flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2 text-left transition-all hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/15 text-xs font-bold text-white transition-colors group-hover:bg-accent">
-            {initial}
+          <span
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-white/15 text-xs font-bold text-white transition-colors group-hover:bg-accent"
+            style={avatarStyle}
+          >
+            {logoUrl ? <span className="sr-only">Logo</span> : initial}
           </span>
           <div className="min-w-0">
             <span className="block text-[0.65rem] font-semibold uppercase tracking-wider text-white/50">
@@ -387,6 +416,16 @@ export function ShellIdentity({
             >
               {value}
             </span>
+            {secondary ? (
+              <span className="block truncate text-[0.65rem] text-white/60" title={secondary}>
+                {secondary}
+              </span>
+            ) : null}
+            {planLabel ? (
+              <span className="mt-0.5 inline-flex rounded-full bg-orange/40 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-white">
+                {planLabel}
+              </span>
+            ) : null}
           </div>
         </div>
 

@@ -62,6 +62,14 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    `.env.local` n'est jamais versionné. La clé `service_role` contourne les
    politiques RLS : elle ne doit jamais être exposée au navigateur.
 
+   > **Fuite de secrets** — Seul `.env.example` (sans valeur) est versionné.
+   > Si un fichier `.env.local`, `.env.remote.local` ou une clé `service_role`
+   > a circulé (archive, capture d'écran, dépôt, message), **régénérez
+   > immédiatement les clés du projet Supabase** (*Project Settings → API →
+   > JWT Settings → renouveler les clés* `anon` et `service_role`), mettez à
+   > jour l'hébergement, puis redéployez. Vérifier l'état du suivi :
+   > `git ls-files | grep env` ne doit lister que `.env.example`.
+
 5. **Appliquer le schéma de base de données :**
    ```bash
    supabase db push

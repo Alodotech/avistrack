@@ -44,6 +44,8 @@ export function FormStudio({
   );
   const [thanksTitle, setThanksTitle] = useState(config.thanksTitle);
   const [thanksMessage, setThanksMessage] = useState(config.thanksMessage);
+  const [allowAnonymous, setAllowAnonymous] = useState(config.allowAnonymous ?? true);
+  const [allowRemarks, setAllowRemarks] = useState(config.allowRemarks ?? true);
   const [view, setView] = useState<"form" | "thanks">("form");
   const [attempted, setAttempted] = useState(false);
   const labelRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -101,6 +103,8 @@ export function FormStudio({
       noValidate
     >
       <input type="hidden" name="questions" value={JSON.stringify(questions)} />
+      <input type="hidden" name="allowAnonymous" value={allowAnonymous ? "on" : ""} />
+      <input type="hidden" name="allowRemarks" value={allowRemarks ? "on" : ""} />
 
       <Panel
         id="questions"
@@ -319,6 +323,43 @@ export function FormStudio({
                 <p className="text-sm text-red">{state.errors.thanksMessage}</p>
               ) : null}
             </div>
+          </div>
+        </Panel>
+
+        <Panel
+          id="options"
+          title="Options de collecte"
+          description="Choisissez ce que vos clients peuvent faire depuis le formulaire."
+        >
+          <div className="flex flex-col gap-4">
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={allowAnonymous}
+                onChange={(event) => setAllowAnonymous(event.target.checked)}
+                className="mt-0.5 size-4 accent-accent"
+              />
+              <span>
+                <span className="block font-semibold">Autoriser les avis anonymes</span>
+                <span className="block text-xs text-gray-600">
+                  Le client peut publier sans laisser son prénom, son nom et son téléphone.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={allowRemarks}
+                onChange={(event) => setAllowRemarks(event.target.checked)}
+                className="mt-0.5 size-4 accent-accent"
+              />
+              <span>
+                <span className="block font-semibold">Autoriser les remarques privées</span>
+                <span className="block text-xs text-gray-600">
+                  Le client peut adresser un message privé à l&apos;entreprise, sans le publier.
+                </span>
+              </span>
+            </label>
           </div>
         </Panel>
 

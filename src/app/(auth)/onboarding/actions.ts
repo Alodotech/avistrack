@@ -2,23 +2,26 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { absoluteUrl } from "@/lib/site-url";
-import { createCompany } from "@/server/repositories/company-repository";
-import { createClient } from "@/utils/supabase/server";
+import { LOGO_REQUIRED } from "@/lib/company-status";
+import {
+  COMPANY_LOGIN_PATH,
+  getCurrentCompany,
+} from "@/server/auth/guards";
+import { uploadCompanyLogo } from "@/server/repositories/company-logo-repository";
+import { updateCompanyProfile } from "@/server/repositories/company-repository";
 
 export type OnboardingState = {
-  status: "idle" | "error";
+  status: "idle" | "saved" | "error";
   message?: string;
-  errors?: { name?: string; email?: string; phone?: string; password?: string };
+  errors?: { name?: string; phone?: string; email?: string; logo?: string };
 };
 
 const onboardingSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Le nom doit contenir au moins 2 caractères.")
+    .min(2, "Indiquez le nom de votre entreprise.")
     .max(120, "Le nom ne peut pas dépasser 120 caractères."),
-  email: z.email("Adresse e-mail invalide."),
   phone: z
     .string()
     .trim()
@@ -31,21 +34,23 @@ const onboardingSchema = z.object({
           "Indiquez le numéro au format international, par exemple +22901970000.",
         ),
     ),
-  password: z
-    .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
-    .max(72, "Le mot de passe ne peut pas dépasser 72 caractères."),
+  email: z.string().trim().email("Adresse e-mail invalide"),
 });
 
-export async function createAccount(
+export async function completeOnboarding(
   _previous: OnboardingState,
   formData: FormData,
 ): Promise<OnboardingState> {
+  const company = await getCurrentCompany();
+  if (!company) redirect(COMPANY_LOGIN_PATH);
+  if (company.status !== "ACTIVE") {
+    return { status: "error", message: "Votre compte n'est pas actif." };
+  }
+
   const parsed = onboardingSchema.safeParse({
     name: formData.get("name"),
-    email: formData.get("email"),
     phone: formData.get("phone"),
-    password: formData.get("password"),
+    email: formData.get("email"),
   });
   if (!parsed.success) {
     const fields = z.flattenError(parsed.error).fieldErrors;
@@ -54,54 +59,33 @@ export async function createAccount(
       message: "Corrigez les champs signalés.",
       errors: {
         name: fields.name?.[0],
-        email: fields.email?.[0],
         phone: fields.phone?.[0],
-        password: fields.password?.[0],
+        email: fields.email?.[0],
       },
     };
   }
 
-  const { name, email, phone, password } = parsed.data;
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { name, phone },
-      emailRedirectTo: absoluteUrl("/auth/callback"),
-    },
-  });
-  if (error || !data.user) {
-    return {
-      status: "error",
-      message: "Corrigez les champs signalés.",
-      errors: { email: "Un compte existe déjà avec cette adresse e-mail." },
-    };
+  let logoUrl: string | null | undefined;
+  const logo = formData.get("logo");
+  if (logo instanceof File && logo.size > 0) {
+    const uploaded = await uploadCompanyLogo(company.id, logo);
+    if (!uploaded.ok) {
+      return {
+        status: "error",
+        message: uploaded.message,
+        errors: { logo: uploaded.message },
+      };
+    }
+    logoUrl = uploaded.url;
   }
 
-  // Création immédiate de la fiche entreprise, rattachée au compte.
-  const result = await createCompany({
-    userId: data.user.id,
-    name,
-    email,
-    phone,
-  });
-  if (!result.ok) {
-    return {
-      status: "error",
-      message: "Corrigez les champs signalés.",
-      errors: { email: "Un compte existe déjà avec cette adresse e-mail." },
-    };
+  // Le caractère obligatoire du logo se règle par `LOGO_REQUIRED` : la
+  // validation serveur suit la même règle que le libellé du formulaire.
+  if (LOGO_REQUIRED && !company.logoUrl && !logoUrl) {
+    const message = "Le logo de votre entreprise est obligatoire.";
+    return { status: "error", message, errors: { logo: message } };
   }
 
-  // Si la confirmation d'e-mail est activée, aucune session n'est ouverte :
-  // l'utilisateur est invité à confirmer son adresse.
-  if (!data.session) {
-    return {
-      status: "error",
-      message: `Compte créé. Confirmez votre adresse en cliquant sur le lien envoyé à ${email}.`,
-    };
-  }
-
-  redirect("/dashboard");
+  await updateCompanyProfile(company.id, { ...parsed.data, logoUrl });
+  return { status: "saved", message: "Profil enregistré. Choisissez votre forfait." };
 }

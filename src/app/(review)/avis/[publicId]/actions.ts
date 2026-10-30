@@ -5,13 +5,14 @@ import { z } from "zod";
 import { sanitizeText } from "@/lib/sanitize";
 import { findPublicCompanyByPublicId } from "@/server/repositories/company-repository";
 import { getPublicReviewFormConfig } from "@/server/repositories/form-repository";
-import { createReview } from "@/server/repositories/review-repository";
+import { createRemark, createReview } from "@/server/repositories/review-repository";
 import type { Rating } from "@/server/domain";
 
 export type PublicReviewState = {
   status: "idle" | "submitted" | "error";
   message?: string;
   errors?: Record<string, string>;
+  reviewerType?: "anonymous" | "identified";
 };
 
 /** Cookie de limitation : une soumission par entreprise et par fenêtre de 5 min. */
@@ -88,6 +89,9 @@ export async function submitReview(
   let rating: Rating | null = null;
   let visitDate = todayIso();
   let comment: string | null = null;
+  let customerFirstName: string | null = null;
+  let customerLastName: string | null = null;
+  let customerPhone: string | null = null;
 
   for (const question of config.questions) {
     const raw = formData.get(question.id);
@@ -140,12 +144,37 @@ export async function submitReview(
     errors[ratingQuestion?.id ?? "rating"] = "Merci de choisir une note.";
   }
 
-  if (Object.keys(errors).length > 0) {
-    return { status: "error", message: "Corrigez les champs signalés.", errors };
+  const submittedType = String(formData.get("reviewerType") ?? "anonymous");
+  const reviewerType = submittedType === "identified" ? "identified" : "anonymous";
+  if (reviewerType === "identified") {
+    const firstName = String(formData.get("reviewerFirstName") ?? "").trim();
+    const lastName = String(formData.get("reviewerLastName") ?? "").trim();
+    const phone = String(formData.get("reviewerPhone") ?? "").trim();
+    if (firstName.length < 2) {
+      errors.reviewerFirstName = "Indiquez votre prénom.";
+    }
+    if (lastName.length < 2) {
+      errors.reviewerLastName = "Indiquez votre nom.";
+    }
+    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s.-]/g, ""))) {
+      errors.reviewerPhone = "Indiquez un numéro au format international.";
+    }
+    customerFirstName = firstName || null;
+    customerLastName = lastName || null;
+    customerPhone = phone ? phone.replace(/[\s.-]/g, "") : null;
   }
 
   if (rating === null) {
     return { status: "error", message: "Merci de choisir une note." };
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return {
+      status: "error",
+      message: "Corrigez les champs signalés.",
+      errors,
+      reviewerType,
+    };
   }
 
   await createReview({
@@ -153,6 +182,10 @@ export async function submitReview(
     companyId: company.id,
     rating,
     comment,
+    customerFirstName,
+    customerLastName,
+    customerPhone,
+    reviewerType,
     visitDate,
     createdAt: new Date(),
     answers,
@@ -162,6 +195,76 @@ export async function submitReview(
   // mal rempli ne bloque pas l'utilisateur. Le cookie vaut pour tout le site,
   // et non pour un chemin inexistant. Il est `httpOnly` : le navigateur n'a
   // aucun besoin de le lire, seul le serveur s'en sert.
+  cookieStore.set(LIMIT_COOKIE, `${Date.now()}|${company.id}`, {
+    maxAge: LIMIT_WINDOW_MS / 1000,
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+
+  return { status: "submitted" };
+}
+export async function submitRemark(
+  _previous: PublicReviewState,
+  formData: FormData,
+): Promise<PublicReviewState> {
+  const publicId = decodeURIComponent(String(formData.get("publicId") ?? "")).trim();
+  const company = await findPublicCompanyByPublicId(publicId);
+  if (!company || company.status !== "ACTIVE") {
+    return { status: "error", message: "Ce formulaire n'est plus disponible." };
+  }
+
+  const config = await getPublicReviewFormConfig(publicId);
+  if (!config.allowRemarks) {
+    return { status: "error", message: "Les remarques ne sont pas ouvertes." };
+  }
+
+  const cookieStore = await cookies();
+  const lastSubmission = readLastSubmission(
+    cookieStore.get(LIMIT_COOKIE)?.value,
+    company.id,
+  );
+  if (lastSubmission > 0 && Date.now() - lastSubmission < LIMIT_WINDOW_MS) {
+    return {
+      status: "error",
+      message: "Vous avez déjà écrit récemment. Merci de patienter 5 minutes.",
+    };
+  }
+
+  const firstName = String(formData.get("remarkFirstName") ?? "").trim();
+  const lastName = String(formData.get("remarkLastName") ?? "").trim();
+  const phone = String(formData.get("remarkPhone") ?? "").trim();
+  const message = String(formData.get("remarkMessage") ?? "").trim();
+  const errors: Record<string, string> = {};
+
+  if (firstName.length > 80) errors.remarkFirstName = "Prénom trop long.";
+  if (lastName.length > 80) errors.remarkLastName = "Nom trop long.";
+  if (phone && !/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s.-]/g, ""))) {
+    errors.remarkPhone = "Indiquez un numéro au format international.";
+  }
+  if (message.length < 2) {
+    errors.remarkMessage = "Écrivez votre remarque.";
+  } else if (message.length > MAX_ANSWER_LENGTH) {
+    errors.remarkMessage = "Votre remarque est trop longue.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return {
+      status: "error",
+      message: "Corrigez les champs signalés.",
+      errors,
+    };
+  }
+
+  await createRemark({
+    companyId: company.id,
+    firstName: firstName ? sanitizeText(firstName, 80) : null,
+    lastName: lastName ? sanitizeText(lastName, 80) : null,
+    phone: phone ? phone.replace(/[\s.-]/g, "") : null,
+    message: sanitizeText(message, MAX_ANSWER_LENGTH),
+  });
+
   cookieStore.set(LIMIT_COOKIE, `${Date.now()}|${company.id}`, {
     maxAge: LIMIT_WINDOW_MS / 1000,
     path: "/",

@@ -1,14 +1,13 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   EXPORT_MAX_ROWS,
   resolveDateRange,
   type CompanyFilters,
 } from "@/lib/company-filters";
-import { ADMIN_LOGIN_PATH, getCurrentAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import type { Admin } from "@/server/domain";
 import { recordAdminAction } from "@/server/repositories/audit-log-repository";
 import {
@@ -30,12 +29,13 @@ const NOT_FOUND: AdminActionState = {
 
 /**
  * Une Server Action est joignable par un POST direct : chacune revérifie la
- * session ADMIN. Une session entreprise ne donne aucun droit ici (AU-07).
+ * session ADMIN et la permission du module. Une session entreprise ne donne
+ * aucun droit ici (AU-07).
  */
-async function authorizeAdmin(): Promise<Admin> {
-  const admin = await getCurrentAdmin();
-  if (!admin) redirect(ADMIN_LOGIN_PATH);
-  return admin;
+async function authorizeAdmin(
+  level: "read" | "manage" = "manage",
+): Promise<Admin> {
+  return requireAdminPermission("companies", level);
 }
 
 const statusSchema = z.object({
@@ -172,7 +172,7 @@ export type ExportableCompany = {
 export async function fetchCompaniesForExport(
   filters: CompanyFilters,
 ): Promise<ExportableCompany[]> {
-  await authorizeAdmin();
+  await authorizeAdmin("read");
 
   const range = resolveDateRange(filters, new Date());
   const page = await listCompaniesForAdmin({

@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/server/auth/guards";
+import { requireAdminPermission } from "@/server/auth/guards";
 import type { SubscriptionPeriod } from "@/server/domain";
 import { setCompanySubscription } from "@/server/repositories/subscription-repository";
 
 export async function updateSubscriptionAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminPermission("finances", "manage");
 
   const companyId = formData.get("companyId")?.toString();
   const companyName = formData.get("companyName")?.toString() || "Entreprise";

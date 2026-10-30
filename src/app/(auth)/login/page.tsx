@@ -6,6 +6,7 @@ import {
   COMPANY_HOME_PATH,
 } from "@/server/auth/guards";
 import { getAccountState } from "@/server/auth/account-state";
+import { needsCompanyOnboarding } from "@/server/services/company-onboarding";
 
 export const metadata: Metadata = { title: "Connexion" };
 
@@ -20,9 +21,16 @@ export const metadata: Metadata = { title: "Connexion" };
 export default async function LoginPage() {
   const state = await getAccountState();
 
-  if (state.kind === "company") redirect(COMPANY_HOME_PATH);
+  if (state.kind === "company") {
+    redirect(
+      (await needsCompanyOnboarding(state.company))
+        ? "/onboarding"
+        : COMPANY_HOME_PATH,
+    );
+  }
   if (state.kind === "admin") redirect(ADMIN_HOME_PATH);
   if (state.kind === "deleted") return <DeletedAccountScreen />;
+  if (state.kind === "onboarding") redirect("/onboarding");
 
   // Plus de page isolée : ouverture directe de la modale de connexion
   redirect("/?auth=login");

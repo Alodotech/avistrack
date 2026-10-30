@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { OpenAuthButton } from "@/components/auth/open-auth-button";
+import { Pricing } from "@/components/marketing/pricing";
 import {
   DashboardScreen,
   PhoneFormScreen,
@@ -169,6 +170,8 @@ export default function LandingPage() {
           </ScrollReveal>
         </div>
       </section>
+
+      <Pricing />
 
       {/* 05 — CTA final */}
       <section

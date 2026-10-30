@@ -16,8 +16,28 @@ const CHANGED = vi.hoisted(() => ({
 
 vi.mock("@/server/auth/guards", () => ({
   ADMIN_LOGIN_PATH: "/admin/login",
+  ADMIN_ACCESS_DENIED_PATH: "/admin/acces-refuse",
   getCurrentAdmin: async () =>
     session.adminId ? { id: session.adminId, email: "admin@avistrack.example" } : null,
+  requireAdminPermission: async () => {
+    if (!session.adminId) throw new Error("REDIRECT:/admin/login");
+    return {
+      id: session.adminId,
+      email: "admin@avistrack.example",
+      permissions: {
+        dashboard: "manage",
+        companies: "manage",
+        finances: "manage",
+        users: "manage",
+        audit: "manage",
+        reports: "manage",
+      },
+    };
+  },
+  requireAdmin: async () => {
+    if (!session.adminId) throw new Error("REDIRECT:/admin/login");
+    return { id: session.adminId, email: "admin@avistrack.example" };
+  },
 }));
 
 const session = vi.hoisted(() => ({ adminId: null as string | null }));

@@ -25,10 +25,56 @@ export type CompanyRow = {
   slug: string;
   phone: string | null;
   email: string;
+  logo_url: string | null;
   status: CompanyStatusRow;
+  qr_generated_at: string | null;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type SubscriptionPlanRow = "trial" | "pro" | "enterprise";
+export type SubscriptionPeriodRow = "trial" | "monthly" | "annual";
+export type SubscriptionStatusRow =
+  | "trialing"
+  | "active"
+  | "canceled"
+  | "expired"
+  | "suspended";
+
+export type CompanySubscriptionRow = {
+  company_id: string;
+  plan: SubscriptionPlanRow;
+  period: SubscriptionPeriodRow;
+  amount: number;
+  status: SubscriptionStatusRow;
+  started_at: string;
+  current_period_end: string | null;
+  trial_ends_at: string | null;
+  canceled_at: string | null;
+  updated_at: string;
+};
+
+export type PaymentRow = {
+  id: string;
+  company_id: string;
+  plan: string;
+  period: string;
+  amount: number;
+  status: "pending" | "paid" | "failed" | "refunded";
+  provider: string;
+  provider_ref: string | null;
+  created_at: string;
+};
+
+export type ReportDownloadRow = {
+  id: string;
+  admin_id: string | null;
+  admin_email: string;
+  period: string;
+  label: string;
+  format: "pdf" | "excel" | "csv";
+  created_at: string;
 };
 
 export type ReviewRow = {
@@ -36,7 +82,9 @@ export type ReviewRow = {
   company_id: string;
   rating: number;
   comment: string | null;
+  customer_first_name: string | null;
   customer_name: string | null;
+  reviewer_type: "anonymous" | "identified";
   customer_phone: string | null;
   customer_email: string | null;
   visit_date: string | null;
@@ -53,6 +101,8 @@ export type ReviewFormConfigRow = {
   allow_comment: boolean;
   accent_color: string;
   questions: Json;
+  allow_anonymous: boolean;
+  allow_remarks: boolean;
   updated_at: string;
 };
 
@@ -61,6 +111,29 @@ export type AdminRow = {
   user_id: string;
   email: string;
   role: string;
+  /** Rôle personnalisé assigné (migration 007). */
+  role_id: string | null;
+  permissions: Json;
+  created_at: string;
+};
+
+/** Rôle d'administration personnalisé (migration 007). */
+export type AdminRoleRow = {
+  id: string;
+  name: string;
+  permissions: Json;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RemarkRow = {
+  id: string;
+  company_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  message: string;
+  status: string;
   created_at: string;
 };
 
@@ -96,6 +169,8 @@ export type PublicFormConfigRow = {
   allow_comment: boolean;
   accent_color: string;
   questions: Json;
+  allow_anonymous: boolean;
+  allow_remarks: boolean;
 };
 
 /** Point d'une série mensuelle renvoyé par `platform_stats`. */
@@ -122,8 +197,13 @@ export type Database = {
       companies: Table<CompanyRow>;
       reviews: Table<ReviewRow>;
       review_form_configs: Table<ReviewFormConfigRow>;
+      company_remarks: Table<RemarkRow>;
       admins: Table<AdminRow>;
+      admin_roles: Table<AdminRoleRow>;
       audit_logs: Table<AuditLogRow>;
+      company_subscriptions: Table<CompanySubscriptionRow>;
+      payments: Table<PaymentRow>;
+      report_downloads: Table<ReportDownloadRow>;
     };
     Views: Record<string, never>;
     Functions: {

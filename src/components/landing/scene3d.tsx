@@ -23,6 +23,10 @@ const CAMERA_KEYS: Keyframe[] = [
   [-5.6, 7.2, 4.8, 2.1, 0.2, -30, 64],
 ];
 
+// Décalage caméra propre à chaque chapitre : il cadre la maquette dans la
+// colonne de droite sur desktop, sans jamais mordre sur le texte.
+const CAMERA_SHIFT: number[] = [2.2, 2.2, 0.6, 0, -0.2, 0];
+
 // Brume par chapitre : le plan final se déploie et doit montrer les trois
 // écrans (QR, téléphone, tableau) jusqu'au mur du fond, sans les noyer.
 const FOG_FAR: number[] = [85, 85, 85, 85, 85, 190];
@@ -214,7 +218,7 @@ async function initScene(
   // colonne texte. Sous 1024 px, l'affichage est mono-colonne et les écrans
   // produits sont rendus en HTML (lisibles et nets) : la scène reste centrée.
   const isSceneWide = window.innerWidth >= 1024;
-  const screenShift = isSceneWide ? 1.8 : 0;
+  const screenShift = isSceneWide ? 3.6 : 0;
   const maxPixelRatio = isSceneWide ? 1.7 : 1.35;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -851,15 +855,18 @@ async function initScene(
     const portrait = aspect < 1 ? clamp((1 - aspect) / 0.6, 0, 1) : 0;
     const lift = portrait * 2.6;
 
-    // La caméra suit le décalage complet des écrans : le cadrage de chaque
-    // chapitre reste identique à celui d'origine, simplement translaté.
+    // La caméra ne suit que partiellement le décalage des écrans : ils
+    // restent dans la colonne de droite et ne passent jamais sous le texte.
+    const frameShift =
+      (CAMERA_SHIFT[segment] ?? 0) +
+      ((CAMERA_SHIFT[segment + 1] ?? 0) - (CAMERA_SHIFT[segment] ?? 0)) * local;
     camera.position.set(
-      interpolate(0) + screenShift + easedPointerX * 0.16,
+      interpolate(0) + frameShift + easedPointerX * 0.16,
       interpolate(1) - easedPointerY * 0.12 + lift,
       interpolate(2),
     );
     camera.lookAt(
-      interpolate(3) + screenShift + easedPointerX * 0.07,
+      interpolate(3) + frameShift + easedPointerX * 0.07,
       interpolate(4) + lift,
       interpolate(5),
     );

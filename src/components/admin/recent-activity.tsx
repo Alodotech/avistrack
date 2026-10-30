@@ -13,6 +13,10 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   UPDATE_ADMIN_ROLE: "Changement rôle",
   REMOVE_ADMIN: "Retrait utilisateur",
   UPDATE_SUBSCRIPTION: "Mise à jour abonnement",
+  DOWNLOAD_REPORT: "Téléchargement rapport",
+  PAYMENT: "Paiement",
+  CREATE_ROLE: "Création rôle",
+  UPDATE_ROLE: "Mise à jour rôle",
 };
 
 function timeAgo(date: Date): string {

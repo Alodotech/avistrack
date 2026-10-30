@@ -11,7 +11,7 @@ import { createClient } from "@/utils/supabase/server";
  * lecture, la politique RLS autorise en plus le visiteur anonyme du formulaire.
  */
 
-const DEFAULT_ACCENT_COLOR = "#d71920";
+const DEFAULT_ACCENT_COLOR = "#0F5C47";
 
 function assertCompanyId(companyId: string): void {
   if (typeof companyId !== "string" || companyId.length === 0) {
@@ -30,7 +30,7 @@ export async function getReviewFormConfig(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("review_form_configs")
-    .select("questions, thanks_title, thanks_message")
+    .select("questions, thanks_title, thanks_message, allow_anonymous, allow_remarks")
     .eq("company_id", companyId)
     .maybeSingle();
   if (error) throw error;
@@ -40,6 +40,8 @@ export async function getReviewFormConfig(
     questions: toQuestions(data.questions) ?? undefined,
     thanksTitle: data.thanks_title,
     thanksMessage: data.thanks_message,
+    allowAnonymous: data.allow_anonymous,
+    allowRemarks: data.allow_remarks,
   });
 }
 
@@ -66,6 +68,8 @@ export async function getPublicReviewFormConfig(
     questions: toQuestions(row.questions) ?? undefined,
     thanksTitle: row.thanks_title,
     thanksMessage: row.thanks_message,
+    allowAnonymous: row.allow_anonymous,
+    allowRemarks: row.allow_remarks,
   });
 }
 
@@ -83,6 +87,8 @@ export async function updateReviewFormConfig(
       thanks_message: config.thanksMessage,
       allow_comment: config.questions.some((question) => question.type === "text"),
       accent_color: DEFAULT_ACCENT_COLOR,
+      allow_anonymous: config.allowAnonymous ?? true,
+      allow_remarks: config.allowRemarks ?? true,
     },
     { onConflict: "company_id" },
   );

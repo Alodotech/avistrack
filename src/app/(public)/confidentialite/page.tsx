@@ -54,8 +54,9 @@ export default function PrivacyPage() {
             </p>
             <p className="text-gray-600">
               Côté entreprise, l&apos;inscription recueille la raison sociale, une
-              adresse e-mail, un numéro de téléphone et les identifiants de
-              connexion du compte. Chaque action d&apos;administration
+              adresse e-mail, un numéro de téléphone, les identifiants de
+              connexion du compte et, le cas échéant, un logo facultatif. Chaque
+              action d&apos;administration
               (suspension, réactivation, suppression) est horodatée et
               consignée dans un journal d&apos;audit.
             </p>

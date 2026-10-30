@@ -45,6 +45,10 @@ function toReview(row: ReviewRow): Review {
     companyId: row.company_id,
     rating: row.rating as Rating,
     comment: row.comment,
+    customerFirstName: row.customer_first_name,
+    customerLastName: row.customer_name,
+    customerPhone: row.customer_phone,
+    reviewerType: row.reviewer_type,
     visitDate: row.visit_date ?? row.created_at.slice(0, 10),
     createdAt: new Date(row.created_at),
     answers: toAnswers(row.answers),
@@ -133,8 +137,83 @@ export async function createReview(review: Review): Promise<void> {
     company_id: review.companyId,
     rating: review.rating,
     comment: review.comment,
+    customer_first_name: review.customerFirstName,
+    customer_name: review.customerLastName,
+    customer_phone: review.customerPhone,
+    reviewer_type: review.reviewerType ?? "anonymous",
     visit_date: review.visitDate,
     answers: review.answers ?? {},
   });
   if (error) throw error;
+}
+
+export async function createRemark(input: {
+  companyId: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  message: string;
+}): Promise<void> {
+  assertCompanyId(input.companyId);
+  const supabase = await createClient();
+  const { error } = await supabase.from("company_remarks").insert({
+    company_id: input.companyId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    phone: input.phone,
+    message: input.message,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Supprime une remarque de l'entreprise connectée.
+ *
+ * Le filtre porte explicitement sur `company_id` **et** sur l'identifiant de
+ * la remarque : un identifiant appartenant à une autre entreprise ne trouve
+ * aucune ligne, même si les politiques RLS étaient contournées.
+ */
+export async function deleteRemark(
+  companyId: string,
+  remarkId: string,
+): Promise<boolean> {
+  assertCompanyId(companyId);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("company_remarks")
+    .delete()
+    .eq("id", remarkId)
+    .eq("company_id", companyId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+export async function listRemarksForCompany(
+  companyId: string,
+  options: { page: number; pageSize: number },
+): Promise<Page<import("@/server/domain").Remark>> {
+  assertCompanyId(companyId);
+  const supabase = await createClient();
+  const from = (options.page - 1) * options.pageSize;
+  const { data, error, count } = await supabase
+    .from("company_remarks")
+    .select("*", { count: "exact" })
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .range(from, from + options.pageSize - 1);
+  if (error) throw error;
+  return {
+    items: (data ?? []).map((row) => ({
+      id: row.id,
+      companyId: row.company_id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      phone: row.phone,
+      message: row.message,
+      createdAt: new Date(row.created_at),
+    })),
+    total: count ?? 0,
+  };
 }
