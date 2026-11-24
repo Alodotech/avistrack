@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { FedapayCheckoutButton } from "@/components/billing/fedapay-checkout-button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { getSubscriptionPrice } from "@/lib/pricing";
 import type { PaymentHistoryItem } from "@/server/repositories/subscription-repository";
 import type { SubscriptionView } from "@/lib/subscription";
 import { cancelSubscriptionAction } from "@/server/actions/payments";
@@ -15,6 +17,7 @@ type Props = {
   startedAt: string;
   endDate: string | null;
   payments: PaymentHistoryItem[];
+  canPay: boolean;
 };
 
 export function SubscriptionManager({
@@ -24,10 +27,14 @@ export function SubscriptionManager({
   startedAt,
   endDate,
   payments,
+  canPay,
 }: Props) {
   const router = useRouter();
   const [cancelPending, startCancel] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "monthly" | "annual"
+  >(period === "annual" ? "annual" : "monthly");
 
   const isPaid = period === "monthly" || period === "annual";
   const canCancel = isPaid && view.status !== "CANCELED" && view.status !== "EXPIRED";
@@ -64,6 +71,50 @@ export function SubscriptionManager({
               {cancelPending ? "Résiliation…" : "Résilier"}
             </Button>
           ) : null}
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-lg border border-black/10 bg-gray-50 p-4">
+          <div>
+            <p className="text-sm font-semibold">Choisir une formule</p>
+            <p className="text-xs text-gray-600">
+              Le paiement est sécurisé par FedaPay, en FCFA.
+            </p>
+          </div>
+          {canPay ? (
+            <>
+              <div
+                role="radiogroup"
+                aria-label="Formule d'abonnement"
+                className="flex flex-wrap gap-2"
+              >
+                {(["monthly", "annual"] as const).map((choice) => (
+                  <button
+                    key={choice}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedPeriod === choice}
+                    onClick={() => setSelectedPeriod(choice)}
+                    className={buttonClass(
+                      selectedPeriod === choice ? "primary" : "secondary",
+                      "",
+                      "sm",
+                    )}
+                  >
+                    {choice === "monthly" ? "Mensuel" : "Annuel"} ·{" "}
+                    {formatCurrency(getSubscriptionPrice(choice))}
+                  </button>
+                ))}
+              </div>
+              <FedapayCheckoutButton
+                period={selectedPeriod}
+                label={`Payer ${formatCurrency(getSubscriptionPrice(selectedPeriod))}`}
+              />
+            </>
+          ) : (
+            <p role="alert" className="text-sm text-red">
+              Le paiement en ligne est temporairement indisponible.
+            </p>
+          )}
         </div>
 
         {error ? (

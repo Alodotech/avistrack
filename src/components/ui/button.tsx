@@ -13,12 +13,12 @@ type Size = "md" | "sm";
 
 /** `sm` sert aux actions de ligne dans les tableaux ; la hauteur reste confortable au clic. */
 const SIZES: Record<Size, string> = {
-  md: "min-h-11 px-4",
-  sm: "min-h-10 px-3",
+  md: "min-h-11 min-w-[44px] px-4",
+  sm: "min-h-11 min-w-[44px] px-3",
 };
 
 const BASE =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function buttonClass(
   variant: Variant = "primary",

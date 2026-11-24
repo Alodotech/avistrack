@@ -25,7 +25,7 @@ export function SubscriptionSummary({
         view.isExpired
           ? "border-red bg-red/5"
           : view.isEndingSoon
-            ? "border-orange bg-orange/5"
+            ? "border-red bg-red/5"
             : "border-black/10 bg-white"
       }`}
     >

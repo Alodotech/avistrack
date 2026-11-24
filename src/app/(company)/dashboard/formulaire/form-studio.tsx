@@ -140,7 +140,7 @@ export function FormStudio({
                         disabled={index === 0}
                         aria-label={`Monter la question ${index + 1}`}
                         title="Monter d'une position"
-                        className="grid size-10 cursor-pointer place-items-center rounded-full border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="grid size-11 cursor-pointer place-items-center rounded-md border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <ArrowUpIcon className="size-4" />
                       </button>
@@ -150,7 +150,7 @@ export function FormStudio({
                         disabled={index === questions.length - 1}
                         aria-label={`Descendre la question ${index + 1}`}
                         title="Descendre d'une position"
-                        className="grid size-10 cursor-pointer place-items-center rounded-full border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="grid size-11 cursor-pointer place-items-center rounded-md border border-black/15 text-black transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <ArrowDownIcon className="size-4" />
                       </button>
@@ -164,7 +164,7 @@ export function FormStudio({
                           type="button"
                           onClick={() => removeQuestion(question.id)}
                           aria-label={`Supprimer la question ${index + 1}`}
-                          className="ml-1 inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold text-red transition-colors hover:bg-red/10"
+                          className="ml-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded px-2.5 text-sm font-medium text-red transition-colors hover:bg-red/10"
                         >
                           <TrashIcon className="size-4" />
                           Supprimer
@@ -232,7 +232,7 @@ export function FormStudio({
                               type: event.target.value as QuestionType,
                             })
                           }
-                          className="min-h-10 rounded-md border border-black/30 bg-white px-2 text-sm"
+                          className="min-h-11 rounded-md border border-black/30 bg-white px-2 text-sm"
                         >
                           {ADDABLE_TYPES.map((type) => (
                             <option key={type} value={type}>
@@ -244,7 +244,7 @@ export function FormStudio({
                     )}
 
                     {!isRating ? (
-                      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                      <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
                         <input
                           type="checkbox"
                           checked={question.required}
@@ -332,7 +332,7 @@ export function FormStudio({
           description="Choisissez ce que vos clients peuvent faire depuis le formulaire."
         >
           <div className="flex flex-col gap-4">
-            <label className="flex cursor-pointer items-start gap-3 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
               <input
                 type="checkbox"
                 checked={allowAnonymous}
@@ -346,7 +346,7 @@ export function FormStudio({
                 </span>
               </span>
             </label>
-            <label className="flex cursor-pointer items-start gap-3 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
               <input
                 type="checkbox"
                 checked={allowRemarks}
@@ -417,7 +417,7 @@ function ViewTabs({
     <div
       role="group"
       aria-label="Écran affiché dans l'aperçu"
-      className="inline-flex rounded-full border border-black/15 p-1"
+      className="inline-flex rounded-md border border-black/15 p-1"
     >
       {options.map((option) => {
         const active = view === option.id;
@@ -427,7 +427,7 @@ function ViewTabs({
             type="button"
             onClick={() => onChange(option.id)}
             aria-pressed={active}
-            className={`min-h-11 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors ${
+            className={`min-h-11 cursor-pointer rounded px-3 text-sm font-semibold transition-colors ${
               active ? "bg-black text-white" : "text-gray-600 hover:text-black"
             }`}
           >
@@ -521,7 +521,7 @@ function FormPreview({
         );
       })}
 
-      <span className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-4 text-sm font-semibold text-white">
+      <span className="inline-flex min-h-11 items-center justify-center rounded bg-accent px-4 text-sm font-semibold text-white">
         Envoyer mon avis
       </span>
     </PhoneFrame>

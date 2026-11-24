@@ -101,7 +101,7 @@ export function AppShell({
       <div className="flex flex-1 flex-col lg:flex-row">
         <a
           href="#contenu"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-black"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:flex focus:min-h-11 focus:items-center focus:rounded-md focus:bg-white focus:px-4 focus:text-sm focus:font-semibold focus:text-black"
         >
           Aller au contenu
         </a>
@@ -114,7 +114,7 @@ export function AppShell({
           <div className="min-w-0 border-b border-white/10 px-4 py-3 lg:px-5 lg:pt-5 lg:pb-4">
             <Link
               href={homeHref}
-              className="flex flex-col gap-2 transition-opacity hover:opacity-90"
+              className="flex min-h-11 flex-col justify-center gap-2 transition-opacity hover:opacity-90"
             >
               <div className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-white">
                 <Image
@@ -128,7 +128,7 @@ export function AppShell({
               </div>
               {isAdmin ? (
                 <div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-0.5 text-[0.65rem] font-bold tracking-wider text-white uppercase shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 rounded bg-accent px-2 py-1 text-[0.65rem] font-semibold tracking-wide text-white uppercase">
                     Administration
                   </span>
                 </div>
@@ -334,7 +334,7 @@ export function ShellIdentity({
     <div ref={containerRef} className="relative w-full">
       {/* Menu déroulant / popover au-dessus du mail */}
       {menuOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-full min-w-[220px] rounded-2xl border border-white/15 bg-[#151518] p-2.5 text-white shadow-2xl backdrop-blur-md z-30">
+        <div className="absolute bottom-full left-0 mb-2 w-full min-w-[220px] rounded-md border border-white/15 bg-[#151518] p-2 text-white shadow-lg z-30">
           <div className="flex items-center gap-2.5 px-2 py-1.5">
             <span
               className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-white shadow-xs"
@@ -355,7 +355,7 @@ export function ShellIdentity({
                 </p>
               ) : null}
               {planLabel ? (
-                <span className="mt-1 inline-flex rounded-full bg-orange/40 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-white">
+                <span className="mt-1 inline-flex rounded bg-white/15 px-1.5 py-0.5 text-[0.6rem] font-medium text-white">
                   {planLabel}
                 </span>
               ) : null}
@@ -371,7 +371,7 @@ export function ShellIdentity({
               setMenuOpen(false);
               setModalOpen(true);
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl bg-red/10 px-3 py-2 text-xs font-semibold text-red transition-colors hover:bg-red/20 hover:text-white"
+            className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded bg-red/10 px-3 text-xs font-semibold text-red transition-colors hover:bg-red/20"
           >
             <svg
               className="size-4 shrink-0 text-red"
@@ -397,7 +397,7 @@ export function ShellIdentity({
         onClick={() => setMenuOpen((prev) => !prev)}
         aria-expanded={menuOpen}
         aria-haspopup="true"
-        className="group flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2 text-left transition-all hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="group flex min-h-11 w-full cursor-pointer items-center justify-between gap-2.5 rounded border border-white/10 bg-white/5 p-2 text-left transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <span
@@ -422,7 +422,7 @@ export function ShellIdentity({
               </span>
             ) : null}
             {planLabel ? (
-              <span className="mt-0.5 inline-flex rounded-full bg-orange/40 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-white">
+              <span className="mt-0.5 inline-flex rounded bg-white/15 px-1.5 py-0.5 text-[0.6rem] font-medium text-white">
                 {planLabel}
               </span>
             ) : null}
@@ -459,7 +459,7 @@ export function ShellIdentity({
           />
 
           {/* Carte du modal */}
-          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-black/10 bg-white p-6 text-black shadow-2xl animate-scaleUp">
+          <div className="relative z-10 w-full max-w-sm rounded-md border border-black/15 bg-white p-6 text-black shadow-lg">
             <div className="flex flex-col items-center text-center">
               <div className="mb-3 grid size-12 place-items-center rounded-full bg-red/10 text-accent">
                 <svg
@@ -493,7 +493,7 @@ export function ShellIdentity({
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => setModalOpen(false)}
-                className="cursor-pointer rounded-lg border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                className="inline-flex min-h-11 cursor-pointer items-center rounded border border-black/15 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -508,7 +508,7 @@ export function ShellIdentity({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="cursor-pointer rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-deep disabled:opacity-50 transition-colors"
+                  className="inline-flex min-h-11 cursor-pointer items-center rounded bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
                 >
                   {isSubmitting ? "Déconnexion..." : "Se déconnecter"}
                 </button>

@@ -24,6 +24,7 @@ export function DeltaBadge({ delta }: { delta?: KpiDelta | null }) {
       className={`text-xs font-semibold tabular-nums ${tone}`}
       title={delta.label}
     >
+      <span aria-hidden>{delta.value > 0 ? "↑" : delta.value < 0 ? "↓" : ""}</span>{" "}
       {delta.value > 0 ? "+" : ""}
       {delta.value.toFixed(0)}%
       <span className="sr-only"> {delta.label}</span>

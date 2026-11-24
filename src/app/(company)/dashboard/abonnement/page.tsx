@@ -52,9 +52,9 @@ async function SubscriptionContent() {
               view.isExpired
                 ? "border-red bg-red text-white"
                 : view.isEndingSoon
-                  ? "border-orange bg-orange/10 text-orange"
+                  ? "border-red bg-red/10 text-red"
                   : view.status === "ACTIVE"
-                    ? "border-forest bg-forest/10 text-forest"
+                    ? "border-black bg-black/5 text-black"
                     : "border-gray-600 bg-gray-100 text-gray-600"
             }`}
           >
@@ -69,6 +69,11 @@ async function SubscriptionContent() {
           startedAt={subscription.startedAt.toISOString()}
           endDate={view.endDate?.toISOString() ?? null}
           payments={payments}
+          canPay={Boolean(
+            process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY &&
+              process.env.FEDAPAY_SECRET_KEY &&
+              process.env.FEDAPAY_WEBHOOK_SECRET,
+          )}
         />
       </Panel>
 

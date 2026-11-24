@@ -26,7 +26,7 @@ export default function Error({
 
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-6 bg-gray-100 px-4 py-16 text-center">
-      <div className="w-full max-w-lg rounded-2xl border border-black/15 bg-white p-8">
+      <div className="w-full max-w-lg rounded-md border border-black/15 bg-white p-8">
         <h1 className="text-xl font-semibold tracking-tight">
           Une erreur est survenue
         </h1>

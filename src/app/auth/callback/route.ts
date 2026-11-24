@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkAndSyncAdminOAuth } from "@/server/repositories/admin-repository";
 import {
   ensureCompanyForUser,
   needsCompanyOnboarding,
@@ -17,23 +18,43 @@ import { createClient } from "@/utils/supabase/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const requestedNext = searchParams.get("next") ?? "/dashboard";
+  // Empêche les redirections ouvertes (`//evil.com`, `https://evil.com`…).
+  const next =
+    requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/dashboard";
+  const loginPath = next.startsWith("/admin")
+    ? "/admin/login"
+    : "/?auth=login";
 
   if (!code) {
-    return new NextResponse("Missing code", { status: 400 });
+    // Consentement Google refusé, erreur fournisseur… : on revient au
+    // formulaire de connexion au lieu d'afficher « Missing code » en brut.
+    return NextResponse.redirect(new URL(loginPath, request.url));
   }
 
   const supabase = await createClient();
   const { error, data } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
-    return new NextResponse("Authentication failed", { status: 400 });
+    return NextResponse.redirect(new URL(loginPath, request.url));
   }
 
   const { user } = data;
 
   try {
-    // Si tentative d'accès à l'administration avec un compte Google non admin
+    /*
+     * Un administrateur est reconnu quel que soit le bouton utilisé : sans ce
+     * test, passer par la connexion entreprise créait une fiche `companies`
+     * pour un compte administrateur. Le test par e-mail resynchronise aussi
+     * `user_id` si le compte Google a été recréé.
+     */
+    if (await checkAndSyncAdminOAuth(user.id, user.email)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    // Tentative d'accès à l'administration avec un compte Google non admin
     if (next.startsWith("/admin")) {
       await supabase.auth.signOut();
       return NextResponse.redirect(new URL("/admin/login?error=unauthorized", request.url));
@@ -56,9 +77,7 @@ export async function GET(request: Request) {
       company.status !== "ACTIVE" ||
       (await needsCompanyOnboarding(company))
         ? "/onboarding"
-        : next.startsWith("/admin")
-          ? "/dashboard"
-          : next;
+        : next;
 
     return NextResponse.redirect(new URL(destination, request.url));
   } catch (err) {

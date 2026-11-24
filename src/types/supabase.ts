@@ -67,6 +67,12 @@ export type PaymentRow = {
   created_at: string;
 };
 
+export type FedaPayWebhookEventRow = {
+  id: string;
+  name: string | null;
+  received_at: string;
+};
+
 export type ReportDownloadRow = {
   id: string;
   admin_id: string | null;
@@ -203,6 +209,7 @@ export type Database = {
       audit_logs: Table<AuditLogRow>;
       company_subscriptions: Table<CompanySubscriptionRow>;
       payments: Table<PaymentRow>;
+      fedapay_webhook_events: Table<FedaPayWebhookEventRow>;
       report_downloads: Table<ReportDownloadRow>;
     };
     Views: Record<string, never>;

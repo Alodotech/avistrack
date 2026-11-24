@@ -137,7 +137,7 @@ export function FinancialOverview({
           {/* KPI financiers en FCFA */}
           <div className="grid grid-cols-2 gap-3 min-[760px]:grid-cols-4 min-[760px]:gap-4">
             {/* MRR */}
-            <div className="flex flex-col gap-1 rounded-xl border border-black/10 bg-gray-50/70 p-4">
+            <div className="flex flex-col gap-1 rounded-md border border-black/10 bg-gray-50/70 p-4">
               <span className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider">
                 MRR (Revenu Mensuel)
               </span>
@@ -150,7 +150,7 @@ export function FinancialOverview({
             </div>
 
             {/* ARR */}
-            <div className="flex flex-col gap-1 rounded-xl border border-black/10 bg-gray-50/70 p-4">
+            <div className="flex flex-col gap-1 rounded-md border border-black/10 bg-gray-50/70 p-4">
               <span className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider">
                 ARR (Revenu Annuel)
               </span>
@@ -161,7 +161,7 @@ export function FinancialOverview({
             </div>
 
             {/* Abonnements Actifs & Répartition Annuel/Mensuel */}
-            <div className="flex flex-col gap-1 rounded-xl border border-black/10 bg-gray-50/70 p-4">
+            <div className="flex flex-col gap-1 rounded-md border border-black/10 bg-gray-50/70 p-4">
               <span className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider">
                 Abonnements Payants
               </span>
@@ -174,24 +174,24 @@ export function FinancialOverview({
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-1.5 py-0.5 text-[0.65rem] font-bold text-purple-800">
-                  <ZapIcon className="size-3 text-purple-700" />
+                <span className="inline-flex items-center gap-1 rounded-md bg-gray-200 px-1.5 py-0.5 text-[0.65rem] font-bold text-gray-800">
+                  <ZapIcon className="size-3 text-gray-700" />
                   {stats.annualCount} annuel{stats.annualCount > 1 ? "s" : ""}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-sky-100 px-1.5 py-0.5 text-[0.65rem] font-bold text-sky-800">
-                  <RefreshIcon className="size-3 text-sky-700" />
+                <span className="inline-flex items-center gap-1 rounded-md bg-gray-200 px-1.5 py-0.5 text-[0.65rem] font-bold text-gray-800">
+                  <RefreshIcon className="size-3 text-gray-700" />
                   {stats.monthlyCount} mensuel{stats.monthlyCount > 1 ? "s" : ""}
                 </span>
               </div>
             </div>
 
             {/* Périodes d'essai gratuites */}
-            <div className="flex flex-col gap-1 rounded-xl border border-black/10 bg-gray-50/70 p-4">
+            <div className="flex flex-col gap-1 rounded-md border border-black/10 bg-gray-50/70 p-4">
               <span className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider">
                 En Période d&apos;Essai (14j)
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-xl sm:text-2xl font-bold text-amber-700 tracking-tight">
+                <span className="text-xl sm:text-2xl font-bold text-gray-700 tracking-tight">
                   {stats.trialCount}
                 </span>
                 <span className="text-xs text-gray-500 font-medium">
@@ -205,26 +205,26 @@ export function FinancialOverview({
 
 
           {/* Grille tarifaire unique AvisTrack en FCFA */}
-          <div className="rounded-xl border border-black/10 bg-white p-4">
+          <div className="rounded-md border border-black/10 bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-2">
                 <CreditCardIcon className="size-4 text-accent" />
                 Grille tarifaire de l&apos;Abonnement AvisTrack (en FCFA)
               </h3>
-              <span className="text-[0.75rem] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5">
+              <span className="text-[0.75rem] font-medium text-black bg-gray-50 border border-black/10 rounded-md px-2 py-0.5">
                 Toutes les entreprises profitent des mêmes fonctionnalités complètes
               </span>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {/* Option 1 : Essai gratuit */}
-              <div className="rounded-xl border border-black/10 bg-gray-50/50 p-3.5 flex flex-col gap-1.5">
+              <div className="rounded-md border border-black/10 bg-gray-50/50 p-3.5 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-black flex items-center gap-1.5">
-                    <ClockIcon className="size-4 text-amber-600" />
+                    <ClockIcon className="size-4 text-gray-600" />
                     Essai Découverte
                   </span>
-                  <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[0.65rem] font-bold text-amber-700">
+                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[0.65rem] font-bold text-gray-700">
                     14 jours offerts
                   </span>
                 </div>
@@ -238,13 +238,13 @@ export function FinancialOverview({
               </div>
 
               {/* Option 2 : Formule Mensuelle */}
-              <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3.5 flex flex-col gap-1.5">
+              <div className="rounded-md border border-black/15 bg-gray-50/60 p-3.5 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-950 flex items-center gap-1.5">
-                    <RefreshIcon className="size-4 text-sky-600" />
+                  <span className="text-xs font-bold text-black flex items-center gap-1.5">
+                    <RefreshIcon className="size-4 text-gray-600" />
                     Abonnement Mensuel
                   </span>
-                  <span className="rounded-md bg-sky-500/20 px-2 py-0.5 text-[0.65rem] font-bold text-sky-800">
+                  <span className="rounded-md bg-gray-200 px-2 py-0.5 text-[0.65rem] font-bold text-gray-800">
                     Sans engagement
                   </span>
                 </div>
@@ -252,7 +252,7 @@ export function FinancialOverview({
                   Facturation mois par mois. Idéal pour démarrer avec souplesse.
                 </p>
                 <div className="mt-1">
-                  <span className="text-sm font-bold text-sky-950">
+                  <span className="text-sm font-bold text-black">
                     {formatCurrency(AVIS_TRACK_PRICING.monthly)}{" "}
                     <span className="text-[0.65rem] font-normal text-gray-500">/ mois</span>
                   </span>
@@ -261,16 +261,16 @@ export function FinancialOverview({
               </div>
 
               {/* Option 3 : Formule Annuelle */}
-              <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3.5 flex flex-col gap-1.5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-emerald-600 text-[0.55rem] font-bold text-white px-2 py-0.5 rounded-bl">
+              <div className="rounded-md border border-black/15 bg-gray-50/60 p-3.5 flex flex-col gap-1.5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-black text-[0.55rem] font-bold text-white px-2 py-0.5 rounded-bl">
                   {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} offerts
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                    <ZapIcon className="size-4 text-purple-600" />
+                  <span className="text-xs font-bold text-black flex items-center gap-1.5">
+                    <ZapIcon className="size-4 text-gray-600" />
                     Abonnement Annuel
                   </span>
-                  <span className="rounded-md bg-purple-500/20 px-2 py-0.5 text-[0.65rem] font-bold text-purple-900 mr-16">
+                  <span className="rounded-md bg-gray-200 px-2 py-0.5 text-[0.65rem] font-bold text-gray-900 mr-16">
                     Économique
                   </span>
                 </div>
@@ -278,11 +278,11 @@ export function FinancialOverview({
                   Règlement en une fois par an, avec une remise annuelle.
                 </p>
                 <div className="mt-1">
-                  <span className="text-sm font-bold text-purple-950">
+                  <span className="text-sm font-bold text-black">
                     {formatCurrency(AVIS_TRACK_PRICING.annual)}{" "}
                     <span className="text-[0.65rem] font-normal text-gray-500">/ an</span>
                   </span>
-                  <span className="text-[0.65rem] text-emerald-700 font-medium block">
+                  <span className="text-[0.65rem] text-gray-700 font-medium block">
                     Économisez {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} par an
                   </span>
                 </div>
@@ -293,11 +293,11 @@ export function FinancialOverview({
           {/* Barre d'outils : Filtres par Périodicité (Annuel / Mensuel / Essai) et Recherche */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
             {/* Onglets de filtrage rapide */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
+            <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-md">
               <button
                 type="button"
                 onClick={() => setFilterPeriod("all")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`rounded-lg px-3 py-1.5 min-h-11 min-w-[44px] text-xs font-bold transition ${
                   filterPeriod === "all"
                     ? "bg-white text-black shadow-xs"
                     : "text-gray-600 hover:text-black"
@@ -309,10 +309,10 @@ export function FinancialOverview({
               <button
                 type="button"
                 onClick={() => setFilterPeriod("annual")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 min-h-11 min-w-[44px] text-xs font-bold transition ${
                   filterPeriod === "annual"
-                    ? "bg-purple-600 text-white shadow-xs"
-                    : "text-gray-600 hover:text-purple-700"
+                    ? "bg-black text-white shadow-xs"
+                    : "text-gray-600 hover:text-black"
                 }`}
               >
                 <ZapIcon className="size-3.5" />
@@ -321,7 +321,7 @@ export function FinancialOverview({
                   className={`rounded-full px-1.5 py-0.2 text-[0.65rem] ${
                     filterPeriod === "annual"
                       ? "bg-white/20 text-white"
-                      : "bg-purple-100 text-purple-800"
+                      : "bg-gray-200 text-gray-800"
                   }`}
                 >
                   {stats.annualCount}
@@ -331,10 +331,10 @@ export function FinancialOverview({
               <button
                 type="button"
                 onClick={() => setFilterPeriod("monthly")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 min-h-11 min-w-[44px] text-xs font-bold transition ${
                   filterPeriod === "monthly"
-                    ? "bg-sky-600 text-white shadow-xs"
-                    : "text-gray-600 hover:text-sky-700"
+                    ? "bg-black text-white shadow-xs"
+                    : "text-gray-600 hover:text-black"
                 }`}
               >
                 <RefreshIcon className="size-3.5" />
@@ -343,7 +343,7 @@ export function FinancialOverview({
                   className={`rounded-full px-1.5 py-0.2 text-[0.65rem] ${
                     filterPeriod === "monthly"
                       ? "bg-white/20 text-white"
-                      : "bg-sky-100 text-sky-800"
+                      : "bg-gray-200 text-gray-800"
                   }`}
                 >
                   {stats.monthlyCount}
@@ -353,10 +353,10 @@ export function FinancialOverview({
               <button
                 type="button"
                 onClick={() => setFilterPeriod("trial")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 min-h-11 min-w-[44px] text-xs font-bold transition ${
                   filterPeriod === "trial"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "text-gray-600 hover:text-amber-800"
+                    ? "bg-black text-white shadow-xs"
+                    : "text-gray-600 hover:text-black"
                 }`}
               >
                 <ClockIcon className="size-3.5" />
@@ -365,7 +365,7 @@ export function FinancialOverview({
                   className={`rounded-full px-1.5 py-0.2 text-[0.65rem] ${
                     filterPeriod === "trial"
                       ? "bg-white/20 text-white"
-                      : "bg-amber-100 text-amber-800"
+                      : "bg-gray-200 text-gray-800"
                   }`}
                 >
                   {stats.trialCount}
@@ -381,7 +381,7 @@ export function FinancialOverview({
                 placeholder="Rechercher une entreprise..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-black/10 bg-white pl-9 pr-3 py-1.5 text-xs text-black placeholder:text-gray-400 focus:border-accent focus:outline-none"
+                className="w-full rounded-md border border-black/10 bg-white pl-9 pr-3 py-1.5 min-h-11 min-w-[44px] text-xs text-black placeholder:text-gray-400 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -448,18 +448,18 @@ export function FinancialOverview({
                     <td className={t.td}>
                       {sub.period === "annual" ? (
                         <div className="flex flex-col items-start gap-1">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-400/40 bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-800 shadow-2xs">
-                            <ZapIcon className="size-3.5 text-purple-700" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs">
+                            <ZapIcon className="size-3.5 text-gray-700" />
                             Annuel (12 mois)
                           </span>
-                          <span className="text-[0.65rem] font-semibold text-emerald-700">
+                          <span className="text-[0.65rem] font-semibold text-gray-700">
                             Facturé par an · {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} économisés
                           </span>
                         </div>
                       ) : sub.period === "monthly" ? (
                         <div className="flex flex-col items-start gap-1">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/40 bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-800 shadow-2xs">
-                            <RefreshIcon className="size-3.5 text-sky-600" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs">
+                            <RefreshIcon className="size-3.5 text-gray-600" />
                             Mensuel
                           </span>
                           <span className="text-[0.65rem] font-medium text-gray-500">
@@ -468,8 +468,8 @@ export function FinancialOverview({
                         </div>
                       ) : (
                         <div className="flex flex-col items-start gap-1">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 shadow-2xs">
-                            <ClockIcon className="size-3.5 text-amber-600" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs">
+                            <ClockIcon className="size-3.5 text-gray-600" />
                             Essai gratuit
                           </span>
                           <span className="text-[0.65rem] font-medium text-gray-500">
@@ -503,8 +503,8 @@ export function FinancialOverview({
                             sub.isSuspended
                               ? "text-red"
                               : sub.period === "trial"
-                              ? "text-amber-700"
-                              : "text-emerald-700"
+                              ? "text-gray-600"
+                              : "text-black"
                           }`}
                         >
                           <span
@@ -512,8 +512,8 @@ export function FinancialOverview({
                               sub.isSuspended
                                 ? "bg-red"
                                 : sub.period === "trial"
-                                ? "bg-amber-500"
-                                : "bg-emerald-500"
+                                 ? "bg-gray-400"
+                                 : "bg-black"
                             }`}
                           />
                           {sub.isSuspended
@@ -549,7 +549,7 @@ export function FinancialOverview({
                               period: sub.period,
                             })
                           }
-                          className="rounded-lg border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black hover:bg-gray-50 transition shadow-2xs"
+                          className="rounded-lg border border-black/10 bg-white px-2.5 py-1 min-h-11 min-w-[44px] text-xs font-bold text-black hover:bg-gray-50 transition shadow-2xs"
                         >
                           Changer formule
                         </button>
@@ -557,7 +557,7 @@ export function FinancialOverview({
                           href={`/admin/entreprises?recherche=${encodeURIComponent(
                             sub.company.name
                           )}`}
-                          className="text-xs font-bold text-accent hover:underline"
+                          className="inline-flex min-h-11 min-w-[44px] items-center text-xs font-bold text-accent hover:underline"
                         >
                           Fiche →
                         </Link>

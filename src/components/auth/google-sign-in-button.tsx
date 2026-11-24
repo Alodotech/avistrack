@@ -69,7 +69,7 @@ export function GoogleSignInButton({
         type="button"
         onClick={signInWithGoogle}
         disabled={pending}
-        className="group relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-black/15 bg-white px-5 py-3 text-sm font-bold text-black shadow-xs transition-all duration-200 hover:border-black/30 hover:bg-gray-50/80 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+        className="group relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-black/15 bg-white px-5 py-3 text-sm font-bold text-black shadow-xs transition-all duration-200 hover:border-black/30 hover:bg-gray-50/80 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <GoogleLogo />
         <span className="truncate">{pending ? "Connexion en cours…" : label}</span>

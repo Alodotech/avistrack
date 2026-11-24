@@ -27,7 +27,7 @@ export function InfoTip({
 
   return (
     <span
-      className={`relative inline-flex shrink-0 ${className}`}
+      className={`group relative inline-flex shrink-0 ${className}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       onFocus={() => setOpen(true)}
@@ -38,9 +38,14 @@ export function InfoTip({
         aria-describedby={id}
         aria-label={`À propos : ${text}`}
         onClick={() => setOpen((previous) => !previous)}
-        className="relative grid size-4 shrink-0 place-items-center rounded-full border border-black/25 text-[0.6rem] leading-none font-semibold text-gray-600 transition-colors before:absolute before:-inset-3.5 before:content-[''] hover:border-accent hover:text-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:outline-none"
+        className="-m-3.5 grid size-11 shrink-0 place-items-center rounded-full focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
       >
-        ?
+        <span
+          aria-hidden
+          className="grid size-5 place-items-center rounded-full border border-black/25 text-[0.65rem] leading-none font-semibold text-gray-600 transition-colors group-hover:border-accent group-hover:text-accent"
+        >
+          ?
+        </span>
       </button>
       <span
         id={id}

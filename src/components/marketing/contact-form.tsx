@@ -31,7 +31,7 @@ export function ContactForm() {
   return (
     <section
       aria-labelledby="footer-contact-title"
-      className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8"
+      className="rounded-md border border-white/10 bg-white/[0.04] p-6 sm:p-8"
     >
       <h2
         id="footer-contact-title"

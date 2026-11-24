@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
         {/* Tableau listant l'équipe */}
         <Suspense
           fallback={
-            <div className="rounded-2xl border border-black/10 bg-white p-8 text-center text-sm text-gray-500">
+            <div className="rounded-md border border-black/10 bg-white p-8 text-center text-sm text-gray-500">
               Chargement des utilisateurs…
             </div>
           }
@@ -125,8 +125,8 @@ async function AdminUsersTableContent() {
 
                   {/* Statut de compte */}
                   <td className={t.td}>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                    <span className="inline-flex items-center gap-1.5 rounded border border-black/15 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-black">
+                      <span className="size-1.5 rounded-full bg-black" />
                       Actif
                     </span>
                   </td>

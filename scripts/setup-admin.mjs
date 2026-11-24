@@ -25,6 +25,9 @@ loadEnv();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 const email = "aurelazk004@gmail.com";
 const password = "azk004";
 
@@ -87,7 +90,7 @@ async function main() {
   }
 
   console.log("\n✅ Terminé");
-  console.log("Connecte-toi sur http://localhost:3000/admin/login avec :");
+  console.log(`Connecte-toi sur ${siteUrl}/admin/login avec :`);
   console.log("   Email :", email);
   console.log("   Mot de passe :", password);
 }

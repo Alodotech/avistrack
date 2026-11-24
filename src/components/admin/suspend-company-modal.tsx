@@ -31,14 +31,14 @@ export function SuspendCompanyModal({ companyId, name, status }: Props) {
         }}
         title={title}
         aria-label={title}
-        className="inline-flex size-9 items-center justify-center rounded-lg border border-black/15 bg-white text-gray-700 hover:border-black/40 hover:bg-black/5 hover:text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black"
+        className="inline-flex size-11 items-center justify-center rounded border border-black/15 bg-white text-gray-700 transition-colors hover:border-black/40 hover:bg-gray-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none"
       >
         <PencilIcon className="size-4" />
       </button>
 
       <dialog
         ref={dialogRef}
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-lg border border-black bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-xl"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-md border border-black bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-lg"
       >
         <SuspendDialogBody
           key={instanceId}
@@ -106,17 +106,17 @@ function SuspendDialogBody({
           <legend className="px-1 font-semibold text-xs text-gray-700 uppercase tracking-wider">
             Action à exécuter
           </legend>
-          <label className="flex items-center gap-2 cursor-pointer font-medium text-green-800">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 font-medium text-black">
             <input
               type="radio"
               name="statusSelection"
               checked={actionChoice === "REACTIVATE"}
               onChange={() => setActionChoice("REACTIVATE")}
-              className="size-4 text-green-600"
+              className="size-4 accent-black"
             />
             Réactiver l&apos;entreprise immédiatement
           </label>
-          <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 font-medium text-gray-700">
             <input
               type="radio"
               name="statusSelection"

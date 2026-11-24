@@ -17,10 +17,10 @@ export function AddAdminForm() {
   }, [state]);
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-xs">
+    <div className="rounded-md border border-black/10 bg-white p-6">
       <div className="mb-5 flex flex-col gap-1">
         <h2 className="text-base font-bold text-black tracking-tight flex items-center gap-2">
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-bold">
+            <span className="flex size-6 items-center justify-center rounded bg-accent/10 text-accent text-xs font-bold">
             +
           </span>
           Ajouter un membre à l&apos;équipe AvisTrack
@@ -46,7 +46,7 @@ export function AddAdminForm() {
               type="email"
               required
               placeholder="ex: prenom.nom@gmail.com"
-              className="h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 transition-all"
+              className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
             />
           </div>
 
@@ -63,7 +63,7 @@ export function AddAdminForm() {
                 id="role"
                 name="role"
                 defaultValue="admin"
-                className="h-11 w-full appearance-none rounded-xl border border-black/15 bg-white px-3.5 pr-8 text-sm font-medium text-black focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 transition-all cursor-pointer"
+                className="h-11 w-full appearance-none rounded border border-black/15 bg-white px-3.5 pr-8 text-sm font-medium text-black focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 cursor-pointer"
               >
                 <option value="admin">Administrateur</option>
                 <option value="dirigeant">Dirigeant AvisTrack</option>
@@ -81,7 +81,7 @@ export function AddAdminForm() {
             <button
               type="submit"
               disabled={isPending}
-              className="h-11 w-full rounded-xl bg-accent px-4 text-xs font-bold text-white shadow-xs hover:bg-accent-deep transition-all duration-150 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               {isPending ? (
                 <>
@@ -99,7 +99,7 @@ export function AddAdminForm() {
         {state && !state.ok && state.error && (
           <div
             role="alert"
-            className="rounded-xl border border-red/20 bg-red/10 p-3 text-xs font-medium text-red"
+            className="rounded border border-red/20 bg-red/10 p-3 text-xs font-medium text-red"
           >
             {state.error}
           </div>
@@ -109,7 +109,7 @@ export function AddAdminForm() {
         {state?.ok && (
           <div
             role="status"
-            className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-800"
+            className="rounded border border-black/10 bg-gray-50 p-3 text-xs font-medium text-black"
           >
             L&apos;utilisateur a été ajouté avec succès à l&apos;équipe d&apos;administration.
           </div>

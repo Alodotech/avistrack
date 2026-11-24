@@ -6,7 +6,7 @@ import {
   findCompanyByUserId,
   findCompanyByUserIdIncludingDeleted,
 } from "@/server/repositories/company-repository";
-import { getAuthUser } from "./session";
+import { getAuthUser, type AuthUser } from "./session";
 
 /**
  * État du compte pour la requête courante.
@@ -27,18 +27,34 @@ export type AccountState =
   | { kind: "deleted"; company: Company };
 
 export const getAccountState = cache(async (): Promise<AccountState> => {
-  const user = await getAuthUser();
+  let user: AuthUser | null = null;
+  try {
+    user = await getAuthUser();
+  } catch (e) {
+    console.error("[onboarding-diag] getAuthUser failed:", e instanceof Error ? e.message : String(e));
+    return { kind: "anonymous" };
+  }
   if (!user) return { kind: "anonymous" };
 
   const admin = await findAdminById(user.id);
   if (admin) return { kind: "admin", admin };
 
-  const company = await findCompanyByUserId(user.id);
+  let company: Company | null = null;
+  try {
+    company = await findCompanyByUserId(user.id);
+  } catch (e) {
+    console.error("[onboarding-diag] findCompanyByUserId failed:", e instanceof Error ? e.message : String(e));
+    company = null;
+  }
   if (company) return { kind: "company", company };
 
-  const includingDeleted = await findCompanyByUserIdIncludingDeleted(user.id);
-  if (includingDeleted?.deleted) {
-    return { kind: "deleted", company: includingDeleted.company };
+  try {
+    const includingDeleted = await findCompanyByUserIdIncludingDeleted(user.id);
+    if (includingDeleted?.deleted) {
+      return { kind: "deleted", company: includingDeleted.company };
+    }
+  } catch (e) {
+    console.error("[onboarding-diag] findCompanyByUserIdIncludingDeleted failed:", e instanceof Error ? e.message : String(e));
   }
 
   return { kind: "onboarding" };

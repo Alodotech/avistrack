@@ -1,151 +1,177 @@
-import { formatCount } from "@/lib/format";
+"use client";
+
+import { useState } from "react";
+import {
+  ChartTooltip,
+  ResponsiveChart,
+} from "@/components/ui/responsive-chart";
+import { formatCount, formatShortDate } from "@/lib/format";
 import type { TrendChartPoint } from "@/lib/review-trend";
 
-const WIDTH = 480;
-const HEIGHT = 220;
-const PAD_X = 10;
-const PAD_TOP = 26;
-const PAD_BOTTOM = 30;
+const GRID_LEVELS = [0, 0.5, 1];
+const PAD_X = 34;
+const PAD_TOP = 16;
+const PAD_BOTTOM = 26;
 
 type Series = {
   key: string;
   title: string;
-  /** Couleur de la courbe : l'accent pour l'activité principale, le noir pour l'autre. */
   color: string;
   points: TrendChartPoint[];
-  /** Trait pointillé, pour distinguer les séries sans dépendre de la seule couleur. */
   dashed: boolean;
 };
 
-function shortMonthLabel(key: string): string {
-  const [year, month] = key.split("-");
-  const labels = [
-    "janv.",
-    "févr.",
-    "mars",
-    "avr.",
-    "mai",
-    "juin",
-    "juil.",
-    "août",
-    "sept.",
-    "oct.",
-    "nov.",
-    "déc.",
-  ];
-  const index = Number(month) - 1;
-  const label = labels[index] ?? month;
-  return label === "janv." || label === "sept." ? `${label} ${year.slice(2)}` : label;
-}
-
 function SeriesChart({ series }: { series: Series }) {
+  const [hover, setHover] = useState<number | null>(null);
   const total = series.points.reduce((sum, point) => sum + point.count, 0);
   const max = Math.max(1, ...series.points.map((point) => point.count));
-
-  const innerW = WIDTH - PAD_X * 2;
-  const innerH = HEIGHT - PAD_TOP - PAD_BOTTOM;
-  const stepX = series.points.length > 1 ? innerW / (series.points.length - 1) : 0;
-  const x = (index: number) => PAD_X + index * stepX;
-  const y = (value: number) => PAD_TOP + innerH - (value / max) * innerH;
-  const baseline = PAD_TOP + innerH;
-
-  const line = series.points
-    .map(
-      (point, index) =>
-        `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(point.count).toFixed(1)}`,
-    )
-    .join(" ");
-  const area = series.points.length
-    ? `${line} L${x(series.points.length - 1).toFixed(1)},${baseline} L${x(0).toFixed(1)},${baseline} Z`
-    : "";
-
   const lastIndex = series.points.length - 1;
 
   return (
     <figure className="flex flex-col gap-2">
-      <figcaption className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="flex items-center gap-2 text-sm font-semibold">
+      <figcaption className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
+        <span className="flex items-center gap-2 font-semibold">
           <span
             aria-hidden
-            className="inline-block h-1 w-6 rounded-full"
+            className="inline-block h-0.5 w-5"
             style={{ backgroundColor: series.color }}
           />
           {series.title}
         </span>
-        <span className="text-xs text-gray-600 tabular-nums">
+        <span className="text-gray-600 tabular-nums">
           {formatCount(total)} sur 12 mois
         </span>
       </figcaption>
 
-      <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="h-auto w-full"
-        role="img"
-        aria-label={`${series.title} : ${formatCount(total)} sur les douze derniers mois, maximum ${formatCount(max)} sur un mois.`}
-      >
-        {[0, 0.5, 1].map((level) => (
-          <line
-            key={level}
-            x1={PAD_X}
-            x2={WIDTH - PAD_X}
-            y1={PAD_TOP + innerH * level}
-            y2={PAD_TOP + innerH * level}
-            className="stroke-black/10"
-            strokeWidth={1}
-          />
-        ))}
+      <ResponsiveChart className="chart-plot">
+        {({ width, height }) => {
+          const innerW = Math.max(1, width - PAD_X * 2);
+          const innerH = Math.max(1, height - PAD_TOP - PAD_BOTTOM);
+          const stepX =
+            series.points.length > 1 ? innerW / (series.points.length - 1) : 0;
+          const x = (index: number) => PAD_X + index * stepX;
+          const y = (value: number) =>
+            PAD_TOP + innerH - (value / max) * innerH;
+          const line = series.points
+            .map(
+              (point, index) =>
+                `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(point.count).toFixed(1)}`,
+            )
+            .join(" ");
+          const tickEvery = Math.max(
+            1,
+            Math.ceil(series.points.length / (width < 480 ? 4 : 6)),
+          );
 
-        <text x={PAD_X} y={PAD_TOP - 10} className="fill-gray-600 text-[12px]">
-          max. {formatCount(max)}
-        </text>
+          return (
+            <>
+              <svg
+                width="100%"
+                height={height}
+                viewBox={`0 0 ${width} ${height}`}
+                role="img"
+                aria-label={`${series.title} : ${formatCount(total)} sur les douze derniers mois.`}
+              >
+                {GRID_LEVELS.map((level) => (
+                  <line
+                    key={level}
+                    x1={PAD_X}
+                    x2={width - PAD_X}
+                    y1={PAD_TOP + innerH * level}
+                    y2={PAD_TOP + innerH * level}
+                    className="stroke-black/10"
+                    strokeWidth={1}
+                  />
+                ))}
+                <text x={0} y={PAD_TOP + 4} className="fill-gray-500 text-[10px]">
+                  {formatCount(max)}
+                </text>
+                <text
+                  x={0}
+                  y={PAD_TOP + innerH + 4}
+                  className="fill-gray-500 text-[10px]"
+                >
+                  0
+                </text>
 
-        <path d={area} fill={series.color} fillOpacity={0.08} />
-        <path
-          d={line}
-          stroke={series.color}
-          strokeWidth={2.5}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray={series.dashed ? "6 4" : undefined}
-          fill="none"
-        />
-
-        {series.points.map((point, index) =>
-          point.count === 0 ? null : (
-            <circle
-              key={point.month}
-              cx={x(index)}
-              cy={y(point.count)}
-              r={index === lastIndex ? 3.5 : 2}
-              fill={series.color}
-            />
-          ),
-        )}
-
-        {series.points.map((point, index) =>
-          index % 3 === 0 || index === lastIndex ? (
-            <text
-              key={point.month}
-              x={x(index)}
-              y={HEIGHT - 8}
-              textAnchor={index === 0 ? "start" : index === lastIndex ? "end" : "middle"}
-              className="fill-gray-600 text-[12px]"
-            >
-              {shortMonthLabel(point.month)}
-            </text>
-          ) : null,
-        )}
-      </svg>
+                <path
+                  d={line}
+                  stroke={series.color}
+                  strokeWidth={1.75}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  strokeDasharray={series.dashed ? "5 4" : undefined}
+                  fill="none"
+                />
+                {hover !== null && series.points[hover] ? (
+                  <circle
+                    cx={x(hover)}
+                    cy={y(series.points[hover].count)}
+                    r={4}
+                    className="fill-white"
+                    stroke={series.color}
+                    strokeWidth={2}
+                  />
+                ) : null}
+                {series.points.map((point, index) =>
+                  index % tickEvery === 0 || index === lastIndex ? (
+                    <text
+                      key={point.month}
+                      x={x(index)}
+                      y={height - 6}
+                      textAnchor={
+                        index === 0
+                          ? "start"
+                          : index === lastIndex
+                            ? "end"
+                            : "middle"
+                      }
+                      className="fill-gray-500 text-[10px]"
+                    >
+                      {formatShortDate(`${point.month}-01`)}
+                    </text>
+                  ) : null,
+                )}
+                {series.points.map((point, index) => (
+                  <rect
+                    key={point.month}
+                    x={x(index) - stepX / 2}
+                    y={PAD_TOP}
+                    width={Math.max(stepX, 2)}
+                    height={innerH}
+                    fill="transparent"
+                    onPointerEnter={() => setHover(index)}
+                    onPointerDown={() => setHover(index)}
+                    onPointerLeave={() => setHover(null)}
+                  />
+                ))}
+              </svg>
+              {hover !== null && series.points[hover] ? (
+                <ChartTooltip
+                  x={x(hover)}
+                  width={width}
+                  lines={[
+                    {
+                      label: formatShortDate(`${series.points[hover].month}-01`),
+                      value: "",
+                    },
+                    {
+                      label: "Total",
+                      value: formatCount(series.points[hover].count),
+                      emphasis: true,
+                    },
+                  ]}
+                />
+              ) : null}
+            </>
+          );
+        }}
+      </ResponsiveChart>
     </figure>
   );
 }
 
-/**
- * AD-05 : évolution sur douze mois des inscriptions et des avis. Les deux
- * séries n'ont pas la même unité : chacune a donc sa propre échelle, sinon la
- * plus petite resterait collée au sol. Le SVG est produit par le serveur, sans
- * script client, et chaque valeur reste lisible via l'axe et le résumé.
- */
+/** Évolution sur douze mois : deux séries, rouge pour l'activité, noir pour le reste. */
 export function PlatformTrendChart({
   companies,
   reviews,

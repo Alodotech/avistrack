@@ -65,7 +65,7 @@ export function OnboardingForm({
   }
 
   return (
-    <div className="flex w-full flex-col gap-7 rounded-3xl border border-black/10 bg-white p-7 text-black shadow-xl sm:p-10">
+    <div className="flex w-full flex-col gap-7 rounded-md border border-black/10 bg-white p-7 text-black shadow-lg sm:p-10">
       <header className="flex flex-col text-center">
         <span className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-accent uppercase">
           <span aria-hidden className="size-1.5 rounded-full bg-accent" />

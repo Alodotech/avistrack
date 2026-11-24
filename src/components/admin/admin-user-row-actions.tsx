@@ -111,9 +111,9 @@ export function AdminUserRowActions({
           value={role}
           disabled={isPendingRole}
           onChange={(e) => handleRoleChange(e.target.value as AdminRole)}
-          className={`h-8 appearance-none rounded-lg border px-2.5 pr-7 text-xs font-semibold transition-all cursor-pointer ${
+          className={`h-11 appearance-none rounded border px-2.5 pr-7 text-sm transition-colors cursor-pointer ${
             role === "dirigeant"
-              ? "border-amber-400/40 bg-amber-50 text-amber-900"
+              ? "border-black bg-gray-50 text-black"
               : "border-black/15 bg-white text-gray-800"
           } focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50`}
         >
@@ -134,7 +134,7 @@ export function AdminUserRowActions({
           disabled={isAssigning || roles.length === 0}
           onChange={(event) => handleCustomRoleChange(event.target.value)}
           aria-label={`Rôle personnalisé pour ${userEmail}`}
-          className="h-8 max-w-40 appearance-none rounded-lg border border-black/15 bg-white px-2.5 pr-7 text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-accent/20 focus:outline-none disabled:opacity-50"
+          className="h-11 max-w-40 appearance-none rounded border border-black/15 bg-white px-2.5 pr-7 text-sm text-gray-800 focus:ring-2 focus:ring-accent/20 focus:outline-none disabled:opacity-50"
         >
           <option value="">Rôle standard</option>
           {roles.map((item) => (
@@ -153,7 +153,7 @@ export function AdminUserRowActions({
       <button
         type="button"
         onClick={() => permissionsDialogRef.current?.showModal()}
-        className="rounded-lg border border-black/15 bg-white px-2.5 py-1 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-100"
+        className="inline-flex min-h-11 items-center rounded border border-black/15 bg-white px-3 text-sm text-gray-800 transition-colors hover:bg-gray-100"
       >
         Permissions
       </button>
@@ -168,7 +168,7 @@ export function AdminUserRowActions({
           <button
             type="button"
             onClick={() => dialogRef.current?.showModal()}
-            className="flex size-8 items-center justify-center rounded-lg border border-red/20 bg-red/5 text-red hover:bg-red/10 transition-colors cursor-pointer"
+            className="flex size-11 items-center justify-center rounded border border-red/20 bg-red/5 text-red transition-colors hover:bg-red/10"
             title="Révoquer l'accès"
             aria-label={`Révoquer l'accès pour ${userEmail}`}
           >
@@ -181,7 +181,7 @@ export function AdminUserRowActions({
           <dialog
             ref={dialogRef}
             aria-labelledby={titleId}
-            className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-2xl border border-black/15 bg-white p-6 text-left text-black shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+            className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-md border border-black/15 bg-white p-6 text-left text-black shadow-lg backdrop:bg-black/60"
           >
             <div className="flex flex-col gap-4">
               <div className="flex size-11 items-center justify-center rounded-full bg-red/10 text-red">
@@ -201,7 +201,7 @@ export function AdminUserRowActions({
               </div>
 
               {deleteError && (
-                <div role="alert" className="rounded-xl border border-red/20 bg-red/10 p-2.5 text-xs text-red font-medium">
+                <div role="alert" className="rounded border border-red/20 bg-red/10 p-2.5 text-xs font-medium text-red">
                   {deleteError}
                 </div>
               )}
@@ -211,7 +211,7 @@ export function AdminUserRowActions({
                   type="button"
                   disabled={isDeleting}
                   onClick={() => dialogRef.current?.close()}
-                  className="rounded-xl border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="inline-flex min-h-11 items-center rounded border border-black/15 bg-white px-4 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                 >
                   Annuler
                 </button>
@@ -219,7 +219,7 @@ export function AdminUserRowActions({
                   type="button"
                   disabled={isDeleting}
                   onClick={handleConfirmDelete}
-                  className="rounded-xl bg-red px-4 py-2 text-xs font-bold text-white hover:bg-red/90 transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded bg-red px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
                 >
                   {isDeleting ? "Révocation..." : "Confirmer la révocation"}
                 </button>
@@ -232,7 +232,7 @@ export function AdminUserRowActions({
       <dialog
         ref={permissionsDialogRef}
         aria-label={`Permissions de ${userEmail}`}
-        className="m-auto w-[min(42rem,calc(100vw-2rem))] rounded-2xl border border-black/15 bg-white p-6 text-left text-black shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+        className="m-auto w-[min(42rem,calc(100vw-2rem))] rounded-md border border-black/15 bg-white p-6 text-left text-black shadow-lg backdrop:bg-black/60"
       >
         <div className="flex flex-col gap-5">
           <div>
@@ -249,7 +249,7 @@ export function AdminUserRowActions({
             {ADMIN_MODULES.map((module) => (
               <label
                 key={module}
-                className="flex flex-col gap-1.5 rounded-xl border border-black/10 bg-gray-50/60 p-3"
+                className="flex flex-col gap-1.5 rounded border border-black/10 bg-gray-50/60 p-3"
               >
                 <span className="text-xs font-bold text-black">
                   {ADMIN_MODULE_LABELS[module]}
@@ -265,7 +265,7 @@ export function AdminUserRowActions({
                       [module]: event.target.value as AdminPermissionLevel,
                     }))
                   }
-                  className="mt-1 h-9 rounded-lg border border-black/15 bg-white px-2 text-xs font-semibold"
+                  className="mt-1 h-11 rounded border border-black/15 bg-white px-2 text-sm"
                 >
                   {ADMIN_PERMISSION_LEVELS.map((level) => (
                     <option key={level} value={level}>
@@ -278,7 +278,7 @@ export function AdminUserRowActions({
           </div>
 
           {permissionError ? (
-            <p role="alert" className="rounded-xl border border-red/20 bg-red/10 p-3 text-xs font-medium text-red">
+            <p role="alert" className="rounded border border-red/20 bg-red/10 p-3 text-xs font-medium text-red">
               {permissionError}
             </p>
           ) : null}
@@ -287,7 +287,7 @@ export function AdminUserRowActions({
             <button
               type="button"
               onClick={() => permissionsDialogRef.current?.close()}
-              className="rounded-xl border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+              className="inline-flex min-h-11 items-center rounded border border-black/15 bg-white px-4 text-sm text-gray-700 transition-colors hover:bg-gray-100"
             >
               Annuler
             </button>
@@ -295,7 +295,7 @@ export function AdminUserRowActions({
               type="button"
               disabled={isSavingPermissions}
               onClick={savePermissions}
-              className="rounded-xl bg-accent px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
+              className="inline-flex min-h-11 items-center rounded bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               {isSavingPermissions ? "Enregistrement…" : "Enregistrer"}
             </button>

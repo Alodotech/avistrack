@@ -24,14 +24,14 @@ export function DeleteCompanyModal({ companyId, name }: Props) {
         }}
         title={`Supprimer définitivement ${name}`}
         aria-label={`Supprimer définitivement ${name}`}
-        className="inline-flex size-9 items-center justify-center rounded-lg border border-red/25 bg-white text-red hover:border-red/50 hover:bg-red/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red"
+        className="inline-flex size-11 items-center justify-center rounded border border-red/25 bg-white text-red transition-colors hover:border-red/50 hover:bg-red/10 focus-visible:ring-2 focus-visible:ring-red focus-visible:outline-none"
       >
         <TrashIcon className="size-4" />
       </button>
 
       <dialog
         ref={dialogRef}
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-lg border border-red bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-xl"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-md border border-red bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-lg"
       >
         <DeleteDialogBody
           key={instanceId}

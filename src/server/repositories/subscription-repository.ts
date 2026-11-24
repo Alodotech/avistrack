@@ -11,6 +11,31 @@ import { createAdminClient } from "@/utils/supabase/admin";
 
 export const TRIAL_DAYS = 14;
 
+export async function hasProcessedFedapayEvent(
+  eventId: string,
+): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("fedapay_webhook_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+export async function markFedapayEventProcessed(
+  eventId: string,
+  name: string,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("fedapay_webhook_events").upsert(
+    { id: eventId, name },
+    { onConflict: "id", ignoreDuplicates: true },
+  );
+  if (error) throw error;
+}
+
 function mapStatus(value: string): SubscriptionStatus {
   return value.toUpperCase() as SubscriptionStatus;
 }
@@ -141,10 +166,27 @@ export async function activatePaidSubscription(input: {
   providerRef: string;
   actorEmail?: string;
 }): Promise<CompanySubscription> {
+  if (!input.providerRef.trim()) throw new Error("Référence de paiement manquante.");
+
   const supabase = createAdminClient();
   const now = new Date();
   const end = addPeriod(now, input.period);
   if (!end) throw new Error("Période d'abonnement invalide.");
+
+  const { data: existingPayment, error: paymentLookupError } = await supabase
+    .from("payments")
+    .select("id, company_id")
+    .eq("provider", input.provider)
+    .eq("provider_ref", input.providerRef)
+    .maybeSingle();
+  if (paymentLookupError) throw paymentLookupError;
+  if (existingPayment) {
+    if (existingPayment.company_id !== input.companyId) {
+      throw new Error("Référence de paiement déjà utilisée par une autre entreprise.");
+    }
+    const existing = await getCompanySubscription(input.companyId);
+    if (existing) return existing;
+  }
 
   const { data, error } = await supabase
     .from("company_subscriptions")
@@ -167,34 +209,42 @@ export async function activatePaidSubscription(input: {
     .single();
   if (error) throw error;
 
-  const [{ error: paymentError }, { error: auditError }] = await Promise.all([
-    supabase.from("payments").insert({
-      company_id: input.companyId,
+  if (existingPayment) {
+    const { error: paymentError } = await supabase
+      .from("payments")
+      .update({ status: "paid" })
+      .eq("id", existingPayment.id);
+    if (paymentError) throw paymentError;
+    return toSubscription(data);
+  }
+
+  const { error: paymentError } = await supabase.from("payments").insert({
+    company_id: input.companyId,
+    plan: input.plan,
+    period: input.period,
+    amount: input.amount,
+    status: "paid",
+    provider: input.provider,
+    provider_ref: input.providerRef,
+  });
+  if (paymentError) throw paymentError;
+
+  const { error: auditError } = await supabase.from("audit_logs").insert({
+    action: "PAYMENT",
+    target_type: "company",
+    target_id: input.companyId,
+    details: {
+      companyName: input.companyId,
+      adminEmail: input.actorEmail ?? "client",
+      reason: `Paiement ${input.provider} — ${input.period} — ${input.amount} FCFA`,
       plan: input.plan,
       period: input.period,
       amount: input.amount,
-      status: "paid",
       provider: input.provider,
-      provider_ref: input.providerRef,
-    }),
-    supabase.from("audit_logs").insert({
-      action: "PAYMENT",
-      target_type: "company",
-      target_id: input.companyId,
-      details: {
-        companyName: input.companyId,
-        adminEmail: input.actorEmail ?? "client",
-        reason: `Paiement ${input.provider} — ${input.period} — ${input.amount} FCFA`,
-        plan: input.plan,
-        period: input.period,
-        amount: input.amount,
-        provider: input.provider,
-      },
-    }),
-  ]);
-
-  if (paymentError) throw paymentError;
+    },
+  });
   if (auditError) throw auditError;
+
   return toSubscription(data);
 }
 
@@ -284,6 +334,7 @@ export type PaymentHistoryItem = {
   amount: number;
   status: string;
   provider: string;
+  providerRef: string | null;
   createdAt: Date;
 };
 
@@ -304,6 +355,7 @@ export async function listPayments(
     amount: row.amount,
     status: row.status,
     provider: row.provider,
+    providerRef: row.provider_ref,
     createdAt: new Date(row.created_at),
   }));
 }
@@ -328,6 +380,7 @@ export async function findPayment(
     amount: data.amount,
     status: data.status,
     provider: data.provider,
+    providerRef: data.provider_ref,
     createdAt: new Date(data.created_at),
   };
 }

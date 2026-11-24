@@ -46,19 +46,6 @@ const PLANS: Plan[] = [
   },
 ];
 
-const COMPARISON = [
-  { feature: "Établissements", trial: "1", pro: "Jusqu'à 5" },
-  { feature: "QR code et avis", trial: "Illimités", pro: "Illimités" },
-  { feature: "Formulaire personnalisable", trial: "Oui", pro: "Oui" },
-  { feature: "Avis anonymes ou identifiés", trial: "Oui", pro: "Oui" },
-  { feature: "Remarques privées", trial: "Oui", pro: "Oui" },
-  { feature: "Tableau de bord et tendances", trial: "Oui", pro: "Oui" },
-  { feature: "Export des avis", trial: "Non", pro: "CSV" },
-  { feature: "Affiche QR A6", trial: "Oui", pro: "Oui" },
-  { feature: "Support", trial: "E-mail", pro: "Prioritaire" },
-  { feature: "Engagement", trial: "14 jours, sans carte", pro: "Sans engagement" },
-];
-
 const FAQ = [
   {
     question: "L'essai gratuit demande-t-il une carte bancaire ?",
@@ -136,7 +123,7 @@ export function Pricing() {
               type="button"
               aria-pressed={period === "monthly"}
               onClick={() => setPeriod("monthly")}
-              className={`min-h-10 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
+              className={`min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
                 period === "monthly"
                   ? "bg-black text-white"
                   : "text-gray-600 hover:text-black"
@@ -148,7 +135,7 @@ export function Pricing() {
               type="button"
               aria-pressed={period === "annual"}
               onClick={() => setPeriod("annual")}
-              className={`min-h-10 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
+              className={`min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
                 period === "annual"
                   ? "bg-red text-white"
                   : "text-gray-600 hover:text-black"
@@ -171,14 +158,14 @@ export function Pricing() {
             return (
               <article
                 key={plan.id}
-                className={`relative flex h-full flex-col rounded-2xl border p-6 sm:p-7 ${
+                className={`relative flex h-full flex-col rounded-md border p-6 sm:p-7 ${
                   plan.highlighted
                     ? "order-1 border-red/40 bg-white shadow-[0_24px_60px_-28px_rgba(215,25,32,0.55)] lg:order-2 lg:-translate-y-4"
                     : "order-2 border-black/10 bg-white/65 lg:order-1"
                 }`}
               >
                 {plan.highlighted ? (
-                  <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-red/10 px-3 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-red uppercase">
+                  <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-red/10 px-3 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-accent-deep uppercase">
                     <span aria-hidden className="size-1.5 rounded-full bg-red" />
                     Essai gratuit 14 jours
                   </span>
@@ -249,61 +236,6 @@ export function Pricing() {
             );
           })}
         </div>
-
-        <section aria-labelledby="pricing-compare" className="mt-16 lg:mt-20">
-          <h3
-            id="pricing-compare"
-            className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl"
-          >
-            Comparer les plans
-          </h3>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-gray-600">
-            Les mêmes outils de collecte dans les deux offres ; le Pro lève les
-            limites et ajoute les exports.
-          </p>
-
-          <div className="mt-8 overflow-x-auto rounded-2xl border border-black/10 bg-white">
-            <table className="w-full min-w-[34rem] text-sm">
-              <caption className="sr-only">
-                Comparaison de l&apos;essai gratuit et du plan Pro
-              </caption>
-              <thead className="bg-gray-50 text-left text-xs tracking-wide text-gray-600 uppercase">
-                <tr>
-                  <th scope="col" className="px-5 py-3">
-                    Fonctionnalité
-                  </th>
-                  <th scope="col" className="px-5 py-3">
-                    Essai gratuit
-                  </th>
-                  <th scope="col" className="px-5 py-3 text-red">
-                    Pro
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row) => (
-                  <tr key={row.feature} className="border-t border-black/10">
-                    <th scope="row" className="px-5 py-3 text-left font-semibold">
-                      {row.feature}
-                    </th>
-                    <td className="px-5 py-3 text-gray-600">{row.trial}</td>
-                    <td className="px-5 py-3 font-semibold">{row.pro}</td>
-                  </tr>
-                ))}
-                <tr className="border-t border-black/10 bg-gray-50">
-                  <th scope="row" className="px-5 py-3 text-left font-semibold">
-                    Prix
-                  </th>
-                  <td className="px-5 py-3 text-gray-600">Gratuit 14 jours</td>
-                  <td className="px-5 py-3 font-semibold">
-                    {formatCurrency(AVIS_TRACK_PRICING.monthly)} / mois ou{" "}
-                    {formatCurrency(AVIS_TRACK_PRICING.annual)} / an
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
 
         <section aria-labelledby="pricing-faq" className="mt-16 lg:mt-20">
           <h3

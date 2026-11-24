@@ -10,7 +10,7 @@ export function AdminLoginForm() {
   const error = searchParams.get("error");
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-7 rounded-3xl border border-black/10 bg-white p-7 text-black shadow-xl sm:p-10">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-7 rounded-lg border border-black/15 bg-white p-6 text-black shadow-md sm:p-8">
       <header className="flex flex-col items-center text-center">
         <div className="mb-3 flex items-center justify-center gap-2.5">
           <Image
@@ -56,7 +56,7 @@ export function AdminLoginForm() {
       <p className="border-t border-black/10 pt-4 text-center text-xs text-gray-500">
         <Link
           href="/"
-          className="font-semibold text-black underline-offset-4 hover:underline"
+          className="inline-flex min-h-11 items-center font-semibold text-black underline-offset-4 hover:underline"
         >
           ← Retour à l&apos;accueil
         </Link>

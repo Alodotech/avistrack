@@ -239,7 +239,7 @@ export async function updateCompanyProfile(
     logoUrl?: string | null;
   },
 ): Promise<Company | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const update: {
     phone: string;
     email: string;

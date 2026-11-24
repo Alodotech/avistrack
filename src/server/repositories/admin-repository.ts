@@ -105,32 +105,42 @@ export async function findAdminByEmail(email: string): Promise<Admin | null> {
 
 /**
  * Vérifie si un utilisateur est administrateur lors du retour OAuth et synchronise son user_id.
+ *
+ * La comparaison e-mail est faite côté serveur : insérer l'e-mail dans un
+ * filtre PostgREST `or(...ilike...)` permettrait à une adresse contenant
+ * `%`, `_`, `,` ou `)` de modifier la requête (contournement de droits).
  */
 export async function checkAndSyncAdminOAuth(
   userId: string,
   email?: string | null,
 ): Promise<boolean> {
   const adminClient = createAdminClient();
-  const query = adminClient.from("admins").select("user_id, email");
 
-  if (email) {
-    query.or(`user_id.eq.${userId},email.ilike.${email}`);
-  } else {
-    query.eq("user_id", userId);
+  const { data: byId } = await adminClient
+    .from("admins")
+    .select("user_id, email")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (byId) return true;
+
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return false;
+
+  const { data: admins } = await adminClient
+    .from("admins")
+    .select("user_id, email");
+  const byEmail = (admins ?? []).find(
+    (row) => row.email.trim().toLowerCase() === normalizedEmail,
+  );
+  if (!byEmail) return false;
+
+  if (byEmail.user_id !== userId) {
+    await adminClient
+      .from("admins")
+      .update({ user_id: userId })
+      .eq("user_id", byEmail.user_id);
   }
-
-  const { data: adminRecord } = await query.maybeSingle();
-
-  if (adminRecord) {
-    if (adminRecord.user_id !== userId && email) {
-      await adminClient
-        .from("admins")
-        .update({ user_id: userId })
-        .ilike("email", email);
-    }
-    return true;
-  }
-  return false;
+  return true;
 }
 
 /**

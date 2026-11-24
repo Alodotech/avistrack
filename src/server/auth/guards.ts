@@ -89,6 +89,11 @@ export const getCurrentAdmin = cache(async (): Promise<Admin | null> => {
 export async function requireAdmin(): Promise<Admin> {
   const state = await getAccountState();
   if (state.kind === "admin") return state.admin;
+  // Un compte entreprise n'a rien à faire sur l'écran de connexion admin :
+  // chaque état repart vers sa propre destination (évite l'aller-retour).
+  if (state.kind === "company") redirect(COMPANY_HOME_PATH);
+  if (state.kind === "onboarding") redirect(ONBOARDING_PATH);
+  if (state.kind === "deleted") redirect(COMPANY_LOGIN_PATH);
   redirect(ADMIN_LOGIN_PATH);
 }
 

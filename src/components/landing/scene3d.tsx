@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import qrcode from "qrcode-generator";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -131,56 +128,49 @@ function roundRectPath(
 
 type Cleanup = () => void;
 
-/**
- * Scène WebGL fixe derrière le contenu : la caméra suit les 6 chapitres au
- * défilement (plaque QR + faisceau de scan, téléphone, tableau de bord,
- * isolation A/B). Chargée en différé, rendue aux événements uniquement.
- */
-export function Scene3D() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+/** Monte la scène WebGL sur un canvas déjà présent dans le DOM. */
+export function mountScene(canvas: HTMLCanvasElement, root: HTMLElement): Cleanup {
+  if (!document.getElementById("hero")) return () => undefined;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const root = document.documentElement;
-    if (!canvas || !document.getElementById("hero")) return;
+  // Sous 1024 px, la caméra ne peut pas garder les maquettes hors du texte :
+  // on rend les maquettes HTML à la place de la scène.
+  const sceneAllowed = window.matchMedia("(min-width: 1024px)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-    // Sous 1024 px, la caméra ne peut pas garder les maquettes hors du texte :
-    // on rend les maquettes HTML à la place de la scène.
-    const sceneAllowed = window.matchMedia("(min-width: 1024px)");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+  let cleanup: Cleanup | undefined;
+  let scheduled = 0;
+  let cancelled = false;
 
-    let cleanup: Cleanup | undefined;
-    let scheduled = 0;
+  const stop = () => {
+    window.clearTimeout(scheduled);
+    cleanup?.();
+    cleanup = undefined;
+  };
 
-    const stop = () => {
-      window.clearTimeout(scheduled);
-      cleanup?.();
-      cleanup = undefined;
-    };
+  const sync = () => {
+    if (!sceneAllowed.matches) {
+      stop();
+      return;
+    }
+    if (cleanup || scheduled) return;
+    scheduled = window.setTimeout(() => {
+      scheduled = 0;
+      void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
+        if (cancelled || !sceneAllowed.matches) done();
+        else cleanup = done;
+      });
+    }, 40);
+  };
 
-    const sync = () => {
-      if (!sceneAllowed.matches) {
-        stop();
-        return;
-      }
-      if (cleanup || scheduled) return;
-      scheduled = window.setTimeout(() => {
-        scheduled = 0;
-        void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
-          if (sceneAllowed.matches) cleanup = done;
-          else done();
-        });
-      }, 40);
-    };
+  sync();
+  sceneAllowed.addEventListener("change", sync);
 
-    sync();
-    sceneAllowed.addEventListener("change", sync);
-
-    return stop;
-  }, []);
-
-  return <canvas ref={canvasRef} aria-hidden className="scene-canvas" />;
+  return () => {
+    cancelled = true;
+    sceneAllowed.removeEventListener("change", sync);
+    stop();
+  };
 }
 
 async function initScene(
@@ -230,9 +220,9 @@ async function initScene(
     renderer.shadowMap.type = THREE.PCFShadowMap;
   }
 
-  // Les textures 3D (QR, formulaire, dashboard) utilisent la vraie Inter :
-  // garantir qu'elle est rastérisée avant de dessiner les canvas.
-  if (document.fonts?.ready) await document.fonts.ready;
+  // Les textures utilisent la police disponible ; un rendu est reprogrammé
+  // quand Inter finit de charger, sans bloquer l'apparition de la scène.
+  if (document.fonts?.ready) void document.fonts.ready.then(() => queueRender());
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(colors.bg);
@@ -351,7 +341,7 @@ async function initScene(
       img.onerror = () => {
         try {
           const code = qrcode(0, "M");
-          code.addData("https://avistrack.fr/avis/demo-avistrack");
+          code.addData("https://avis-pied.vercel.app/avis/demo-avistrack");
           code.make();
           const count = code.getModuleCount();
           const cell = qrSize / count;

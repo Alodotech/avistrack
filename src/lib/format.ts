@@ -5,6 +5,12 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "UTC",
 });
 
+const shortDateFormatter = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "short",
+  timeZone: "UTC",
+});
+
 const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
   month: "2-digit",
@@ -32,6 +38,12 @@ const EMPTY_VALUE = "—";
 export function formatDate(value: Date | string): string {
   const date = toDate(value);
   return date === null ? EMPTY_VALUE : dateFormatter.format(date);
+}
+
+/** Date courte française, par exemple « 12 nov. ». */
+export function formatShortDate(value: Date | string): string {
+  const date = toDate(value);
+  return date === null ? EMPTY_VALUE : shortDateFormatter.format(date);
 }
 
 /** Convertit une date ou une chaîne ISO en `Date`, ou `null` si illisible. */

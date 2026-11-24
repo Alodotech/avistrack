@@ -10,12 +10,15 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:rls": "vitest run tests/rls",
+    "audit:session": "node scripts/make-audit-session.mjs",
+    "audit:responsive": "node scripts/audit-responsive.mjs",
     "db:purge": "node scripts/purge-companies.mjs",
     "update-types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > src/types/supabase.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "fedapay": "^1.2.5",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
@@ -32,6 +35,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",

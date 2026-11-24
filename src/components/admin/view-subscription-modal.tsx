@@ -69,21 +69,21 @@ export function ViewSubscriptionModal({
         onClick={() => dialogRef.current?.showModal()}
         title={`Vérifier l'abonnement de ${name}`}
         aria-label={`Vérifier l'abonnement de ${name}`}
-        className="inline-flex size-9 items-center justify-center rounded-lg border border-blue-200 bg-white text-blue-700 hover:border-blue-400 hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+        className="inline-flex size-11 items-center justify-center rounded-lg border border-black/15 bg-white text-black hover:border-black/40 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black"
       >
         <CreditCardIcon className="size-4" />
       </button>
 
       <dialog
         ref={dialogRef}
-        className="m-auto w-[min(34rem,calc(100vw-2rem))] rounded-xl border border-black/20 bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-2xl"
+        className="m-auto w-[min(34rem,calc(100vw-2rem))] rounded-md border border-black/20 bg-white p-6 text-left text-black backdrop:bg-black/60 shadow-lg"
       >
         <div className="flex flex-col gap-5">
           {/* Entête */}
           <div className="flex items-start justify-between gap-3 border-b border-black/10 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <span className="inline-flex size-8 items-center justify-center rounded-lg bg-gray-100 text-black">
                   <CreditCardIcon className="size-5" />
                 </span>
                 <h2 className="text-lg font-bold text-black wrap-break-word">
@@ -98,7 +98,7 @@ export function ViewSubscriptionModal({
               type="button"
               onClick={() => dialogRef.current?.close()}
               aria-label="Fermer"
-              className="rounded-lg p-1 text-gray-500 hover:bg-black/5 hover:text-black transition-colors"
+              className="flex size-11 items-center justify-center rounded-md text-gray-500 hover:bg-black/5 hover:text-black transition-colors"
             >
               <XIcon className="size-5" />
             </button>
@@ -108,14 +108,14 @@ export function ViewSubscriptionModal({
           <div
             className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium ${
               isExpired
-                ? "border border-amber-300 bg-amber-50 text-amber-900"
-                : "border border-green-200 bg-green-50 text-green-900"
+                ? "border border-red/30 bg-red/5 text-red"
+                : "border border-black/10 bg-gray-50 text-black"
             }`}
           >
             {isExpired ? (
-              <ClockIcon className="size-5 shrink-0 text-amber-700" />
+              <ClockIcon className="size-5 shrink-0 text-red" />
             ) : (
-              <CheckIcon className="size-5 shrink-0 text-green-700" />
+              <CheckIcon className="size-5 shrink-0 text-black" />
             )}
             <div>
               {isExpired ? (
@@ -144,7 +144,7 @@ export function ViewSubscriptionModal({
             {/* 1. Jour de l'abonnement */}
             <div className="flex flex-col gap-1 rounded-lg border border-black/10 bg-gray-50/70 p-3.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <CalendarIcon className="size-4 text-blue-600" />
+                <CalendarIcon className="size-4 text-gray-600" />
                 Jour de l&apos;abonnement
               </div>
               <div className="mt-1 text-xl font-bold tabular-nums text-black">
@@ -158,7 +158,7 @@ export function ViewSubscriptionModal({
             {/* 2. Jour de la fin */}
             <div className="flex flex-col gap-1 rounded-lg border border-black/10 bg-gray-50/70 p-3.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <ClockIcon className="size-4 text-purple-600" />
+                <ClockIcon className="size-4 text-gray-600" />
                 Jour de la fin
               </div>
               <div className="mt-1 text-xl font-bold tabular-nums text-black">
@@ -199,7 +199,7 @@ export function ViewSubscriptionModal({
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-black/10">
             <Link
               href={`/admin/finances?q=${encodeURIComponent(name)}`}
-              className={buttonClass("ghost", "text-sm text-blue-700 hover:text-blue-900")}
+              className={buttonClass("ghost", "text-sm text-black hover:text-gray-600")}
               onClick={() => dialogRef.current?.close()}
             >
               Gérer dans Finances →

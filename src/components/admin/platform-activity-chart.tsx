@@ -1,180 +1,218 @@
-import { formatCount } from "@/lib/format";
+"use client";
+
+import { useState } from "react";
+import {
+  ChartTooltip,
+  ResponsiveChart,
+} from "@/components/ui/responsive-chart";
+import { formatCount, formatShortDate } from "@/lib/format";
 import type { PlatformActivity } from "@/server/repositories/platform-activity-repository";
 
-const WIDTH = 720;
-const HEIGHT = 260;
-const PAD_X = 12;
-const PAD_TOP = 22;
-const PAD_BOTTOM = 34;
+const GRID_LEVELS = [0, 0.25, 0.5, 0.75, 1];
+const PAD_X = 34;
+const PAD_TOP = 16;
+const PAD_BOTTOM = 26;
 
 const SERIES = [
   {
     key: "registrations" as const,
     label: "Entreprises inscrites",
-    color: "#0F5C47",
+    color: "var(--color-accent)",
   },
   {
     key: "subscriptions" as const,
-    label: "Inscriptions avec abonnement",
-    color: "#C2410C",
+    label: "Avec abonnement",
+    color: "var(--color-black)",
   },
 ];
 
-function shortDate(value: string): string {
-  const date = new Date(`${value}T00:00:00Z`);
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-/** Courbes d'activité sur une fenêtre glissante, produites côté serveur. */
+/** Activité de la plateforme : deux séries, rouge et noir, une seule échelle. */
 export function PlatformActivityChart({
   activity,
 }: {
   activity: PlatformActivity;
 }) {
+  const [hover, setHover] = useState<number | null>(null);
   const points = activity.points;
   const max = Math.max(
     1,
     ...points.flatMap((point) => SERIES.map((series) => point[series.key])),
   );
-  const innerW = WIDTH - PAD_X * 2;
-  const innerH = HEIGHT - PAD_TOP - PAD_BOTTOM;
-  const stepX = points.length > 1 ? innerW / (points.length - 1) : 0;
-  const x = (index: number) => PAD_X + index * stepX;
-  const y = (value: number) => PAD_TOP + innerH - (value / max) * innerH;
-  const labelEvery = points.length <= 14 ? 1 : Math.ceil(points.length / 8);
+  const lastIndex = points.length - 1;
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Summary
-          label="Entreprises utilisatrices"
-          value={activity.totalCompanies}
-        />
+      <dl className="flex flex-wrap gap-x-8 gap-y-4">
+        <Summary label="Entreprises" value={activity.totalCompanies} />
         <Summary
           label="Inscriptions sur la période"
           value={activity.registrations}
-          color="#0F5C47"
         />
         <Summary
-          label="Inscriptions avec abonnement"
+          label="Avec abonnement"
           value={activity.registrationsWithSubscription}
-          color="#C2410C"
         />
-      </div>
+        <Summary label="Avis reçus" value={activity.reviews} />
+      </dl>
 
       <figure className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-gray-700">
+        <figcaption className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-600">
           {SERIES.map((series) => (
             <span key={series.key} className="flex items-center gap-2">
               <span
                 aria-hidden
-                className="inline-block h-1 w-6 rounded-full"
+                className="inline-block h-0.5 w-5"
                 style={{ backgroundColor: series.color }}
               />
               {series.label}
             </span>
           ))}
-          <span className="ml-auto text-gray-500">
-            {formatCount(activity.reviews)} avis sur la période
-          </span>
-        </div>
+        </figcaption>
 
-        <svg
-          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          className="h-auto w-full"
-          role="img"
-          aria-label={`Activité des ${activity.days} derniers jours : ${activity.registrations} inscriptions dont ${activity.registrationsWithSubscription} avec abonnement, sur ${activity.totalCompanies} entreprises.`}
-        >
-          {[0, 0.5, 1].map((level) => (
-            <line
-              key={level}
-              x1={PAD_X}
-              x2={WIDTH - PAD_X}
-              y1={PAD_TOP + innerH * level}
-              y2={PAD_TOP + innerH * level}
-              className="stroke-black/10"
-              strokeWidth={1}
-            />
-          ))}
-
-          <text x={PAD_X} y={PAD_TOP - 8} className="fill-gray-500 text-[11px]">
-            max. {formatCount(max)}
-          </text>
-
-          {SERIES.map((series) => {
-            const line = points
-              .map((point, index) => {
-                const value = point[series.key];
-                return `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(value).toFixed(1)}`;
-              })
-              .join(" ");
-            return (
-              <path
-                key={series.key}
-                d={line}
-                stroke={series.color}
-                strokeWidth={2.5}
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                fill="none"
-              />
+        <ResponsiveChart className="chart-plot">
+          {({ width, height }) => {
+            const innerW = Math.max(1, width - PAD_X * 2);
+            const innerH = Math.max(1, height - PAD_TOP - PAD_BOTTOM);
+            const stepX = points.length > 1 ? innerW / (points.length - 1) : 0;
+            const x = (index: number) => PAD_X + index * stepX;
+            const y = (value: number) => PAD_TOP + innerH - (value / max) * innerH;
+            const tickEvery = Math.max(
+              1,
+              Math.ceil(points.length / (width < 480 ? 4 : 6)),
             );
-          })}
 
-          {points.map((point, index) =>
-            index % labelEvery === 0 || index === points.length - 1 ? (
-              <text
-                key={point.date}
-                x={x(index)}
-                y={HEIGHT - 8}
-                textAnchor={
-                  index === 0
-                    ? "start"
-                    : index === points.length - 1
-                      ? "end"
-                      : "middle"
-                }
-                className="fill-gray-500 text-[11px]"
-              >
-                {shortDate(point.date)}
-              </text>
-            ) : null,
-          )}
-        </svg>
+            return (
+              <>
+                <svg
+                  width="100%"
+                  height={height}
+                  viewBox={`0 0 ${width} ${height}`}
+                  role="img"
+                  aria-label={`Activité des ${activity.days} derniers jours : ${activity.registrations} inscriptions dont ${activity.registrationsWithSubscription} avec abonnement.`}
+                >
+                  {GRID_LEVELS.map((level) => (
+                    <line
+                      key={level}
+                      x1={PAD_X}
+                      x2={width - PAD_X}
+                      y1={PAD_TOP + innerH * level}
+                      y2={PAD_TOP + innerH * level}
+                      className="stroke-black/10"
+                      strokeWidth={1}
+                    />
+                  ))}
+                  <text x={0} y={PAD_TOP + 4} className="fill-gray-500 text-[10px]">
+                    {formatCount(max)}
+                  </text>
+                  <text
+                    x={0}
+                    y={PAD_TOP + innerH + 4}
+                    className="fill-gray-500 text-[10px]"
+                  >
+                    0
+                  </text>
+
+                  {SERIES.map((series) => {
+                    const line = points
+                      .map(
+                        (point, index) =>
+                          `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(point[series.key]).toFixed(1)}`,
+                      )
+                      .join(" ");
+                    return (
+                      <path
+                        key={series.key}
+                        d={line}
+                        stroke={series.color}
+                        strokeWidth={1.75}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    );
+                  })}
+
+                  {hover !== null && points[hover] ? (
+                    <>
+                      {SERIES.map((series) => (
+                        <circle
+                          key={series.key}
+                          cx={x(hover)}
+                          cy={y(points[hover][series.key])}
+                          r={4}
+                          className="fill-white"
+                          stroke={series.color}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </>
+                  ) : null}
+
+                  {points.map((point, index) =>
+                    index % tickEvery === 0 || index === lastIndex ? (
+                      <text
+                        key={point.date}
+                        x={x(index)}
+                        y={height - 6}
+                        textAnchor={
+                          index === 0
+                            ? "start"
+                            : index === lastIndex
+                              ? "end"
+                              : "middle"
+                        }
+                        className="fill-gray-500 text-[10px]"
+                      >
+                        {formatShortDate(point.date)}
+                      </text>
+                    ) : null,
+                  )}
+
+                  {points.map((point, index) => (
+                    <rect
+                      key={point.date}
+                      x={x(index) - stepX / 2}
+                      y={PAD_TOP}
+                      width={Math.max(stepX, 2)}
+                      height={innerH}
+                      fill="transparent"
+                      onPointerEnter={() => setHover(index)}
+                      onPointerDown={() => setHover(index)}
+                      onPointerLeave={() => setHover(null)}
+                    />
+                  ))}
+                </svg>
+                {hover !== null && points[hover] ? (
+                  <ChartTooltip
+                    x={x(hover)}
+                    width={width}
+                    lines={[
+                      {
+                        label: formatShortDate(points[hover].date),
+                        value: "",
+                      },
+                      ...SERIES.map((series) => ({
+                        label: series.label,
+                        value: formatCount(points[hover][series.key]),
+                        emphasis: true,
+                      })),
+                    ]}
+                  />
+                ) : null}
+              </>
+            );
+          }}
+        </ResponsiveChart>
       </figure>
     </div>
   );
 }
 
-function Summary({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  /** Absent pour le chiffre clé global : il ne fait partie d'aucune série. */
-  color?: string;
-}) {
+function Summary({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-black/10 bg-gray-50/70 p-3.5">
-      <span className="flex items-center gap-2 text-[0.68rem] font-bold tracking-wider text-gray-500 uppercase">
-        {color ? (
-          <span
-            aria-hidden
-            className="size-2 rounded-full"
-            style={{ backgroundColor: color }}
-          />
-        ) : null}
-        {label}
-      </span>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-black tabular-nums">
-        {formatCount(value)}
-      </p>
+    <div className="flex flex-col gap-1">
+      <dt className="text-xs text-gray-600">{label}</dt>
+      <dd className="text-xl font-semibold tabular-nums">{formatCount(value)}</dd>
     </div>
   );
 }

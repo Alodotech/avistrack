@@ -51,7 +51,7 @@ export function DateFilters({
       role="search"
       className="flex flex-wrap items-end gap-4"
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:max-w-xs">
+      <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto sm:max-w-xs sm:flex-1">
         <label
           htmlFor="company-search"
           className="text-xs font-semibold tracking-wide text-gray-600 uppercase"

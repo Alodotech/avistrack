@@ -20,7 +20,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <Scene3DLoader />
         <a
           href="#contenu"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-black focus:ring-2 focus:ring-red"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:flex focus:min-h-11 focus:items-center focus:rounded-md focus:bg-white focus:px-4 focus:text-sm focus:font-semibold focus:text-black focus:ring-2 focus:ring-red"
         >
           Aller au contenu
         </a>

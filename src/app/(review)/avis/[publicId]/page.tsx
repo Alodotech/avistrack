@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 function UnavailableScreen({ title, message }: { title: string; message: string }) {
   return (
-    <div className="rounded-2xl border border-black/15 bg-white p-8 text-center">
+    <div className="rounded-md border border-black/15 bg-white p-8 text-center">
       <h1 className="text-xl font-semibold">{title}</h1>
       <p className="mt-3 text-sm leading-6 text-gray-600">{message}</p>
     </div>

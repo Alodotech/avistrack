@@ -52,10 +52,10 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-black/10 bg-white p-6 shadow-xs">
+    <div className="flex flex-col gap-6 rounded-md border border-black/10 bg-white p-6">
       <div className="flex flex-col gap-1">
         <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-black">
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+          <span className="flex size-6 items-center justify-center rounded bg-accent/10 text-xs font-bold text-accent">
             +
           </span>
           Créer un rôle
@@ -85,7 +85,7 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
             minLength={2}
             maxLength={60}
             placeholder="ex: Chargé de reporting"
-            className="h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none"
+            className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none"
           />
         </div>
 
@@ -96,7 +96,7 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
           {ADMIN_MODULES.map((module) => (
             <label
               key={module}
-              className="flex flex-col gap-1.5 rounded-xl border border-black/10 bg-gray-50/60 p-3"
+              className="flex flex-col gap-1.5 rounded border border-black/10 bg-gray-50/60 p-3"
             >
               <span className="text-xs font-bold text-black">
                 {ADMIN_MODULE_LABELS[module]}
@@ -109,7 +109,7 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
                     [module]: event.target.value as AdminPermissionLevel,
                   }))
                 }
-                className="mt-1 h-9 rounded-lg border border-black/15 bg-white px-2 text-xs font-semibold"
+                className="mt-1 h-11 rounded border border-black/15 bg-white px-2 text-sm"
               >
                 {ADMIN_PERMISSION_LEVELS.map((level) => (
                   <option key={level} value={level}>
@@ -122,12 +122,12 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
         </fieldset>
 
         {error ? (
-          <p role="alert" className="rounded-xl border border-red/20 bg-red/10 p-3 text-xs font-medium text-red">
+          <p role="alert" className="rounded border border-red/20 bg-red/10 p-3 text-xs font-medium text-red">
             {error}
           </p>
         ) : null}
         {notice ? (
-          <p role="status" className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-800">
+          <p role="status" className="rounded border border-black/10 bg-gray-50 p-3 text-xs font-medium text-black">
             {notice}
           </p>
         ) : null}
@@ -152,7 +152,7 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
             {roles.map((role) => (
               <li
                 key={role.id}
-                className="rounded-full border border-black/15 bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800"
+                className="rounded border border-black/15 bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800"
                 title={ADMIN_MODULES.map(
                   (module) => `${module}: ${role.permissions[module]}`,
                 ).join(" · ")}

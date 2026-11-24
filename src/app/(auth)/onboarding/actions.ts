@@ -43,49 +43,56 @@ export async function completeOnboarding(
 ): Promise<OnboardingState> {
   const company = await getCurrentCompany();
   if (!company) redirect(COMPANY_LOGIN_PATH);
-  if (company.status !== "ACTIVE") {
-    return { status: "error", message: "Votre compte n'est pas actif." };
-  }
 
-  const parsed = onboardingSchema.safeParse({
-    name: formData.get("name"),
-    phone: formData.get("phone"),
-    email: formData.get("email"),
-  });
-  if (!parsed.success) {
-    const fields = z.flattenError(parsed.error).fieldErrors;
-    return {
-      status: "error",
-      message: "Corrigez les champs signalés.",
-      errors: {
-        name: fields.name?.[0],
-        phone: fields.phone?.[0],
-        email: fields.email?.[0],
-      },
-    };
-  }
+  try {
+    if (company.status !== "ACTIVE") {
+      return { status: "error", message: "Votre compte n'est pas actif." };
+    }
 
-  let logoUrl: string | null | undefined;
-  const logo = formData.get("logo");
-  if (logo instanceof File && logo.size > 0) {
-    const uploaded = await uploadCompanyLogo(company.id, logo);
-    if (!uploaded.ok) {
+    const parsed = onboardingSchema.safeParse({
+      name: formData.get("name"),
+      phone: formData.get("phone"),
+      email: formData.get("email"),
+    });
+    if (!parsed.success) {
+      const fields = z.flattenError(parsed.error).fieldErrors;
       return {
         status: "error",
-        message: uploaded.message,
-        errors: { logo: uploaded.message },
+        message: "Corrigez les champs signalés.",
+        errors: {
+          name: fields.name?.[0],
+          phone: fields.phone?.[0],
+          email: fields.email?.[0],
+        },
       };
     }
-    logoUrl = uploaded.url;
-  }
 
-  // Le caractère obligatoire du logo se règle par `LOGO_REQUIRED` : la
-  // validation serveur suit la même règle que le libellé du formulaire.
-  if (LOGO_REQUIRED && !company.logoUrl && !logoUrl) {
-    const message = "Le logo de votre entreprise est obligatoire.";
-    return { status: "error", message, errors: { logo: message } };
-  }
+    let logoUrl: string | null | undefined;
+    const logo = formData.get("logo");
+    if (logo instanceof File && logo.size > 0) {
+      const uploaded = await uploadCompanyLogo(company.id, logo);
+      if (!uploaded.ok) {
+        return {
+          status: "error",
+          message: uploaded.message,
+          errors: { logo: uploaded.message },
+        };
+      }
+      logoUrl = uploaded.url;
+    }
 
-  await updateCompanyProfile(company.id, { ...parsed.data, logoUrl });
-  return { status: "saved", message: "Profil enregistré. Choisissez votre forfait." };
+    if (LOGO_REQUIRED && !company.logoUrl && !logoUrl) {
+      const message = "Le logo de votre entreprise est obligatoire.";
+      return { status: "error", message, errors: { logo: message } };
+    }
+
+    await updateCompanyProfile(company.id, { ...parsed.data, logoUrl });
+    return { status: "saved", message: "Profil enregistré. Choisissez votre forfait." };
+  } catch (e) {
+    console.error("[onboarding-diag] completeOnboarding failed:", JSON.stringify(e));
+    return {
+      status: "error",
+      message: "Une erreur est survenue lors de l'enregistrement. Réessayez.",
+    };
+  }
 }

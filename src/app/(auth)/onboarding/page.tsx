@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { DeletedAccountScreen } from "@/components/auth/deleted-account-screen";
 import {
   ADMIN_HOME_PATH,
@@ -24,7 +25,16 @@ export const metadata: Metadata = { title: "Compléter mon compte" };
  * rechargement.
  */
 export default async function OnboardingPage() {
-  const state = await getAccountState();
+  // Rendu à la demande : empêche l'erreur "Date.now() during prerendering"
+  // levée par supabase.auth.getUser() en interne.
+  await connection();
+
+  let state;
+  try {
+    state = await getAccountState();
+  } catch {
+    redirect("/?auth=login");
+  }
 
   if (state.kind === "company") {
     if (

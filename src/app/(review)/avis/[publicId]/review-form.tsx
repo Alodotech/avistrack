@@ -15,6 +15,14 @@ const inputClass =
 
 const initialState: PublicReviewState = { status: "idle" };
 
+/**
+ * Soumission de démonstration (QR de la page d'accueil) : aucun avis n'est
+ * écrit en base, mais le parcours reste identique pour le visiteur.
+ */
+async function submitDemo(): Promise<PublicReviewState> {
+  return { status: "submitted" };
+}
+
 const RATING_VALUES = [1, 2, 3, 4, 5] as const;
 const RATING_LABELS = [
   "",
@@ -44,7 +52,7 @@ function ThankYou({
   message: string;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-black/10 bg-white p-8 text-center shadow-sm sm:p-10">
+    <div className="flex flex-col items-center rounded-md border border-black/10 bg-white p-8 text-center shadow-sm sm:p-10">
       <span className="grid size-20 place-items-center rounded-full bg-accent/10 text-accent">
         <svg
           viewBox="0 0 24 24"
@@ -71,19 +79,22 @@ export function ReviewForm({
   publicId,
   config,
   maxDate,
+  demo = false,
 }: {
   companyName: string;
   publicId: string;
   config: ReviewFormConfig;
   maxDate: string;
+  /** Mode vitrine : le formulaire ne persiste rien. */
+  demo?: boolean;
 }) {
   const [mode, setMode] = useState<"welcome" | "review" | "remark">("welcome");
   const [reviewState, reviewAction, reviewPending] = useActionState(
-    submitReview,
+    demo ? submitDemo : submitReview,
     initialState,
   );
   const [remarkState, remarkAction, remarkPending] = useActionState(
-    submitRemark,
+    demo ? submitDemo : submitRemark,
     initialState,
   );
   const [rating, setRating] = useState(0);
@@ -109,7 +120,7 @@ export function ReviewForm({
 
   if (mode === "welcome") {
     return (
-      <div className="flex flex-col gap-6 rounded-2xl border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+      <div className="flex flex-col gap-6 rounded-md border border-black/10 bg-white p-6 shadow-sm sm:p-8">
         <header className="flex flex-col gap-2 border-b border-black/10 pb-5">
           <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-gray-600 uppercase">
             <span aria-hidden className="size-1.5 rounded-full bg-accent" />
@@ -128,7 +139,7 @@ export function ReviewForm({
           <button
             type="button"
             onClick={() => setMode("review")}
-            className="flex min-h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep"
+            className="flex min-h-11 items-center justify-center rounded-md bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep"
           >
             Répondre au formulaire
           </button>
@@ -136,7 +147,7 @@ export function ReviewForm({
             <button
               type="button"
               onClick={() => setMode("remark")}
-              className="flex min-h-11 items-center justify-center rounded-full border border-black bg-white px-5 text-sm font-semibold text-black transition-colors hover:bg-gray-100"
+              className="flex min-h-11 items-center justify-center rounded-md border border-black bg-white px-5 text-sm font-semibold text-black transition-colors hover:bg-gray-100"
             >
               Laisser une remarque
             </button>
@@ -155,7 +166,7 @@ export function ReviewForm({
       <form
         action={remarkAction}
         noValidate
-        className="flex flex-col gap-5 rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-8"
+        className="flex flex-col gap-5 rounded-md border border-black/10 bg-white p-5 shadow-sm sm:p-8"
       >
         <input type="hidden" name="publicId" value={publicId} />
         <header className="flex flex-col gap-2 border-b border-black/10 pb-5">
@@ -236,7 +247,7 @@ export function ReviewForm({
           <button
             type="submit"
             disabled={remarkPending}
-            className="min-h-12 w-full cursor-pointer rounded-full bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:opacity-60"
+            className="min-h-12 w-full cursor-pointer rounded-md bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:opacity-60"
           >
             {remarkPending ? "Envoi…" : "Envoyer ma remarque"}
           </button>
@@ -261,7 +272,7 @@ export function ReviewForm({
     <form
       action={reviewAction}
       noValidate
-      className="flex flex-col gap-6 rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-8"
+      className="flex flex-col gap-6 rounded-md border border-black/10 bg-white p-5 shadow-sm sm:p-8"
     >
       <input type="hidden" name="publicId" value={publicId} />
 
@@ -520,7 +531,7 @@ export function ReviewForm({
         <button
           type="submit"
           disabled={reviewPending}
-          className="min-h-12 w-full cursor-pointer rounded-full bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-12 w-full cursor-pointer rounded-md bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
         >
           {reviewPending ? "Envoi…" : "Envoyer mon avis"}
         </button>

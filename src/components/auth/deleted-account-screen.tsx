@@ -9,7 +9,7 @@ import { signOutCompany } from "@/server/auth/sign-out";
  */
 export function DeletedAccountScreen() {
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border border-black/15 border-l-4 border-l-red bg-white p-6 sm:p-8">
+    <section className="flex flex-col gap-6 rounded-md border border-black/15 border-l-4 border-l-red bg-white p-6 sm:p-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-xl font-semibold tracking-tight">
           Votre entreprise a été supprimée

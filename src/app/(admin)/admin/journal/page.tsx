@@ -119,7 +119,7 @@ async function AuditLogContent({
       title="Filtrer le journal"
       description="Recherchez par entreprise ou administrateur, par action et par période."
     >
-      <form method="get" className="flex flex-col gap-3 lg:flex-row lg:items-end">
+      <form method="get" className="flex flex-col gap-3 xl:flex-row xl:items-end">
         <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
           Entreprise ou administrateur
           <input
@@ -127,7 +127,7 @@ async function AuditLogContent({
             name="q"
             defaultValue={filters.q}
             placeholder="Nom ou e-mail"
-            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+            className="min-h-11 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-semibold">
@@ -135,7 +135,7 @@ async function AuditLogContent({
           <select
             name="action"
             defaultValue={action ?? ""}
-            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+            className="min-h-11 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
           >
             <option value="">Toutes les actions</option>
             {(Object.keys(ACTION_LABELS) as AuditAction[]).map((value) => (
@@ -150,7 +150,7 @@ async function AuditLogContent({
           <select
             name="periode"
             defaultValue={filters.periode}
-            className="min-h-10 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
+            className="min-h-11 rounded-md border border-black/25 bg-white px-3 text-sm font-normal focus:border-accent focus:outline-none"
           >
             {PERIODS.map(([key, label]) => (
               <option key={key} value={key}>
@@ -160,19 +160,19 @@ async function AuditLogContent({
           </select>
         </label>
         <div className="flex flex-wrap gap-2">
-          <button type="submit" className="min-h-10 rounded-md bg-black px-4 text-sm font-semibold text-white">
+          <button type="submit" className="inline-flex min-h-11 items-center rounded-md bg-black px-4 text-sm font-semibold text-white">
             Filtrer
           </button>
-          <a href="/admin/journal" className="min-h-10 rounded-md border border-black/25 px-4 py-2.5 text-sm font-semibold">
+          <a href="/admin/journal" className="inline-flex min-h-11 items-center rounded-md border border-black/25 px-4 text-sm font-semibold">
             Réinitialiser
           </a>
         </div>
       </form>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <a href={exportHref(filters, "csv")} className="text-sm font-semibold underline underline-offset-4">
+        <a href={exportHref(filters, "csv")} className="inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-4">
           Exporter en CSV
         </a>
-        <a href={exportHref(filters, "pdf")} className="text-sm font-semibold underline underline-offset-4">
+        <a href={exportHref(filters, "pdf")} className="inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-4">
           Exporter en PDF
         </a>
       </div>
@@ -225,7 +225,7 @@ async function AuditLogContent({
           </ul>
 
           <div className={`${t.wrapper} hidden md:block`}>
-            <table className={`${t.table} min-w-176`}>
+            <table className={t.table}>
               <thead className={t.head}>
                 <tr>
                   {COLUMNS.map((heading) => (
@@ -241,7 +241,7 @@ async function AuditLogContent({
                     <td className={`${t.td} whitespace-nowrap tabular-nums`}>
                       {formatDateTime(entry.createdAt)}
                     </td>
-                    <td className={`${t.td} whitespace-nowrap`}>{entry.adminEmail}</td>
+                    <td className={`${t.td} wrap-anywhere`}>{entry.adminEmail}</td>
                     <td className={`${t.td} font-semibold`}>
                       {ACTION_LABELS[entry.action]}
                     </td>

@@ -43,11 +43,12 @@ export async function GET(
   line("Montant", formatCurrency(payment.amount));
   line("Statut", "Payé");
   line("Référence", payment.id);
-  line("Prestataire", payment.provider);
+  line("Prestataire", payment.provider === "fedapay" ? "FedaPay" : payment.provider);
+  if (payment.providerRef) line("Réf. prestataire", payment.providerRef);
 
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
-  doc.text("Document généré pour une démonstration — aucun débit réel.", 10, 78);
+  doc.text("Reçu généré automatiquement par AvisTrack.", 10, y + 4);
 
   return new Response(doc.output("arraybuffer"), {
     headers: {

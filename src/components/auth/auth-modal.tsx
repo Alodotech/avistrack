@@ -52,14 +52,13 @@ export function AuthModal() {
       {/* Carte du modal */}
       <div
         ref={modalRef}
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-black/10 bg-white p-7 sm:p-9 text-black shadow-2xl transition-all duration-300 animate-scaleUp"
-        style={{ color: "#0a0a0a" }}
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-lg border border-black/15 bg-white p-6 text-black shadow-lg sm:p-8"
       >
         {/* Bouton de fermeture */}
         <button
           type="button"
           onClick={closeModal}
-          className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-black transition-colors cursor-pointer"
+          className="absolute right-3 top-3 grid size-11 place-items-center rounded-md text-gray-600 transition-colors hover:bg-gray-100 hover:text-black"
           aria-label="Fermer la boîte de dialogue"
         >
           <svg
@@ -89,14 +88,14 @@ export function AuthModal() {
           </div>
 
           {/* Sélecteur d'onglet : Se connecter / Créer un compte */}
-          <div className="mt-2 mb-5 flex w-full rounded-2xl bg-gray-100 p-1">
+          <div className="mt-2 mb-5 flex w-full rounded-md bg-gray-100 p-1">
             <button
               type="button"
               onClick={openLogin}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`inline-flex min-h-11 flex-1 items-center justify-center rounded text-sm font-medium transition-colors ${
                 !isSignup
-                  ? "bg-white text-black shadow-xs"
-                  : "text-gray-500 hover:text-black"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-600 hover:text-black"
               }`}
             >
               Se connecter
@@ -104,10 +103,10 @@ export function AuthModal() {
             <button
               type="button"
               onClick={openSignup}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`inline-flex min-h-11 flex-1 items-center justify-center rounded text-sm font-medium transition-colors ${
                 isSignup
-                  ? "bg-white text-black shadow-xs"
-                  : "text-gray-500 hover:text-black"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-600 hover:text-black"
               }`}
             >
               Créer mon compte
@@ -145,7 +144,7 @@ export function AuthModal() {
               <button
                 type="button"
                 onClick={openLogin}
-                className="font-bold text-accent hover:underline cursor-pointer"
+                className="inline-flex min-h-11 items-center font-semibold text-accent hover:underline"
               >
                 Se connecter
               </button>
@@ -156,7 +155,7 @@ export function AuthModal() {
               <button
                 type="button"
                 onClick={openSignup}
-                className="font-bold text-accent hover:underline cursor-pointer"
+                className="inline-flex min-h-11 items-center font-semibold text-accent hover:underline"
               >
                 Créer un compte
               </button>
@@ -165,10 +164,7 @@ export function AuthModal() {
         </div>
 
         {/* Footer légal discret */}
-        <p
-          className="mt-6 text-center text-[0.72rem] leading-tight"
-          style={{ color: "#8a8a8a" }}
-        >
+        <p className="mt-6 text-center text-xs leading-tight text-gray-500">
           En continuant, vous acceptez les{" "}
           <a
             href="/mentions-legales"

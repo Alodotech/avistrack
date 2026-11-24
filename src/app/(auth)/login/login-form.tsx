@@ -6,7 +6,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export function LoginForm() {
   return (
-    <div className="flex flex-col gap-7 rounded-3xl border border-black/10 bg-white p-7 sm:p-10 text-black shadow-xl max-w-md mx-auto w-full">
+    <div className="flex flex-col gap-7 rounded-md border border-black/10 bg-white p-7 sm:p-10 text-black shadow-lg max-w-md mx-auto w-full">
       <header className="flex flex-col items-center text-center">
         <div className="mb-4 flex items-center justify-center gap-2.5">
           <Image

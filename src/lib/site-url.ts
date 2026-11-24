@@ -23,6 +23,18 @@ function configuredSiteUrl(): string | null {
 }
 
 /**
+ * URL fournie automatiquement par Vercel, utilisée si `NEXT_PUBLIC_SITE_URL`
+ * n'est pas défini. `VERCEL_PROJECT_PRODUCTION_URL` pointe vers le domaine de
+ * production (stable), `VERCEL_URL` vers l'URL du déploiement courant.
+ */
+function vercelSiteUrl(): string | null {
+  const raw =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? "";
+  const host = raw.trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  return host.length > 0 ? `https://${host}` : null;
+}
+
+/**
  * URL canonique de l'application, sans slash final.
  *
  * En production, une variable manquante est une erreur de configuration : on
@@ -30,7 +42,7 @@ function configuredSiteUrl(): string | null {
  * pointant vers un domaine qui n'est pas le bon.
  */
 export function siteUrl(): string {
-  const configured = configuredSiteUrl();
+  const configured = configuredSiteUrl() ?? vercelSiteUrl();
   if (configured) return configured;
   if (process.env.NODE_ENV === "production") {
     throw new Error(
@@ -46,7 +58,7 @@ export function siteUrl(): string {
  * génération.
  */
 export function siteUrlOrFallback(): string {
-  const configured = configuredSiteUrl();
+  const configured = configuredSiteUrl() ?? vercelSiteUrl();
   if (configured) return configured;
   return process.env.NODE_ENV === "production"
     ? FALLBACK_SITE_URL

@@ -16,7 +16,7 @@ const LEGAL_LINKS = [
 ] as const;
 
 const LINK_CLASS =
-  "inline-flex min-h-9 items-center text-sm text-white/65 underline-offset-4 transition-colors hover:text-white hover:underline";
+  "inline-flex min-h-11 min-w-11 items-center text-sm text-white/65 underline-offset-4 transition-colors hover:text-white hover:underline";
 
 /** Calculée au chargement du module : valeur stable pour le prérendu. */
 const YEAR = new Date().getFullYear();
@@ -27,7 +27,7 @@ export function SiteFooter() {
     <footer id="contact" className="relative overflow-hidden bg-black text-white">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 right-0 size-[28rem] rounded-full bg-accent/10 blur-3xl"
+        className="pointer-events-none absolute -top-40 right-0 size-[28rem] rounded-full bg-accent/10 blur-3xl hidden sm:block"
       />
 
       <div className="relative mx-auto w-full max-w-7xl px-6 pt-16 pb-8 lg:px-16 lg:pt-20">
@@ -36,7 +36,7 @@ export function SiteFooter() {
           <div className="flex flex-col gap-5">
             <Link
               href="/"
-              className="inline-flex items-center gap-3 text-xl font-bold tracking-tight"
+              className="inline-flex min-h-11 items-center gap-3 text-xl font-bold tracking-tight"
               aria-label="AvisTrack, accueil"
             >
               <Image
@@ -54,13 +54,13 @@ export function SiteFooter() {
               isolation stricte des données par entreprise.
             </p>
 
-            <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-white/50 uppercase">
+            <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-white/70 uppercase">
               <span aria-hidden className="size-1.5 rounded-full bg-accent" />
               Une question ?
             </p>
             <a
               href="mailto:contact@avistrack.com"
-              className="inline-flex items-center gap-2 text-sm font-medium text-white underline-offset-4 hover:text-white/80 hover:underline"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-white underline-offset-4 transition-colors hover:text-white/80 hover:underline"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -83,7 +83,7 @@ export function SiteFooter() {
           <nav aria-labelledby="footer-product">
             <h2
               id="footer-product"
-              className="text-xs font-semibold tracking-[0.16em] text-white/50 uppercase"
+              className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase"
             >
               Produit
             </h2>
@@ -102,7 +102,7 @@ export function SiteFooter() {
           <nav aria-labelledby="footer-legal">
             <h2
               id="footer-legal"
-              className="text-xs font-semibold tracking-[0.16em] text-white/50 uppercase"
+              className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase"
             >
               Légal
             </h2>
@@ -124,7 +124,7 @@ export function SiteFooter() {
 
           {/* Contact */}
           <div>
-            <h2 className="text-xs font-semibold tracking-[0.16em] text-white/50 uppercase">
+            <h2 className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase">
               Contact
             </h2>
             <a
@@ -141,7 +141,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
           <p>© {YEAR} AvisTrack — Tous droits réservés.</p>
           <p>Collecte d&apos;avis par QR code · Données isolées par entreprise</p>
         </div>

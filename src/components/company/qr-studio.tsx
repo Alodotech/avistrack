@@ -24,7 +24,7 @@ import {
 /* Constantes DA AvisTrack                                            */
 /* ------------------------------------------------------------------ */
 
-const ACCENT_GREEN = "#0F5C47";
+const ACCENT_RED = "#d71920";
 const INK_BLACK = "#000000";
 const WHITE = "#FFFFFF";
 
@@ -43,7 +43,7 @@ const PAGE_FORMATS: {
 
 const QR_COLORS = [
   { id: "black", label: "Noir", value: INK_BLACK },
-  { id: "green", label: "Vert AvisTrack", value: ACCENT_GREEN },
+  { id: "red", label: "Rouge AvisTrack", value: ACCENT_RED },
 ] as const;
 
 const LINK_MODES = [
@@ -168,7 +168,7 @@ function QrPoster({
     width: logoSize,
     height: logoSize,
     borderRadius: "50%",
-    backgroundColor: ACCENT_GREEN,
+    backgroundColor: ACCENT_RED,
     color: WHITE,
     display: "flex",
     alignItems: "center",
@@ -306,7 +306,7 @@ export function QrStudio({
   companyLogoUrl,
 }: QrStudioProps) {
   const [pageFormatId, setPageFormatId] = useState<"A6" | "A5" | "A4">("A6");
-  const [qrColorId, setQrColorId] = useState<"black" | "green">("green");
+  const [qrColorId, setQrColorId] = useState<"black" | "red">("red");
   const [linkMode, setLinkMode] = useState<"official" | "custom">("official");
   const [customLink, setCustomLink] = useState("");
   const [qrSvgDataUrl, setQrSvgDataUrl] = useState<string | null>(null);
@@ -354,7 +354,7 @@ export function QrStudio({
       try {
         const svg = await generateQrSvg(
           qrUrl,
-          qrColorId === "green" ? ACCENT_GREEN : INK_BLACK,
+          qrColorId === "red" ? ACCENT_RED : INK_BLACK,
         );
         if (cancelled) return;
         setQrSvgDataUrl(`data:image/svg+xml;base64,${btoa(svg)}`);
@@ -483,20 +483,21 @@ export function QrStudio({
   };
 
   const previewScaleStyle: CSSProperties = {
+    position: "absolute",
+    top: 0,
+    left: 0,
     transform: `scale(${scale})`,
     transformOrigin: "top left",
-    transformBox: "border-box",
     width: format.logicalW,
     height: format.logicalH,
   };
 
   const previewContainerStyle: CSSProperties = {
+    position: "relative",
     width: "100%",
     maxWidth: "160mm",
     height: containerWidth > 0 ? containerWidth * (format.logicalH / format.logicalW) : undefined,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    overflow: "hidden",
   };
 
   return (
@@ -629,7 +630,7 @@ export function QrStudio({
                   value={customLink}
                   onChange={(e) => setCustomLink(e.target.value)}
                   placeholder="https://exemple.com"
-                  className="min-h-10 w-full rounded-md border border-black/30 bg-gray-50 px-3 text-sm text-black focus:border-accent focus:outline-none"
+                  className="min-h-11 w-full rounded-md border border-black/30 bg-gray-50 px-3 text-sm text-black focus:border-accent focus:outline-none"
                 />
               </div>
             )}
@@ -649,9 +650,9 @@ export function QrStudio({
 
       {/* Barre d'actions en bas */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-4">
-        <div className="flex items-center gap-2 text-xs text-gray-600">
-          <QrIcon className="size-4" aria-hidden />
-          <span>Lien : {qrUrl}</span>
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-xs text-gray-600">
+          <QrIcon className="size-4 shrink-0" aria-hidden />
+          <span className="truncate">Lien : {qrUrl}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button

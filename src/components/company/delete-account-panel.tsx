@@ -43,7 +43,7 @@ export function DeleteAccountPanel({ companyName }: { companyName: string }) {
       <button
         type="button"
         onClick={() => setStep("explain")}
-        className="w-fit cursor-pointer text-sm font-semibold text-red underline underline-offset-4"
+        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-red underline underline-offset-4"
       >
         Supprimer mon compte
       </button>
@@ -60,7 +60,7 @@ export function DeleteAccountPanel({ companyName }: { companyName: string }) {
             aria-hidden="true"
             onClick={close}
           />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-black/10 bg-white p-6 text-black shadow-2xl">
+          <div className="relative z-10 w-full max-w-md rounded-md border border-black/10 bg-white p-6 text-black shadow-lg">
             <h3 id="delete-account-title" className="text-base font-bold">
               {step === "explain"
                 ? `Supprimer ${companyName} ?`

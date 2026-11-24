@@ -31,7 +31,7 @@ export default function AdminFinancesPage() {
 
       <Suspense
         fallback={
-          <div className="rounded-2xl border border-black/10 bg-white p-8 text-center text-sm text-gray-500">
+          <div className="rounded-md border border-black/10 bg-white p-8 text-center text-sm text-gray-500">
             Chargement des données financières…
           </div>
         }

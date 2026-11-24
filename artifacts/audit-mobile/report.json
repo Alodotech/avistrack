@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "landing",
+    "landing-login",
+    "landing-signup",
+    "tarifs",
+    "mentions-legales",
+    "confidentialite",
+    "avis-demo",
+    "avis-reel",
+    "admin-login",
+    "dashboard",
+    "dashboard-qr",
+    "dashboard-formulaire",
+    "dashboard-remarques",
+    "dashboard-abonnement",
+    "dashboard-profil",
+    "admin",
+    "admin-entreprises",
+    "admin-utilisateurs",
+    "admin-finances",
+    "admin-journal",
+    "admin-rapports"
+  ],
+  "widths": [
+    320,
+    375,
+    390
+  ],
+  "summary": [],
+  "defects": []
+}

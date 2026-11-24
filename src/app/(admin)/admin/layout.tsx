@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const admin = await getCurrentAdmin();
   const visibleNav = admin
     ? NAV.filter((item) => hasAdminPermission(admin.permissions, item.module))
-    : NAV;
+    : [];
 
   return (
     <AppShell

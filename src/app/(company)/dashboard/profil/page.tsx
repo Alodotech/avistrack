@@ -69,8 +69,8 @@ async function ProfileContent() {
                 view.isExpired
                   ? "border-red bg-red text-white"
                   : view.isEndingSoon
-                    ? "border-orange bg-orange/10 text-orange"
-                    : "border-forest bg-forest/10 text-forest"
+                    ? "border-red bg-red/10 text-red"
+                    : "border-black bg-black/5 text-black"
               }`}
             >
               {view.statusLabel}
@@ -129,7 +129,7 @@ async function ProfileContent() {
           <form action={signOutCompany} className="mt-5">
             <button
               type="submit"
-              className="text-sm font-semibold text-red underline underline-offset-4"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-red underline underline-offset-4"
             >
               Se déconnecter
             </button>

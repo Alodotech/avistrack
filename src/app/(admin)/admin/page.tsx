@@ -192,7 +192,7 @@ async function DashboardContent({
                 href={days === 30 ? "/admin" : `/admin?periode=${key}`}
                 className={buttonClass(
                   activityDays === days ? "primary" : "secondary",
-                  "min-h-9 px-3 py-1.5 text-xs",
+                  "min-h-11 px-4 text-sm",
                 )}
               >
                 {label}
