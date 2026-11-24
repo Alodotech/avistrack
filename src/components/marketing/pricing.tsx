@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 import { formatCurrency } from "@/lib/format";
 import {
@@ -8,50 +7,43 @@ import {
   AVIS_TRACK_PRICING,
 } from "@/lib/pricing";
 
-type Period = "monthly" | "annual";
-
-type Plan = {
-  id: "trial" | "pro";
+type PricingOption = {
+  id: "monthly" | "annual";
   name: string;
   description: string;
-  features: string[];
+  price: number;
+  periodLabel: string;
   highlighted?: boolean;
 };
 
-const PLANS: Plan[] = [
+const PRICING_OPTIONS: PricingOption[] = [
   {
-    id: "trial",
-    name: "Essai gratuit",
-    description: "14 jours pour tester AvisTrack et poser votre premier QR code.",
-    features: [
-      "1 établissement",
-      "QR code et avis illimités",
-      "Formulaire d'avis personnalisable",
-      "Tableau de bord complet",
-      "Sans carte bancaire",
-    ],
+    id: "monthly",
+    name: "Pro mensuel",
+    description: "Pour avancer à votre rythme, avec un paiement chaque mois.",
+    price: AVIS_TRACK_PRICING.monthly,
+    periodLabel: "par mois",
   },
   {
-    id: "pro",
-    name: "Pro",
-    description: "Pour les commerces qui veulent suivre leur satisfaction.",
-    features: [
-      "Tout le plan Gratuit",
-      "Jusqu'à 5 établissements",
-      "Statistiques avancées",
-      "Export des avis en CSV",
-      "Support prioritaire",
-    ],
+    id: "annual",
+    name: "Pro annuel",
+    description: `Un paiement par an, avec une remise de ${formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)}.`,
+    price: AVIS_TRACK_PRICING.annual,
+    periodLabel: "par an",
     highlighted: true,
   },
 ];
 
+const PRO_FEATURES = [
+  "1 entreprise",
+  "QR code et avis illimités",
+  "Formulaire d'avis personnalisable",
+  "Tableau de bord et statistiques avancées",
+  "Export complet des avis en CSV, PDF et Excel",
+  "Support prioritaire",
+];
+
 const FAQ = [
-  {
-    question: "L'essai gratuit demande-t-il une carte bancaire ?",
-    answer:
-      "Non. L'essai de 14 jours s'active depuis votre espace, sans aucun moyen de paiement. À la fin de l'essai, vous choisissez votre offre ou votre accès se ferme.",
-  },
   {
     question: "Que se passe-t-il quand mon abonnement expire ?",
     answer:
@@ -87,7 +79,6 @@ function CheckIcon() {
 }
 
 export function Pricing() {
-  const [period, setPeriod] = useState<Period>("monthly");
   const { openSignup } = useAuthModal();
 
   return (
@@ -108,124 +99,64 @@ export function Pricing() {
             Des tarifs simples, sans surprise.
           </h2>
           <p className="mt-4 text-base leading-7 text-gray-600">
-            Commencez gratuitement, passez au Pro quand votre activité se
-            développe. Sans engagement, sans carte bancaire pour l&apos;essai.
+            Choisissez l&apos;offre Pro et sa facturation mensuelle ou annuelle
+            selon les besoins de votre entreprise.
           </p>
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <div
-            role="group"
-            aria-label="Période de facturation"
-            className="inline-flex rounded-full border border-black/10 bg-white p-1 shadow-sm"
-          >
-            <button
-              type="button"
-              aria-pressed={period === "monthly"}
-              onClick={() => setPeriod("monthly")}
-              className={`min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
-                period === "monthly"
-                  ? "bg-black text-white"
-                  : "text-gray-600 hover:text-black"
-              }`}
-            >
-              Mensuel
-            </button>
-            <button
-              type="button"
-              aria-pressed={period === "annual"}
-              onClick={() => setPeriod("annual")}
-              className={`min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors ${
-                period === "annual"
-                  ? "bg-red text-white"
-                  : "text-gray-600 hover:text-black"
-              }`}
-            >
-              Annuel
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-12 grid gap-6 lg:mt-16 lg:grid-cols-2 lg:items-stretch">
-          {PLANS.map((plan) => {
-            const price =
-              plan.id === "trial"
-                ? AVIS_TRACK_PRICING.trial
-                : period === "annual"
-                  ? AVIS_TRACK_PRICING.annual
-                  : AVIS_TRACK_PRICING.monthly;
-
+        <div className="mt-12 grid gap-6 md:mt-16 md:grid-cols-2 md:items-stretch">
+          {PRICING_OPTIONS.map((option) => {
             return (
               <article
-                key={plan.id}
+                key={option.id}
                 className={`relative flex h-full flex-col rounded-md border p-6 sm:p-7 ${
-                  plan.highlighted
-                    ? "order-1 border-red/40 bg-white shadow-[0_24px_60px_-28px_rgba(215,25,32,0.55)] lg:order-2 lg:-translate-y-4"
-                    : "order-2 border-black/10 bg-white/65 lg:order-1"
+                  option.highlighted
+                    ? "border-red/40 bg-white shadow-[0_24px_60px_-28px_rgba(215,25,32,0.55)] md:-translate-y-4"
+                    : "border-black/10 bg-white/65"
                 }`}
               >
-                {plan.highlighted ? (
-                  <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-red/10 px-3 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-accent-deep uppercase">
-                    <span aria-hidden className="size-1.5 rounded-full bg-red" />
-                    Essai gratuit 14 jours
-                  </span>
-                ) : null}
-
-                <h3 className="text-xl font-bold tracking-tight">{plan.name}</h3>
+                <h3 className="text-xl font-bold tracking-tight">
+                  {option.name}
+                </h3>
                 <p className="mt-2 min-h-12 text-sm leading-6 text-gray-600">
-                  {plan.description}
+                  {option.description}
                 </p>
 
-                <div className="mt-6 flex min-h-28 flex-col justify-end">
-                  <div
-                    key={`${plan.id}-${period}`}
-                    className="pricing-price flex flex-col gap-1"
-                  >
-                    <p className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-4xl font-bold tracking-tight sm:text-5xl">
-                        {formatCurrency(price)}
-                      </span>
-                      {plan.id === "trial" ? (
-                        <span className="text-sm font-medium text-gray-600">
-                          pendant 14 jours
-                        </span>
-                      ) : (
-                        <span className="text-sm font-medium text-gray-600">
-                          {period === "annual" ? "/ an" : "/ mois"}
-                        </span>
-                      )}
+                <div className="pricing-price mt-6 flex min-h-28 flex-col justify-end gap-1">
+                  <p className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-4xl font-bold tracking-tight sm:text-5xl">
+                      {formatCurrency(option.price)}
+                    </span>
+                    <span className="text-sm font-medium text-gray-600">
+                      {option.periodLabel}
+                    </span>
+                  </p>
+                  {option.id === "annual" ? (
+                    <p className="text-xs text-gray-600">
+                      Économisez {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} par
+                      rapport au mensuel
                     </p>
-                    {plan.id === "pro" && period === "annual" ? (
-                      <p className="text-xs text-gray-600">
-                        {formatCurrency(AVIS_TRACK_ANNUAL_SAVINGS)} d&apos;économie
-                        par rapport au mensuel
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-600">
-                        {plan.id === "trial"
-                          ? "Sans carte bancaire"
-                          : "Sans engagement"}
-                      </p>
-                    )}
-                  </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-gray-600">
+                      Sans engagement
+                    </p>
+                  )}
                 </div>
 
                 <button
                   type="button"
                   onClick={openSignup}
                   className={`mt-6 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors ${
-                    plan.highlighted
+                    option.highlighted
                       ? "bg-red text-white hover:bg-red/80"
                       : "border border-black bg-white text-black hover:bg-gray-100"
                   }`}
                 >
-                  {plan.highlighted
-                    ? "Démarrer mon essai gratuit"
-                    : "Commencer l'essai gratuit"}
+                  Créer mon compte
                 </button>
 
                 <ul className="mt-7 flex flex-col gap-3 border-t border-black/10 pt-6 text-sm">
-                  {plan.features.map((feature) => (
+                  {PRO_FEATURES.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <CheckIcon />
                       <span>{feature}</span>

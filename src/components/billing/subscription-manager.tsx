@@ -2,10 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FedapayCheckoutButton } from "@/components/billing/fedapay-checkout-button";
-import { Button, buttonClass } from "@/components/ui/button";
+import { FeexPayPaymentForm } from "@/components/billing/feexpay-payment-form";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { getSubscriptionPrice } from "@/lib/pricing";
 import type { PaymentHistoryItem } from "@/server/repositories/subscription-repository";
 import type { SubscriptionView } from "@/lib/subscription";
 import { cancelSubscriptionAction } from "@/server/actions/payments";
@@ -18,6 +17,9 @@ type Props = {
   endDate: string | null;
   payments: PaymentHistoryItem[];
   canPay: boolean;
+  countryCode: string;
+  companyPhone: string;
+  testMode: boolean;
 };
 
 export function SubscriptionManager({
@@ -28,13 +30,13 @@ export function SubscriptionManager({
   endDate,
   payments,
   canPay,
+  countryCode,
+  companyPhone,
+  testMode,
 }: Props) {
   const router = useRouter();
   const [cancelPending, startCancel] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<
-    "monthly" | "annual"
-  >(period === "annual" ? "annual" : "monthly");
 
   const isPaid = period === "monthly" || period === "annual";
   const canCancel = isPaid && view.status !== "CANCELED" && view.status !== "EXPIRED";
@@ -73,49 +75,13 @@ export function SubscriptionManager({
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-3 rounded-lg border border-black/10 bg-gray-50 p-4">
-          <div>
-            <p className="text-sm font-semibold">Choisir une formule</p>
-            <p className="text-xs text-gray-600">
-              Le paiement est sécurisé par FedaPay, en FCFA.
-            </p>
-          </div>
-          {canPay ? (
-            <>
-              <div
-                role="radiogroup"
-                aria-label="Formule d'abonnement"
-                className="flex flex-wrap gap-2"
-              >
-                {(["monthly", "annual"] as const).map((choice) => (
-                  <button
-                    key={choice}
-                    type="button"
-                    role="radio"
-                    aria-checked={selectedPeriod === choice}
-                    onClick={() => setSelectedPeriod(choice)}
-                    className={buttonClass(
-                      selectedPeriod === choice ? "primary" : "secondary",
-                      "",
-                      "sm",
-                    )}
-                  >
-                    {choice === "monthly" ? "Mensuel" : "Annuel"} ·{" "}
-                    {formatCurrency(getSubscriptionPrice(choice))}
-                  </button>
-                ))}
-              </div>
-              <FedapayCheckoutButton
-                period={selectedPeriod}
-                label={`Payer ${formatCurrency(getSubscriptionPrice(selectedPeriod))}`}
-              />
-            </>
-          ) : (
-            <p role="alert" className="text-sm text-red">
-              Le paiement en ligne est temporairement indisponible.
-            </p>
-          )}
-        </div>
+        <FeexPayPaymentForm
+          countryCode={countryCode}
+          companyPhone={companyPhone}
+          canPay={canPay}
+          testMode={testMode}
+          initialPeriod={period === "annual" ? "annual" : "monthly"}
+        />
 
         {error ? (
           <p role="alert" className="text-sm text-red">{error}</p>
@@ -175,14 +141,26 @@ export function SubscriptionManager({
                       <td className="py-2 pr-4 tabular-nums">
                         {formatCurrency(payment.amount)}
                       </td>
-                      <td className="py-2 pr-4">Payé</td>
+                      <td className="py-2 pr-4">
+                        {payment.status === "paid"
+                          ? "Payé"
+                          : payment.status === "pending"
+                            ? "En attente"
+                            : payment.status === "failed"
+                              ? "Échoué"
+                              : "Remboursé"}
+                      </td>
                       <td className="py-2">
-                        <a
-                          className="font-semibold text-accent underline underline-offset-4"
-                          href={`/api/company/paiements/${payment.id}/recu`}
-                        >
-                          PDF
-                        </a>
+                        {payment.status === "paid" ? (
+                          <a
+                            className="font-semibold text-accent underline underline-offset-4"
+                            href={`/api/company/paiements/${payment.id}/recu`}
+                          >
+                            PDF
+                          </a>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                     </tr>
                   ))}

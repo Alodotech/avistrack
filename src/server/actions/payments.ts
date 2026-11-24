@@ -2,17 +2,24 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { createFedapayCheckoutToken } from "@/lib/fedapay-checkout-token";
+import {
+  getFeexPayCountry,
+  isFeexPayOperator,
+  isFeexPayCountry,
+  normalizeFeexPayPhoneNumber,
+  type FeexPayOperator,
+  type FeexPayPaymentMethod,
+} from "@/lib/feexpay";
 import { getSubscriptionPrice } from "@/lib/pricing";
 import { requireCompany } from "@/server/auth/guards";
 import {
-  getFedapayEnvironment,
-  getFedapaySecretKey,
-} from "@/server/fedapay";
+  getFeexPayApiUrl,
+  getFeexPayApiKey,
+  getFeexPayShopId,
+} from "@/server/feexpay";
 import {
   cancelCompanySubscription,
-  ensureTrialSubscription,
-  getCompanySubscription,
+  createPendingFeexPayPayment,
 } from "@/server/repositories/subscription-repository";
 
 export type PaymentActionState = {
@@ -22,25 +29,10 @@ export type PaymentActionState = {
   endDate?: string | null;
 };
 
-export type FedapayCheckoutPeriod = "monthly" | "annual";
-
-export type FedapayCheckoutConfig = {
-  publicKey: string;
-  environment: "sandbox" | "live";
-  period: FedapayCheckoutPeriod;
-  amount: number;
-  description: string;
-  token: string;
-  customer: {
-    email: string;
-    firstname: string;
-    lastname: string;
-  };
-};
-
-export type FedapayCheckoutActionState = {
+export type FeexPayCheckoutActionState = {
   ok: boolean;
-  config?: FedapayCheckoutConfig;
+  checkoutUrl?: string;
+  notice?: string;
   message?: string;
 };
 
@@ -52,21 +44,6 @@ function refreshBilling() {
 
 const BILLING_GUARD = { allowOnboarding: true, allowExpired: true } as const;
 
-export async function activateTrialAction(): Promise<PaymentActionState> {
-  const company = await requireCompany(BILLING_GUARD);
-  const existing = await getCompanySubscription(company.id);
-  if (existing && (existing.status === "ACTIVE" || existing.status === "TRIALING")) {
-    return { ok: true, status: existing.status };
-  }
-  const trial = await ensureTrialSubscription(company.id);
-  refreshBilling();
-  return {
-    ok: true,
-    status: trial.status,
-    endDate: trial.currentPeriodEnd?.toISOString() ?? null,
-  };
-}
-
 export async function cancelSubscriptionAction(): Promise<PaymentActionState> {
   const company = await requireCompany(BILLING_GUARD);
   await cancelCompanySubscription(company.id);
@@ -74,47 +51,177 @@ export async function cancelSubscriptionAction(): Promise<PaymentActionState> {
   return { ok: true, message: "Abonnement résilié." };
 }
 
-export async function createFedapayCheckoutAction(
-  period: FedapayCheckoutPeriod,
-): Promise<FedapayCheckoutActionState> {
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asString(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function getFeexPayCheckoutUrl(value: string | null): string | null {
+  if (!value) return null;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("URL de paiement FeexPay invalide.");
+  }
+  if (
+    url.protocol !== "https:" ||
+    !url.hostname.endsWith(".feexpay.me")
+  ) {
+    throw new Error("URL de paiement FeexPay invalide.");
+  }
+  return url.toString();
+}
+
+export async function createFeexPayCheckoutAction(
+  period: "monthly" | "annual",
+  method: FeexPayPaymentMethod,
+  phone: string,
+  operator?: FeexPayOperator,
+  address?: {
+    city: string;
+    zip: string;
+    firstName: string;
+    lastName: string;
+  },
+): Promise<FeexPayCheckoutActionState> {
   try {
     const company = await requireCompany(BILLING_GUARD);
     if (period !== "monthly" && period !== "annual") {
       return { ok: false, message: "Formule invalide." };
     }
-    const publicKey = process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY;
-    if (!publicKey) {
-      return { ok: false, message: "FedaPay n'est pas configuré." };
+    if (method !== "mobile_money" && method !== "card") {
+      return { ok: false, message: "Moyen de paiement invalide." };
+    }
+    if (!isFeexPayCountry(company.countryCode)) {
+      return {
+        ok: false,
+        message: "Le pays de l'entreprise n'est pas pris en charge par FeexPay.",
+      };
+    }
+    if (
+      method === "mobile_money" &&
+      !isFeexPayOperator(company.countryCode, operator)
+    ) {
+      return { ok: false, message: "Opérateur Mobile Money invalide." };
+    }
+    if (
+      method === "card" &&
+      (!address ||
+        !address.city.trim() ||
+        !address.zip.trim() ||
+        !address.firstName.trim() ||
+        !address.lastName.trim())
+    ) {
+      return {
+        ok: false,
+        message:
+          "Les informations du titulaire de la carte, la ville et le code postal sont requis.",
+      };
     }
 
     const amount = getSubscriptionPrice(period);
-    const token = createFedapayCheckoutToken(
-      {
-        companyId: company.id,
-        period,
-        amount,
-        nonce: randomUUID(),
-        iat: Date.now(),
+    const phoneNumber = normalizeFeexPayPhoneNumber(phone, company.countryCode);
+    if (!phoneNumber) {
+      const country = getFeexPayCountry(company.countryCode);
+      throw new Error(
+        country
+          ? `Saisissez un numéro valide avec l'indicatif +${country.callingCode}.`
+          : "Le pays de l'entreprise n'est pas pris en charge.",
+      );
+    }
+    const apiKey = getFeexPayApiKey();
+    const shop = getFeexPayShopId();
+    const endpoint =
+      method === "card"
+        ? "/api/transactions/public/requesttopay/init"
+        : `/api/transactions/public/requesttopay/${operator}`;
+    const description = `Abonnement AvisTrack — ${period === "annual" ? "Pro annuel" : "Pro mensuel"}`;
+    const apiUrl = getFeexPayApiUrl();
+    const cardPayload =
+      method === "card"
+        ? {
+            currency: "XOF",
+            first_name: address?.firstName.trim(),
+            last_name: address?.lastName.trim(),
+            email: company.email,
+            city: address?.city.trim(),
+            zip: address?.zip.trim(),
+            country: company.countryCode,
+            callback_info: randomUUID(),
+          }
+        : {};
+    const response = await fetch(`${apiUrl}${endpoint}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
-      getFedapaySecretKey(),
+      body: JSON.stringify({
+        shop,
+        amount: method === "card" ? String(amount) : amount,
+        phoneNumber: method === "card" ? phoneNumber : Number(phoneNumber),
+        ...(method === "card" ? cardPayload : {}),
+        ...(method === "mobile_money"
+          ? {
+              callback_info: randomUUID(),
+            }
+          : {}),
+        description,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    let responseBody: unknown;
+    try {
+      responseBody = await response.json();
+    } catch {
+      throw new Error("Réponse FeexPay invalide.");
+    }
+    const data = asRecord(responseBody);
+    if (!response.ok) {
+      const providerMessage =
+        asString(data?.message) ?? asString(data?.error);
+      throw new Error(
+        providerMessage
+          ? `FeexPay : ${providerMessage}`
+          : `FeexPay a refusé la demande (HTTP ${response.status}).`,
+      );
+    }
+
+    const providerRef = asString(data?.reference);
+    if (!providerRef) {
+      throw new Error("Référence de transaction FeexPay manquante.");
+    }
+    const checkoutUrl = getFeexPayCheckoutUrl(
+      asString(data?.paymentUrl) ?? asString(data?.payment_url),
     );
-    const [firstname, ...rest] = company.name.trim().split(/\s+/);
+    if (method === "card" && !checkoutUrl) {
+      throw new Error("Lien de paiement FeexPay manquant.");
+    }
+
+    await createPendingFeexPayPayment({
+      companyId: company.id,
+      period,
+      amount,
+      providerRef,
+    });
 
     return {
       ok: true,
-      config: {
-        publicKey,
-        environment: getFedapayEnvironment(),
-        period,
-        amount,
-        description: `Abonnement AvisTrack — ${period === "annual" ? "Pro annuel" : "Pro mensuel"}`,
-        token,
-        customer: {
-          email: company.email,
-          firstname: firstname || company.name,
-          lastname: rest.join(" ") || company.name,
-        },
-      },
+      checkoutUrl: checkoutUrl ?? undefined,
+      notice:
+        method === "mobile_money"
+          ? "Demande envoyée. Confirmez le paiement sur votre téléphone ; l'abonnement sera activé après confirmation FeexPay."
+          : undefined,
     };
   } catch (error) {
     return {
@@ -122,7 +229,7 @@ export async function createFedapayCheckoutAction(
       message:
         error instanceof Error
           ? error.message
-          : "Impossible de préparer le paiement.",
+          : "Impossible de préparer le paiement FeexPay.",
     };
   }
 }

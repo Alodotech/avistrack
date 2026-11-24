@@ -59,7 +59,7 @@ export function SiteFooter() {
               Une question ?
             </p>
             <a
-              href="mailto:contact@avistrack.com"
+              href="mailto: contact@avistrack.org"
               className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-white underline-offset-4 transition-colors hover:text-white/80 hover:underline"
             >
               <svg
@@ -75,7 +75,7 @@ export function SiteFooter() {
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <path d="m3.5 7 8.5 6 8.5-6" />
               </svg>
-              contact@avistrack.com
+               contact@avistrack.org
             </a>
           </div>
 
@@ -115,7 +115,7 @@ export function SiteFooter() {
                 </li>
               ))}
               <li>
-                <a href="mailto:contact@avistrack.com" className={LINK_CLASS}>
+                <a href="mailto: contact@avistrack.org" className={LINK_CLASS}>
                   Nous écrire
                 </a>
               </li>
@@ -143,7 +143,17 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
           <p>© {YEAR} AvisTrack — Tous droits réservés.</p>
-          <p>Collecte d&apos;avis par QR code · Données isolées par entreprise</p>
+          <p>
+            Réalisé par{" "}
+            <a
+              href="https://alodotech.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-white"
+            >
+              Alodo Tech
+            </a>
+          </p>
         </div>
       </div>
     </footer>

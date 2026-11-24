@@ -34,10 +34,10 @@ export default function PrivacyPage() {
               Éditeur du service AvisTrack (raison sociale et adresse à
               renseigner). Contact :{" "}
               <a
-                href="mailto:contact@avistrack.com"
+                href="mailto: contact@avistrack.org"
                 className="py-3.5 font-semibold text-black underline-offset-4 hover:underline"
               >
-                contact@avistrack.com
+                 contact@avistrack.org
               </a>
               .
             </p>
@@ -119,10 +119,10 @@ export default function PrivacyPage() {
               limitation et de suppression des données qui vous concernent, ainsi
               que du droit à la portabilité. Pour l&apos;exercer, écrivez à{" "}
               <a
-                href="mailto:contact@avistrack.com"
+                href="mailto: contact@avistrack.org"
                 className="py-3.5 font-semibold text-black underline-offset-4 hover:underline"
               >
-                contact@avistrack.com
+                 contact@avistrack.org
               </a>
               . Vous disposez également du droit d&apos;introduire une réclamation
               auprès de l&apos;autorité de contrôle compétente.

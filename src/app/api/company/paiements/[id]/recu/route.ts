@@ -13,7 +13,9 @@ export async function GET(
 
   const { id } = await params;
   const payment = await findPayment(company.id, id);
-  if (!payment) return new Response("Reçu introuvable.", { status: 404 });
+  if (!payment || payment.status !== "paid") {
+    return new Response("Reçu introuvable.", { status: 404 });
+  }
 
   const [{ default: jsPDF }] = await Promise.all([import("jspdf")]);
   const doc = new jsPDF({ unit: "mm", format: "a6" });
@@ -43,7 +45,13 @@ export async function GET(
   line("Montant", formatCurrency(payment.amount));
   line("Statut", "Payé");
   line("Référence", payment.id);
-  line("Prestataire", payment.provider === "fedapay" ? "FedaPay" : payment.provider);
+  const providerName =
+    payment.provider === "feexpay"
+      ? "FeexPay"
+      : payment.provider === "fedapay"
+        ? "FedaPay"
+        : payment.provider;
+  line("Prestataire", providerName);
   if (payment.providerRef) line("Réf. prestataire", payment.providerRef);
 
   doc.setFontSize(7);

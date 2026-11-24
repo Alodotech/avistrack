@@ -58,6 +58,10 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    | `SUPABASE_SERVICE_ROLE_KEY` | Clé `service_role`, **serveur uniquement** |
    | `SUPABASE_PROJECT_ID` | Identifiant du projet (CLI `update-types`) |
    | `NEXT_PUBLIC_SITE_URL` | URL publique canonique (QR code, sitemap, redirections OAuth) |
+   | `FEEXPAY_ENVIRONMENT` | `sandbox` en local, `live` en production |
+   | `FEEXPAY_API_KEY` | Clé privée FeexPay de l'environnement choisi |
+   | `FEEXPAY_SHOP_ID` | Identifiant de la boutique FeexPay correspondante |
+   | `FEEXPAY_WEBHOOK_SECRET` | Secret de signature webhook du même environnement |
 
    `.env.local` n'est jamais versionné. La clé `service_role` contourne les
    politiques RLS : elle ne doit jamais être exposée au navigateur.
@@ -89,12 +93,30 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    > `supabase/migrations/003_security_and_purge.sql` avec `psql` ou
    > `supabase db push`.
 
-6. **Lancer le serveur de développement :**
+6. **Configurer FeexPay :**
+   - Pour le développement, créer une boutique dans le dashboard sandbox FeexPay,
+     puis placer sa clé privée de test (`test_key_`), son identifiant boutique et
+     son secret webhook dans `.env.local`, avec `FEEXPAY_ENVIRONMENT=sandbox`.
+     Les paiements sandbox n'utilisent pas d'argent réel.
+   - En production, définir `FEEXPAY_ENVIRONMENT=live` dans les secrets de
+     l'hébergeur et utiliser uniquement la clé, la boutique et le secret webhook
+     de production. Ne jamais réutiliser les identifiants sandbox en production.
+   - Configurer l'URL webhook FeexPay vers
+     `https://<domaine>/api/webhooks/feexpay`. Pour tester un webhook local,
+     exposer temporairement le serveur avec un tunnel HTTPS et enregistrer cette
+     URL dans la boutique sandbox.
+   - Le profil de l'entreprise détermine le pays et l'indicatif téléphonique.
+     La configuration couvre les pays actuellement listés par FeexPay
+     (Bénin, Burkina Faso, Côte d'Ivoire, Sénégal, Togo et Congo-Brazzaville) ;
+     seuls les opérateurs activés pour la boutique marchand pourront traiter
+     les paiements.
+
+7. **Lancer le serveur de développement :**
    ```bash
    npm run dev
    ```
 
-7. **Vérifier le projet avant de commiter :**
+8. **Vérifier le projet avant de commiter :**
    ```bash
    npm run lint      # ESLint (aucun `any`, règles React)
    npm run typecheck # next typegen + tsc --noEmit

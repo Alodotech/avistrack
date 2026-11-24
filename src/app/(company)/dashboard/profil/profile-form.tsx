@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateProfile, type ProfileFormState } from "./actions";
 import { Button } from "@/components/ui/button";
+import { FEEXPAY_COUNTRIES, getFeexPayCountry } from "@/lib/feexpay";
 
 const inputClass =
   "min-h-11 w-full rounded-md border border-black/30 bg-white px-3 text-sm aria-invalid:border-red";
@@ -12,15 +13,20 @@ const initialState: ProfileFormState = { status: "idle" };
 export function ProfileForm({
   email,
   phone,
+  countryCode,
   name,
   logoUrl,
 }: {
   email: string;
   phone: string;
+  countryCode: string;
   name: string;
   logoUrl: string | null;
 }) {
   const [state, action, pending] = useActionState(updateProfile, initialState);
+  const [selectedCountryCode, setSelectedCountryCode] = useState(countryCode);
+  const country =
+    getFeexPayCountry(selectedCountryCode) ?? FEEXPAY_COUNTRIES[0];
 
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
@@ -40,6 +46,30 @@ export function ProfileForm({
         />
         {state.errors?.name ? (
           <p className="text-sm text-red">{state.errors.name}</p>
+        ) : null}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="profile-country" className="text-sm font-medium">
+          Pays de l&apos;entreprise
+        </label>
+        <select
+          id="profile-country"
+          name="countryCode"
+          defaultValue={countryCode}
+          required
+          onChange={(event) => setSelectedCountryCode(event.target.value)}
+          aria-invalid={Boolean(state.errors?.countryCode)}
+          className={inputClass}
+        >
+          {FEEXPAY_COUNTRIES.map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+        {state.errors?.countryCode ? (
+          <p className="text-sm text-red">{state.errors.countryCode}</p>
         ) : null}
       </div>
 
@@ -66,7 +96,7 @@ export function ProfileForm({
           </p>
         ) : (
           <p id="profile-phone-hint" className="text-xs text-gray-600">
-            Format international, par exemple +22901970000.
+            Format international avec l&apos;indicatif {`+${country.callingCode}`}.
           </p>
         )}
       </div>

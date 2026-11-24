@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { LOGO_REQUIRED } from "@/lib/company-status";
 import {
+  getFeexPayCountry,
+  isFeexPayCountry,
+} from "@/lib/feexpay";
+import {
   COMPANY_LOGIN_PATH,
   getCurrentCompany,
 } from "@/server/auth/guards";
@@ -13,7 +17,13 @@ import { updateCompanyProfile } from "@/server/repositories/company-repository";
 export type OnboardingState = {
   status: "idle" | "saved" | "error";
   message?: string;
-  errors?: { name?: string; phone?: string; email?: string; logo?: string };
+  errors?: {
+    name?: string;
+    phone?: string;
+    countryCode?: string;
+    email?: string;
+    logo?: string;
+  };
 };
 
 const onboardingSchema = z.object({
@@ -34,7 +44,17 @@ const onboardingSchema = z.object({
           "Indiquez le numéro au format international, par exemple +22901970000.",
         ),
     ),
+  countryCode: z.string().refine(isFeexPayCountry, "Pays non pris en charge."),
   email: z.string().trim().email("Adresse e-mail invalide"),
+}).superRefine((profile, context) => {
+  const country = getFeexPayCountry(profile.countryCode);
+  if (country && !profile.phone.startsWith(`+${country.callingCode}`)) {
+    context.addIssue({
+      code: "custom",
+      path: ["phone"],
+      message: `Le téléphone doit utiliser l'indicatif +${country.callingCode}.`,
+    });
+  }
 });
 
 export async function completeOnboarding(
@@ -52,6 +72,7 @@ export async function completeOnboarding(
     const parsed = onboardingSchema.safeParse({
       name: formData.get("name"),
       phone: formData.get("phone"),
+      countryCode: formData.get("countryCode"),
       email: formData.get("email"),
     });
     if (!parsed.success) {
@@ -62,6 +83,7 @@ export async function completeOnboarding(
         errors: {
           name: fields.name?.[0],
           phone: fields.phone?.[0],
+          countryCode: fields.countryCode?.[0],
           email: fields.email?.[0],
         },
       };

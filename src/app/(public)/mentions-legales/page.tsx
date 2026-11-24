@@ -39,10 +39,10 @@ export default function LegalNoticePage() {
             <p className="text-gray-600">
               Pour toute question :{" "}
               <a
-                href="mailto:contact@avistrack.com"
+                href="mailto: contact@avistrack.org"
                 className="py-3.5 font-semibold text-black underline-offset-4 hover:underline"
               >
-                contact@avistrack.com
+                 contact@avistrack.org
               </a>
               .
             </p>

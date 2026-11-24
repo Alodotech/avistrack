@@ -45,7 +45,16 @@ export default async function OnboardingPage() {
         <OnboardingForm
           email={state.company.email}
           phone={state.company.phone}
+          countryCode={state.company.countryCode}
           name={state.company.name}
+          canPay={Boolean(
+            process.env.FEEXPAY_API_KEY &&
+              process.env.FEEXPAY_SHOP_ID &&
+              process.env.FEEXPAY_WEBHOOK_SECRET &&
+              (process.env.FEEXPAY_ENVIRONMENT === "sandbox" ||
+                process.env.FEEXPAY_ENVIRONMENT === "live"),
+          )}
+          testMode={process.env.FEEXPAY_ENVIRONMENT === "sandbox"}
           initialStep={
             needsProfileCompletion(state.company) ? "profile" : "plan"
           }

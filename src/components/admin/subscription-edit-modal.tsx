@@ -116,7 +116,7 @@ export function SubscriptionEditModal({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-black">Période d&apos;essai gratuit (14 jours)</span>
-                    <span className="text-[0.65rem] text-gray-500">Offert à l&apos;inscription, sans engagement</span>
+                    <span className="text-[0.65rem] text-gray-500">À attribuer manuellement aux entreprises sélectionnées</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

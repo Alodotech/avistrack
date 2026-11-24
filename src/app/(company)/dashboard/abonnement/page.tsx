@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SubscriptionManager } from "@/components/billing/subscription-manager";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { formatDate } from "@/lib/format";
-import { defaultTrialSubscription, viewSubscription } from "@/lib/subscription";
+import { viewSubscription } from "@/lib/subscription";
 import { requireCompany } from "@/server/auth/guards";
 import {
   getCompanySubscription,
@@ -36,8 +37,8 @@ async function SubscriptionContent() {
     listPayments(company.id),
   ]);
   const now = new Date();
-  const subscription =
-    stored ?? defaultTrialSubscription(company.id, company.createdAt, now);
+  if (!stored) redirect("/onboarding");
+  const subscription = stored;
   const view = viewSubscription(subscription, now);
 
   return (
@@ -69,10 +70,15 @@ async function SubscriptionContent() {
           startedAt={subscription.startedAt.toISOString()}
           endDate={view.endDate?.toISOString() ?? null}
           payments={payments}
+          countryCode={company.countryCode}
+          companyPhone={company.phone}
+          testMode={process.env.FEEXPAY_ENVIRONMENT === "sandbox"}
           canPay={Boolean(
-            process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY &&
-              process.env.FEDAPAY_SECRET_KEY &&
-              process.env.FEDAPAY_WEBHOOK_SECRET,
+            process.env.FEEXPAY_API_KEY &&
+              process.env.FEEXPAY_SHOP_ID &&
+              process.env.FEEXPAY_WEBHOOK_SECRET &&
+              (process.env.FEEXPAY_ENVIRONMENT === "sandbox" ||
+                process.env.FEEXPAY_ENVIRONMENT === "live"),
           )}
         />
       </Panel>

@@ -5,7 +5,10 @@ import {
   createCompany,
   findCompanyByUserId,
 } from "@/server/repositories/company-repository";
-import { getCompanySubscription } from "@/server/repositories/subscription-repository";
+import {
+  getCompanySubscription,
+  hasAdminGrantedTrialSubscription,
+} from "@/server/repositories/subscription-repository";
 
 /**
  * Onboarding automatique après une première connexion Google (T14).
@@ -89,7 +92,11 @@ export async function needsCompanyOnboarding(
   if (needsProfileCompletion(company)) return true;
   try {
     const subscription = await getCompanySubscription(company.id);
-    return subscription === null;
+    if (!subscription) return true;
+    return (
+      subscription.period === "trial" &&
+      !(await hasAdminGrantedTrialSubscription(company.id))
+    );
   } catch {
     // La table d'abonnement peut ne pas exister encore (migration 006) ou
     // être temporairement indisponible : on considère qu'aucun abonnement

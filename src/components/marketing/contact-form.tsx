@@ -25,7 +25,7 @@ export function ContactForm() {
     );
 
     setSent(true);
-    window.location.href = `mailto:contact@avistrack.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto: contact@avistrack.org?subject=${subject}&body=${body}`;
   };
 
   return (

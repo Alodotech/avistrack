@@ -9,14 +9,12 @@ import type {
 import { getSubscriptionPrice } from "@/lib/pricing";
 import { createAdminClient } from "@/utils/supabase/admin";
 
-export const TRIAL_DAYS = 14;
-
-export async function hasProcessedFedapayEvent(
+export async function hasProcessedFeexPayEvent(
   eventId: string,
 ): Promise<boolean> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("fedapay_webhook_events")
+    .from("feexpay_webhook_events")
     .select("id")
     .eq("id", eventId)
     .maybeSingle();
@@ -24,15 +22,74 @@ export async function hasProcessedFedapayEvent(
   return data !== null;
 }
 
-export async function markFedapayEventProcessed(
+export async function markFeexPayEventProcessed(
   eventId: string,
   name: string,
 ): Promise<void> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from("fedapay_webhook_events").upsert(
+  const { error } = await supabase.from("feexpay_webhook_events").upsert(
     { id: eventId, name },
     { onConflict: "id", ignoreDuplicates: true },
   );
+  if (error) throw error;
+}
+
+export async function createPendingFeexPayPayment(input: {
+  companyId: string;
+  period: Exclude<SubscriptionPeriod, "trial">;
+  amount: number;
+  providerRef: string;
+}): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("payments").insert({
+    company_id: input.companyId,
+    plan: "pro",
+    period: input.period,
+    amount: input.amount,
+    status: "pending",
+    provider: "feexpay",
+    provider_ref: input.providerRef,
+  });
+  if (error) throw error;
+}
+
+export type FeexPayPayment = {
+  companyId: string;
+  period: string;
+  amount: number;
+  status: string;
+};
+
+export async function findFeexPayPayment(
+  providerRef: string,
+): Promise<FeexPayPayment | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("company_id, period, amount, status")
+    .eq("provider", "feexpay")
+    .eq("provider_ref", providerRef)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    companyId: data.company_id,
+    period: data.period,
+    amount: data.amount,
+    status: data.status,
+  };
+}
+
+export async function markFeexPayPaymentFailed(
+  providerRef: string,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("payments")
+    .update({ status: "failed" })
+    .eq("provider", "feexpay")
+    .eq("provider_ref", providerRef)
+    .eq("status", "pending");
   if (error) throw error;
 }
 
@@ -41,9 +98,9 @@ function mapStatus(value: string): SubscriptionStatus {
 }
 
 function addPeriod(start: Date, period: SubscriptionPeriod): Date | null {
-  if (period === "trial") return null;
   const end = new Date(start);
-  if (period === "annual") end.setUTCFullYear(end.getUTCFullYear() + 1);
+  if (period === "trial") end.setUTCDate(end.getUTCDate() + 14);
+  else if (period === "annual") end.setUTCFullYear(end.getUTCFullYear() + 1);
   else end.setUTCMonth(end.getUTCMonth() + 1);
   return end;
 }
@@ -104,6 +161,30 @@ export async function listCompanySubscriptions(
   return map;
 }
 
+async function listAdminGrantedTrialCompanyIds(
+  companyIds: string[],
+): Promise<Set<string>> {
+  if (companyIds.length === 0) return new Set();
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("target_id")
+    .eq("action", "UPDATE_SUBSCRIPTION")
+    .eq("target_type", "company")
+    .in("target_id", companyIds)
+    .contains("details", { period: "trial" });
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.target_id));
+}
+
+export async function hasAdminGrantedTrialSubscription(
+  companyId: string,
+): Promise<boolean> {
+  const companyIds = await listAdminGrantedTrialCompanyIds([companyId]);
+  return companyIds.has(companyId);
+}
+
 export async function getCompanySubscriptions(
   companyIds: string[],
 ): Promise<Map<string, CompanySubscription>> {
@@ -114,6 +195,11 @@ export async function getSerializedCompanySubscriptions(
   companyIds: string[],
 ): Promise<Record<string, SerializedSubscription>> {
   const map = await listCompanySubscriptions(companyIds);
+  const adminGrantedTrials = await listAdminGrantedTrialCompanyIds(
+    [...map.values()]
+      .filter((subscription) => subscription.period === "trial")
+      .map((subscription) => subscription.companyId),
+  );
   const result: Record<string, SerializedSubscription> = {};
   for (const [key, sub] of map.entries()) {
     result[key] = {
@@ -123,37 +209,11 @@ export async function getSerializedCompanySubscriptions(
       trialEndDate: sub.trialEndDate?.toISOString(),
       canceledAt: sub.canceledAt?.toISOString(),
       updatedAt: sub.updatedAt.toISOString(),
+      adminGrantedTrial:
+        sub.period === "trial" && adminGrantedTrials.has(sub.companyId),
     };
   }
   return result;
-}
-
-export async function ensureTrialSubscription(
-  companyId: string,
-  startedAt = new Date(),
-): Promise<CompanySubscription> {
-  const existing = await getCompanySubscription(companyId);
-  if (existing) return existing;
-
-  const supabase = createAdminClient();
-  const trialEnd = new Date(startedAt);
-  trialEnd.setUTCDate(trialEnd.getUTCDate() + TRIAL_DAYS);
-  const { data, error } = await supabase
-    .from("company_subscriptions")
-    .insert({
-      company_id: companyId,
-      plan: "trial",
-      period: "trial",
-      amount: 0,
-      status: "trialing",
-      started_at: startedAt.toISOString(),
-      current_period_end: trialEnd?.toISOString() ?? null,
-      trial_ends_at: trialEnd?.toISOString() ?? null,
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
-  return toSubscription(data);
 }
 
 /** Active un abonnement payant (paiement déjà validé). */
@@ -175,7 +235,7 @@ export async function activatePaidSubscription(input: {
 
   const { data: existingPayment, error: paymentLookupError } = await supabase
     .from("payments")
-    .select("id, company_id")
+    .select("id, company_id, period, amount, status")
     .eq("provider", input.provider)
     .eq("provider_ref", input.providerRef)
     .maybeSingle();
@@ -184,8 +244,16 @@ export async function activatePaidSubscription(input: {
     if (existingPayment.company_id !== input.companyId) {
       throw new Error("Référence de paiement déjà utilisée par une autre entreprise.");
     }
-    const existing = await getCompanySubscription(input.companyId);
-    if (existing) return existing;
+    if (
+      existingPayment.period !== input.period ||
+      existingPayment.amount !== input.amount
+    ) {
+      throw new Error("La référence FeexPay ne correspond pas à cet abonnement.");
+    }
+    if (existingPayment.status === "paid") {
+      const existing = await getCompanySubscription(input.companyId);
+      if (existing) return existing;
+    }
   }
 
   const { data, error } = await supabase

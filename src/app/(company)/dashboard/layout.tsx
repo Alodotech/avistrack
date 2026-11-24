@@ -33,29 +33,33 @@ async function CompanyIdentity() {
   await connection();
   const company = await getCurrentCompany();
   if (!company) return null;
-  const { view } = await getCompanySubscriptionView(company, new Date());
+  const subscription = await getCompanySubscriptionView(company, new Date());
   return (
     <ShellIdentity
       label="Connecté en tant que"
       value={company.name}
       secondary={company.email}
       logoUrl={company.logoUrl}
-      planLabel={view.modeLabel}
+      planLabel={subscription?.view.modeLabel ?? "Aucune offre"}
     />
   );
 }
 
 /**
- * Bandeau affiché dès que l'abonnement est expiré ou suspendu : les gardes
- * serveur renvoient vers `/dashboard/abonnement`, ce rappel explique pourquoi
- * et propose le paiement.
+ * Explique pourquoi l'accès est fermé et dirige vers l'étape de souscription.
  */
 async function SubscriptionNotice() {
   await connection();
   const company = await getCurrentCompany();
   if (!company) return null;
-  const { view } = await getCompanySubscriptionView(company, new Date());
-  if (!view.isExpired && view.status !== "SUSPENDED") return null;
+  const subscription = await getCompanySubscriptionView(company, new Date());
+  if (
+    subscription &&
+    !subscription.view.isExpired &&
+    subscription.view.status !== "SUSPENDED"
+  ) {
+    return null;
+  }
 
   return (
     <div
@@ -63,17 +67,19 @@ async function SubscriptionNotice() {
       className="flex flex-col gap-3 rounded-xl border border-red bg-red/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="font-semibold text-red">
-        {view.isExpired
-          ? "Votre abonnement a expiré."
-          : "Votre abonnement est suspendu."}{" "}
-        Le QR code, les avis et le studio du formulaire sont fermés jusqu&apos;au
-        renouvellement.
+        {!subscription
+          ? "Aucun abonnement n'est encore actif."
+          : subscription.view.isExpired
+            ? "Votre abonnement a expiré."
+            : "Votre abonnement est suspendu."}{" "}
+        Le tableau de bord sera accessible après confirmation du paiement ou
+        attribution d&apos;un essai par l&apos;équipe AvisTrack.
       </p>
       <Link
-        href="/dashboard/abonnement"
+        href={!subscription ? "/onboarding" : "/dashboard/abonnement"}
         className={buttonClass("primary", "w-full sm:w-auto", "sm")}
       >
-        Renouveler mon abonnement
+        {!subscription ? "Choisir une offre" : "Renouveler mon abonnement"}
       </Link>
     </div>
   );

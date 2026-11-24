@@ -1,36 +1,44 @@
 import "server-only";
 import type { Company, CompanySubscription } from "@/server/domain";
 import {
-  defaultTrialSubscription,
+  getCompanySubscription,
+  hasAdminGrantedTrialSubscription,
+} from "@/server/repositories/subscription-repository";
+import {
+  isSubscriptionAccessBlocked,
   viewSubscription,
   type SubscriptionView,
 } from "@/lib/subscription";
-import { getCompanySubscription } from "@/server/repositories/subscription-repository";
 
-/**
- * Abonnement de l'entreprise, réel ou essai par défaut.
- *
- * L'essai calculé à la volée ne sert qu'à l'affichage : dès qu'une ligne existe
- * dans `company_subscriptions`, c'est elle qui fait foi.
- */
+/** Abonnement réellement attribué à l'entreprise, s'il existe. */
 export async function getCompanySubscriptionView(
   company: Company,
   now = new Date(),
-): Promise<{ subscription: CompanySubscription; view: SubscriptionView }> {
+): Promise<{ subscription: CompanySubscription; view: SubscriptionView } | null> {
   const stored = await getCompanySubscription(company.id);
-  const subscription =
-    stored ?? defaultTrialSubscription(company.id, company.createdAt, now);
-  return { subscription, view: viewSubscription(subscription, now) };
+  if (!stored) return null;
+  if (
+    stored.period === "trial" &&
+    !(await hasAdminGrantedTrialSubscription(company.id))
+  ) {
+    return null;
+  }
+  return { subscription: stored, view: viewSubscription(stored, now) };
 }
 
 /**
- * Un abonnement expiré ou suspendu ferme l'accès aux fonctionnalités
- * (QR, avis, studio). Seuls le profil et la page d'abonnement restent ouverts.
+ * Sans abonnement, expiré ou suspendu, l'accès aux fonctionnalités est fermé.
  */
 export async function isCompanyAccessBlocked(
   company: Company,
   now = new Date(),
 ): Promise<boolean> {
-  const { view } = await getCompanySubscriptionView(company, now);
-  return view.isExpired || view.status === "SUSPENDED";
+  const subscription = await getCompanySubscription(company.id);
+  if (
+    subscription?.period === "trial" &&
+    !(await hasAdminGrantedTrialSubscription(company.id))
+  ) {
+    return true;
+  }
+  return isSubscriptionAccessBlocked(subscription, now);
 }

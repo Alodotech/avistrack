@@ -13,6 +13,7 @@ export type Company = {
   name: string;
   email: string;
   phone: string;
+  countryCode: string;
   logoUrl: string | null;
   status: CompanyStatus;
   createdAt: Date;
@@ -174,6 +175,7 @@ export type SerializedSubscription = {
   canceledAt?: string;
   updatedAt: string;
   adminEmail?: string;
+  adminGrantedTrial?: boolean;
 };
 
 export type AuditLogEntry = {

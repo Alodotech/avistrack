@@ -32,7 +32,6 @@ import {
 import { statsFromDistribution } from "@/lib/review-stats";
 import { buildDailyTrend } from "@/lib/review-trend";
 import { requireCompany } from "@/server/auth/guards";
-import { defaultTrialSubscription } from "@/lib/subscription";
 import { getCompanySubscription } from "@/server/repositories/subscription-repository";
 import {
   getRatingDistributionForCompany,
@@ -86,9 +85,8 @@ async function DashboardContent({
     getReviewTimelineForCompany(company.id, 90, now),
     getCompanySubscription(company.id),
   ]);
-  const subscription =
-    storedSubscription ??
-    defaultTrialSubscription(company.id, company.createdAt, now);
+  if (!storedSubscription) redirect("/onboarding");
+  const subscription = storedSubscription;
 
   const lastPage = pageCount(reviews.total, REVIEWS_PAGE_SIZE);
   if (query.page > lastPage) {

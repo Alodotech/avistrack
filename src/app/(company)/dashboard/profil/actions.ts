@@ -4,6 +4,10 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
+  getFeexPayCountry,
+  isFeexPayCountry,
+} from "@/lib/feexpay";
+import {
   COMPANY_LOGIN_PATH,
   getCurrentCompany,
   requireCompany,
@@ -33,13 +37,29 @@ const profileSchema = z.object({
           "Indiquez le numéro au format international, par exemple +22901970000.",
         ),
     ),
+  countryCode: z.string().refine(isFeexPayCountry, "Pays non pris en charge."),
   email: z.string().trim().email("Adresse e-mail invalide"),
+}).superRefine((profile, context) => {
+  const country = getFeexPayCountry(profile.countryCode);
+  if (country && !profile.phone.startsWith(`+${country.callingCode}`)) {
+    context.addIssue({
+      code: "custom",
+      path: ["phone"],
+      message: `Le téléphone doit utiliser l'indicatif +${country.callingCode}.`,
+    });
+  }
 });
 
 export type ProfileFormState = {
   status: "idle" | "saved" | "error";
   message?: string;
-  errors?: { name?: string; phone?: string; email?: string; logo?: string };
+  errors?: {
+    name?: string;
+    phone?: string;
+    countryCode?: string;
+    email?: string;
+    logo?: string;
+  };
 };
 
 export async function updateProfile(
@@ -55,6 +75,7 @@ export async function updateProfile(
   const parsed = profileSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
+    countryCode: formData.get("countryCode"),
     email: formData.get("email"),
   });
   if (!parsed.success) {
@@ -65,6 +86,7 @@ export async function updateProfile(
       errors: {
         name: fields.name?.[0],
         phone: fields.phone?.[0],
+        countryCode: fields.countryCode?.[0],
         email: fields.email?.[0],
       },
     };

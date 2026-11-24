@@ -12,7 +12,6 @@ import {
   XIcon,
 } from "@/components/ui/icons";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { getSubscriptionPrice } from "@/lib/pricing";
 import type { SerializedSubscription, SubscriptionPeriod } from "@/server/domain";
 
 type Props = {
@@ -24,43 +23,39 @@ type Props = {
 
 export function ViewSubscriptionModal({
   name,
-  createdAt,
   subscription,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const hasSubscription = Boolean(
+    subscription &&
+      (subscription.period !== "trial" || subscription.adminGrantedTrial),
+  );
   const period: SubscriptionPeriod = subscription?.period ?? "trial";
-  const amount =
-    subscription?.amount ??
-    getSubscriptionPrice(period);
+  const amount = hasSubscription ? subscription?.amount ?? 0 : 0;
 
-  // Jour de l'abonnement (Date de début de la formule courante)
-  const startDate = subscription?.updatedAt
-    ? new Date(subscription.updatedAt)
-    : new Date(createdAt);
-
-  // Jour de la fin (Date d'échéance ou de fin de validité)
-  const endDate = new Date(startDate);
-  if (period === "annual") {
-    endDate.setFullYear(endDate.getFullYear() + 1);
-  } else if (period === "monthly") {
-    endDate.setMonth(endDate.getMonth() + 1);
-  } else {
-    // Essai gratuit 14 jours
-    endDate.setDate(endDate.getDate() + 14);
-  }
+  const startDate = hasSubscription && subscription
+    ? new Date(subscription.startedAt)
+    : null;
+  const endDate = hasSubscription && subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd)
+    : hasSubscription && subscription?.trialEndDate
+      ? new Date(subscription.trialEndDate)
+      : null;
 
   const now = new Date();
-  const diffMs = endDate.getTime() - now.getTime();
-  const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  const isExpired = daysRemaining < 0;
+  const daysRemaining = endDate
+    ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isExpired = daysRemaining !== null && daysRemaining < 0;
 
-  const planLabel =
-    period === "annual"
+  const planLabel = !hasSubscription
+    ? "Aucune formule attribuée"
+    : period === "annual"
       ? "Formule Annuelle (12 mois)"
       : period === "monthly"
-      ? "Formule Mensuelle"
-      : "Période d'essai gratuit (14 jours)";
+        ? "Formule Mensuelle"
+        : "Période d'essai gratuit (14 jours)";
 
   return (
     <>
@@ -118,16 +113,18 @@ export function ViewSubscriptionModal({
               <CheckIcon className="size-5 shrink-0 text-black" />
             )}
             <div>
-              {isExpired ? (
+              {!hasSubscription ? (
+                <span>Aucun abonnement n&apos;a été attribué à cette entreprise.</span>
+              ) : isExpired ? (
                 <span>
                   Abonnement arrivé à échéance depuis{" "}
                   <strong>
-                    {Math.abs(daysRemaining)} jour
-                    {Math.abs(daysRemaining) > 1 ? "s" : ""}
+                    {Math.abs(daysRemaining ?? 0)} jour
+                    {Math.abs(daysRemaining ?? 0) > 1 ? "s" : ""}
                   </strong>
                   .
                 </span>
-              ) : (
+              ) : daysRemaining !== null ? (
                 <span>
                   Abonnement actif · Il reste{" "}
                   <strong>
@@ -135,6 +132,8 @@ export function ViewSubscriptionModal({
                   </strong>{" "}
                   de validité.
                 </span>
+              ) : (
+                <span>Abonnement actif, sans échéance enregistrée.</span>
               )}
             </div>
           </div>
@@ -148,7 +147,7 @@ export function ViewSubscriptionModal({
                 Jour de l&apos;abonnement
               </div>
               <div className="mt-1 text-xl font-bold tabular-nums text-black">
-                {formatDate(startDate)}
+                {startDate ? formatDate(startDate) : "—"}
               </div>
               <span className="text-xs text-gray-500">
                 Date de début / souscription
@@ -162,7 +161,7 @@ export function ViewSubscriptionModal({
                 Jour de la fin
               </div>
               <div className="mt-1 text-xl font-bold tabular-nums text-black">
-                {formatDate(endDate)}
+                {endDate ? formatDate(endDate) : "—"}
               </div>
               <span className="text-xs text-gray-500">
                 Date d&apos;échéance / renouvellement

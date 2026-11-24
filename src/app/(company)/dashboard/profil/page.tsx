@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { buttonClass } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { defaultTrialSubscription, viewSubscription } from "@/lib/subscription";
+import { viewSubscription } from "@/lib/subscription";
 import { requireCompany } from "@/server/auth/guards";
 import { signOutCompany } from "@/server/auth/sign-out";
 import {
@@ -42,8 +43,8 @@ async function ProfileContent() {
     listPayments(company.id),
   ]);
   const now = new Date();
-  const subscription =
-    stored ?? defaultTrialSubscription(company.id, company.createdAt, now);
+  if (!stored) redirect("/onboarding");
+  const subscription = stored;
   const view = viewSubscription(subscription, now);
   const lastPayment = payments[0] ?? null;
 
@@ -51,9 +52,10 @@ async function ProfileContent() {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <Panel id="identite" title="Identité">
         <ProfileForm
-          key={`${company.name}-${company.phone}-${company.logoUrl ?? ""}`}
+          key={`${company.name}-${company.phone}-${company.countryCode}-${company.logoUrl ?? ""}`}
           email={company.email}
           phone={company.phone}
+          countryCode={company.countryCode}
           name={company.name}
           logoUrl={company.logoUrl}
         />

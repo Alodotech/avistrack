@@ -12,13 +12,13 @@ import type { Company, CompanySubscription } from "@/server/domain";
 
 const store = vi.hoisted(() => ({
   subscription: null as CompanySubscription | null,
+  adminGrantedTrial: false,
 }));
 
 vi.mock("@/server/repositories/subscription-repository", () => ({
   getCompanySubscription: async () => store.subscription,
-  ensureTrialSubscription: async () => store.subscription,
+  hasAdminGrantedTrialSubscription: async () => store.adminGrantedTrial,
   activatePaidSubscription: async () => store.subscription,
-  ensureTrial: async () => store.subscription,
 }));
 
 vi.mock("@/server/repositories/company-repository", () => ({
@@ -37,6 +37,7 @@ function company(overrides: Partial<Company> = {}): Company {
     name: "Pharmacie Camp Guézo",
     email: "pharmacie@example.com",
     phone: "+22901970000",
+    countryCode: "BJ",
     logoUrl: null,
     status: "ACTIVE",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -44,7 +45,9 @@ function company(overrides: Partial<Company> = {}): Company {
   };
 }
 
-function subscription(): CompanySubscription {
+function subscription(
+  overrides: Partial<CompanySubscription> = {},
+): CompanySubscription {
   return {
     companyId: "11111111-1111-4111-8111-111111111111",
     plan: "trial",
@@ -55,11 +58,13 @@ function subscription(): CompanySubscription {
     currentPeriodEnd: new Date("2026-01-15T00:00:00.000Z"),
     trialEndDate: new Date("2026-01-15T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    ...overrides,
   };
 }
 
 beforeEach(() => {
   store.subscription = null;
+  store.adminGrantedTrial = false;
 });
 
 describe("needsCompanyOnboarding", () => {
@@ -76,7 +81,22 @@ describe("needsCompanyOnboarding", () => {
   });
 
   it("devient faux quand la fiche et le forfait sont enregistrés", async () => {
+    store.subscription = subscription({
+      plan: "pro",
+      period: "monthly",
+      amount: 3500,
+      status: "ACTIVE",
+      currentPeriodEnd: new Date("2026-02-01T00:00:00.000Z"),
+      trialEndDate: undefined,
+    });
+    await expect(needsCompanyOnboarding(company())).resolves.toBe(false);
+  });
+
+  it("n'accepte un essai que s'il a été accordé par un administrateur", async () => {
     store.subscription = subscription();
+    await expect(needsCompanyOnboarding(company())).resolves.toBe(true);
+
+    store.adminGrantedTrial = true;
     await expect(needsCompanyOnboarding(company())).resolves.toBe(false);
   });
 });

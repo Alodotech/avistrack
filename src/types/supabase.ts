@@ -24,6 +24,7 @@ export type CompanyRow = {
   name: string;
   slug: string;
   phone: string | null;
+  country_code: string;
   email: string;
   logo_url: string | null;
   status: CompanyStatusRow;
@@ -68,6 +69,12 @@ export type PaymentRow = {
 };
 
 export type FedaPayWebhookEventRow = {
+  id: string;
+  name: string | null;
+  received_at: string;
+};
+
+export type FeexPayWebhookEventRow = {
   id: string;
   name: string | null;
   received_at: string;
@@ -210,6 +217,7 @@ export type Database = {
       company_subscriptions: Table<CompanySubscriptionRow>;
       payments: Table<PaymentRow>;
       fedapay_webhook_events: Table<FedaPayWebhookEventRow>;
+      feexpay_webhook_events: Table<FeexPayWebhookEventRow>;
       report_downloads: Table<ReportDownloadRow>;
     };
     Views: Record<string, never>;

@@ -63,22 +63,11 @@ export function viewSubscription(
   };
 }
 
-export function defaultTrialSubscription(
-  companyId: string,
-  createdAt: Date,
+export function isSubscriptionAccessBlocked(
+  subscription: CompanySubscription | null,
   now: Date,
-): CompanySubscription {
-  const trialEnd = new Date(createdAt);
-  trialEnd.setDate(trialEnd.getDate() + 14);
-  return {
-    companyId,
-    plan: "trial",
-    period: "trial",
-    amount: 0,
-    status: trialEnd.getTime() < now.getTime() ? "EXPIRED" : "TRIALING",
-    startedAt: createdAt,
-    currentPeriodEnd: trialEnd,
-    trialEndDate: trialEnd,
-    updatedAt: createdAt,
-  };
+): boolean {
+  if (!subscription) return true;
+  const view = viewSubscription(subscription, now);
+  return view.isExpired || view.status === "SUSPENDED";
 }

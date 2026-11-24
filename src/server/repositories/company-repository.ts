@@ -1,5 +1,4 @@
 import "server-only";
-import { ensureTrialSubscription } from "./subscription-repository";
 import { nextStatus, type StatusChange } from "@/lib/company-status";
 import {
   emptyDistribution,
@@ -30,6 +29,7 @@ function toCompany(row: CompanyRow): Company {
     name: row.name,
     email: row.email,
     phone: row.phone ?? "",
+    countryCode: row.country_code,
     logoUrl: row.logo_url ?? null,
     status: statusFromRow(row.status),
     createdAt: new Date(row.created_at),
@@ -212,11 +212,6 @@ export async function createCompany(
     if (error.code === "23505") return { ok: false, reason: "EMAIL_TAKEN" };
     throw error;
   }
-  try {
-    await ensureTrialSubscription(data.id, new Date(data.created_at));
-  } catch {
-    // L'abonnement sera créé à la première lecture ; ne bloque pas l'inscription.
-  }
   return { ok: true, company: toCompany(data) };
 }
 
@@ -235,6 +230,7 @@ export async function updateCompanyProfile(
   profile: {
     phone: string;
     email: string;
+    countryCode: string;
     name?: string;
     logoUrl?: string | null;
   },
@@ -243,11 +239,13 @@ export async function updateCompanyProfile(
   const update: {
     phone: string;
     email: string;
+    country_code: string;
     name?: string;
     logo_url?: string | null;
   } = {
     phone: profile.phone,
     email: profile.email,
+    country_code: profile.countryCode,
   };
   if (profile.name !== undefined) update.name = profile.name;
   if (profile.logoUrl !== undefined) update.logo_url = profile.logoUrl;
