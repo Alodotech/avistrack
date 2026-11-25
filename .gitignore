@@ -19,6 +19,7 @@
 
 # production
 /build
+/artifacts/
 
 # misc
 .DS_Store
@@ -39,6 +40,7 @@ yarn-error.log*
 
 # réglages locaux d'outils d'assistance
 .qoder/
+.tsupgrader/
 
 # typescript
 *.tsbuildinfo

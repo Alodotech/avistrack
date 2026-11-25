@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 import { buttonClass } from "@/components/ui/button";
 
 const inputClass =
-  "min-h-11 w-full rounded-xl border border-white/15 bg-white/5 px-3.5 text-sm text-white transition-colors placeholder:text-white/35 hover:border-white/30 focus:border-accent focus:bg-white/10 focus:outline-none";
+  "min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3.5 text-sm text-white transition-colors placeholder:text-white/50 hover:border-white/30 focus:border-accent focus:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/25";
 
 export function ContactForm() {
-  const [sent, setSent] = useState(false);
-
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -24,30 +22,32 @@ export function ContactForm() {
       `Nom : ${name}\nTéléphone : ${phone}\n\n${message}`,
     );
 
-    setSent(true);
-    window.location.href = `mailto: contact@avistrack.org?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@avistrack.org?subject=${subject}&body=${body}`;
   };
 
   return (
     <section
       aria-labelledby="footer-contact-title"
-      className="rounded-md border border-white/10 bg-white/[0.04] p-6 sm:p-8"
+      className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.025] p-5 shadow-2xl shadow-black/20 sm:p-6"
     >
+      <p className="text-[0.65rem] font-bold tracking-[0.16em] text-accent uppercase">
+        Contact
+      </p>
       <h2
         id="footer-contact-title"
-        className="text-xl font-semibold tracking-tight"
+        className="mt-2 text-lg font-semibold tracking-tight sm:text-xl"
       >
-        Contacter l&apos;équipe AvisTrack
+        Parlons de votre projet
       </h2>
       <p className="mt-2 max-w-md text-sm leading-6 text-white/60">
-        Laissez votre numéro et votre message : notre équipe revient vers vous
-        rapidement.
+        Votre messagerie s&apos;ouvrira avec le message prérempli. Vous pourrez
+        l&apos;envoyer depuis votre application de messagerie.
       </p>
 
       <form
         onSubmit={onSubmit}
         noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
+        className="mt-5 grid gap-4 sm:grid-cols-2"
       >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="contact-name" className="text-sm font-medium">
@@ -103,19 +103,10 @@ export function ContactForm() {
         <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="submit"
-            className={buttonClass("primary", "w-full sm:w-auto")}
+            className={buttonClass("primary", "w-full")}
           >
-            Envoyer le message
+            Envoyer
           </button>
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-xs leading-5 text-white/55"
-          >
-            {sent
-              ? "Votre messagerie va s’ouvrir avec le message prérempli."
-              : "Réponse par e-mail ou par téléphone."}
-          </p>
         </div>
       </form>
     </section>

@@ -85,7 +85,7 @@ export function AdminRolesPanel({ roles }: { roles: RoleOption[] }) {
             minLength={2}
             maxLength={60}
             placeholder="ex: Chargé de reporting"
-            className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none"
+            className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-500 focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none"
           />
         </div>
 

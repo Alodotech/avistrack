@@ -46,7 +46,7 @@ export function AddAdminForm() {
               type="email"
               required
               placeholder="ex: prenom.nom@gmail.com"
-              className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
+              className="h-11 w-full rounded border border-black/15 bg-white px-3.5 text-sm text-black placeholder:text-gray-500 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
             />
           </div>
 
@@ -68,7 +68,7 @@ export function AddAdminForm() {
                 <option value="admin">Administrateur</option>
                 <option value="dirigeant">Dirigeant AvisTrack</option>
               </select>
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>

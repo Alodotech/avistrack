@@ -16,9 +16,8 @@ const PUBLIC_PAGES = [
   { name: "landing-signup", path: "/?auth=signup" },
   { name: "tarifs", path: "/tarifs" },
   { name: "mentions-legales", path: "/mentions-legales" },
+  { name: "conditions-generales", path: "/conditions-generales" },
   { name: "confidentialite", path: "/confidentialite" },
-  { name: "avis-demo", path: "/avis/demo-avistrack" },
-  { name: "avis-reel", path: "/avis/861150a3ce48467fa295614f769d57bf375d" },
   { name: "admin-login", path: "/admin/login" },
 ];
 const AUTH_PAGES = [

@@ -158,7 +158,7 @@ export function FinancialOverview({
                   {formatCurrency(stats.mrr)}
                 </span>
               </div>
-              <span className="text-[0.7rem] text-gray-400">Total récurrent / mois</span>
+              <span className="text-[0.7rem] text-gray-500">Total récurrent / mois</span>
             </div>
 
             {/* ARR */}
@@ -169,7 +169,7 @@ export function FinancialOverview({
               <span className="text-xl sm:text-2xl font-bold text-black tracking-tight">
                 {formatCurrency(stats.arr)}
               </span>
-              <span className="text-[0.7rem] text-gray-400">Projection annuelle (MRR × 12)</span>
+              <span className="text-[0.7rem] text-gray-500">Projection annuelle (MRR × 12)</span>
             </div>
 
             {/* Abonnements Actifs & Répartition Annuel/Mensuel */}
@@ -210,7 +210,7 @@ export function FinancialOverview({
                   {stats.trialCount > 1 ? "entreprises" : "entreprise"}
                 </span>
               </div>
-              <span className="text-[0.7rem] text-gray-400">
+              <span className="text-[0.7rem] text-gray-500">
                 Essai attribué manuellement aux entreprises sélectionnées.
               </span>
             </div>
@@ -247,7 +247,7 @@ export function FinancialOverview({
                 </p>
                 <div className="mt-1">
                   <span className="text-sm font-bold text-black">0 FCFA</span>
-                  <span className="text-[0.65rem] text-gray-400 block">
+                  <span className="text-[0.65rem] text-gray-500 block">
                     Pas d&apos;essai automatique à l&apos;inscription
                   </span>
                 </div>
@@ -412,13 +412,13 @@ export function FinancialOverview({
 
             {/* Champ de recherche */}
             <div className="relative w-full sm:w-72">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
               <input
                 type="text"
                 placeholder="Rechercher une entreprise..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border border-black/10 bg-white pl-9 pr-3 py-1.5 min-h-11 min-w-[44px] text-xs text-black placeholder:text-gray-400 focus:border-accent focus:outline-none"
+                className="w-full rounded-md border border-black/10 bg-white pl-9 pr-3 py-1.5 min-h-11 min-w-[44px] text-xs text-black placeholder:text-gray-500 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -465,10 +465,10 @@ export function FinancialOverview({
                         <span className="font-semibold text-black">
                           {sub.company.name}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {sub.company.email}
                         </span>
-                        <span className="text-[0.65rem] text-gray-400 mt-0.5">
+                        <span className="text-[0.65rem] text-gray-500 mt-0.5">
                           Inscrit le {formatDate(sub.company.createdAt)}
                         </span>
                       </div>
@@ -526,7 +526,7 @@ export function FinancialOverview({
                         <span className="font-bold text-black text-xs">
                           {sub.hasSubscription ? formatCurrency(sub.amount) : "—"}
                         </span>
-                        <span className="text-[0.65rem] text-gray-400">
+                        <span className="text-[0.65rem] text-gray-500">
                           {!sub.hasSubscription
                             ? "En attente d'une offre"
                             : sub.period === "annual"

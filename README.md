@@ -62,6 +62,7 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    | `FEEXPAY_API_KEY` | Clé privée FeexPay de l'environnement choisi |
    | `FEEXPAY_SHOP_ID` | Identifiant de la boutique FeexPay correspondante |
    | `FEEXPAY_WEBHOOK_SECRET` | Secret de signature webhook du même environnement |
+   | `CRON_SECRET` | Secret utilisé par Vercel Cron pour autoriser la purge planifiée |
 
    `.env.local` n'est jamais versionné. La clé `service_role` contourne les
    politiques RLS : elle ne doit jamais être exposée au navigateur.
@@ -92,6 +93,13 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    > et ajoute la purge automatique. Sur une base existante, appliquer
    > `supabase/migrations/003_security_and_purge.sql` avec `psql` ou
    > `supabase db push`.
+
+   > La migration `20261125120000_expired_company_data_retention.sql` ajoute
+   > la suppression des comptes restés sans renouvellement pendant 90 jours.
+   > Pour le projet Supabase déjà initialisé manuellement, appliquez uniquement
+   > cette migration depuis le SQL Editor ; ne relancez pas
+   > `supabase/manual-setup.sql` ni `supabase db push` sans avoir d'abord
+   > réconcilié l'historique des migrations.
 
 6. **Configurer FeexPay :**
    - Pour le développement, créer une boutique dans le dashboard sandbox FeexPay,
@@ -180,6 +188,13 @@ La suppression d'une entreprise est **logique** : la ligne passe en
 - **Rétention par défaut : 30 jours.**
 - Purge automatique quotidienne à 03:17 UTC via `pg_cron`
   (job `avistrack-purge-companies`, créé par la migration 003).
+- Après l'expiration d'un abonnement, les données de l'entreprise sont
+  supprimées après 90 jours sans renouvellement. Le cron Vercel configuré dans
+  `vercel.json` exécute `/api/cron/purge-company-data` quotidiennement et
+  supprime également le compte Auth du propriétaire lorsqu'il n'a plus
+  d'entreprise ni de rôle administrateur.
+- Configurer `CRON_SECRET` dans les variables d'environnement de production
+  Vercel. La route refuse les appels sans ce secret.
 - Filet de sécurité manuel, jouable à tout moment :
   ```bash
   npm run db:purge         # 30 jours

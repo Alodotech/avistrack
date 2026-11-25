@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { hasFilledHoneypot } from "@/lib/honeypot";
 import { sanitizeText } from "@/lib/sanitize";
 import { findPublicCompanyByPublicId } from "@/server/repositories/company-repository";
 import { getPublicReviewFormConfig } from "@/server/repositories/form-repository";
@@ -57,6 +58,10 @@ export async function submitReview(
   _previous: PublicReviewState,
   formData: FormData,
 ): Promise<PublicReviewState> {
+  if (hasFilledHoneypot(formData)) {
+    return { status: "error", message: "La soumission n'a pas pu être traitée." };
+  }
+
   const publicId = decodeURIComponent(
     String(formData.get("publicId") ?? ""),
   ).trim();
@@ -209,6 +214,10 @@ export async function submitRemark(
   _previous: PublicReviewState,
   formData: FormData,
 ): Promise<PublicReviewState> {
+  if (hasFilledHoneypot(formData)) {
+    return { status: "error", message: "La soumission n'a pas pu être traitée." };
+  }
+
   const publicId = decodeURIComponent(String(formData.get("publicId") ?? "")).trim();
   const company = await findPublicCompanyByPublicId(publicId);
   if (!company || company.status !== "ACTIVE") {

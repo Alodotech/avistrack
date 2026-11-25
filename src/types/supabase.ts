@@ -160,6 +160,11 @@ export type AuditLogRow = {
   created_at: string;
 };
 
+export type AccountDeletionQueueRow = {
+  user_id: string;
+  queued_at: string;
+};
+
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
   Insert: Insert;
@@ -219,6 +224,7 @@ export type Database = {
       fedapay_webhook_events: Table<FedaPayWebhookEventRow>;
       feexpay_webhook_events: Table<FeexPayWebhookEventRow>;
       report_downloads: Table<ReportDownloadRow>;
+      account_deletion_queue: Table<AccountDeletionQueueRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -240,6 +246,10 @@ export type Database = {
       };
       purge_deleted_companies: {
         Args: { p_retention_days?: number };
+        Returns: number;
+      };
+      purge_expired_companies: {
+        Args: { p_inactive_days?: number };
         Returns: number;
       };
     };

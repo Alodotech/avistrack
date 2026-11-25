@@ -106,7 +106,7 @@ async function AdminUsersTableContent() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-gray-400 font-mono">
+                        <span className="text-xs text-gray-500 font-mono">
                           ID: {admin.userId ? admin.userId.slice(0, 8) + "…" : "En attente"}
                         </span>
                       </div>

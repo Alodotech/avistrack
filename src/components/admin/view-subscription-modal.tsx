@@ -188,7 +188,7 @@ export function ViewSubscriptionModal({
             </div>
             {subscription?.adminEmail ? (
               <p className="mt-1 text-xs text-gray-500 flex items-center gap-1.5 border-t border-black/5 pt-2">
-                <InfoIcon className="size-3.5 text-gray-400" />
+                <InfoIcon className="size-3.5 text-gray-500" />
                 Dernière modification par {subscription.adminEmail}
               </p>
             ) : null}

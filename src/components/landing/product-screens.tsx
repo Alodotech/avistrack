@@ -1,50 +1,62 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import {
-  MessageIcon,
-  StarIcon,
-  ThumbUpIcon,
-  TrendIcon,
-} from "@/components/ui/icons";
+import { StarIcon } from "@/components/ui/icons";
 
 /**
  * Maquettes HTML des écrans produit montrées dans les chapitres de la landing.
  *
  * Volontairement en DOM (et non en textures WebGL) : elles restent nettes,
  * lisibles, accessibles et visibles même quand la scène 3D n'est pas rendue.
- * Les données reprennent celles du dashboard réel (RG-06 : moyenne sur 128
- * avis, répartition 1→5, dernière revue par commerce).
+ * Les données de démonstration sont explicitement signalées comme exemples,
+ * sans être présentées comme des résultats réels.
  */
 
-/** Répartition cohérente : 128 avis, moyenne 4,6 / 5, 97 % à 4-5 étoiles. */
-const DISTRIBUTION: { rating: number; count: number }[] = [
-  { rating: 5, count: 82 },
-  { rating: 4, count: 42 },
-  { rating: 3, count: 2 },
-  { rating: 2, count: 1 },
-  { rating: 1, count: 1 },
-];
-const TOTAL = 128;
-const MAX = 82;
-
 const STATS = [
-  { label: "Note moyenne", value: "4,6", suffix: " / 5", icon: <StarIcon filled={false} className="size-4" /> },
-  { label: "Avis au total", value: String(TOTAL), icon: <MessageIcon className="size-4" /> },
-  { label: "Avis sur 30 jours", value: "42", icon: <TrendIcon className="size-4" /> },
-  { label: "Clients satisfaits", value: "97 %", icon: <ThumbUpIcon className="size-4" /> },
+  { label: "Note moyenne", value: "4,6", suffix: " / 5" },
+  { label: "Avis au total", value: "128" },
+  { label: "Avis sur 30 jours", value: "42" },
+  { label: "Clients satisfaits", value: "97 %" },
 ] as const;
 
+const DISTRIBUTION = [
+  { rating: 1, count: 1 },
+  { rating: 2, count: 1 },
+  { rating: 3, count: 2 },
+  { rating: 4, count: 42 },
+  { rating: 5, count: 82 },
+] as const;
+const MAX_RATING_COUNT = 82;
+
 const RECENT_REVIEWS = [
-  { rating: 5, date: "08/10/2026", comment: "Accueil très professionnel, je recommande." },
-  { rating: 5, date: "06/10/2026", comment: "Conseils clairs et précis, merci." },
+  {
+    rating: 5,
+    date: "08/10/2026",
+    comment: "Accueil très professionnel, je recommande.",
+  },
+  {
+    rating: 5,
+    date: "06/10/2026",
+    comment: "Conseils clairs et précis, merci.",
+  },
   { rating: 4, date: "05/10/2026", comment: "Rapide et efficace." },
   { rating: 2, date: "03/10/2026", comment: "Beaucoup d'attente en caisse." },
 ] as const;
 
-/** Étoiles décoratives : la valeur chiffrée voisine porte le sens. */
-function Stars({ rating, accent = false }: { rating: number; accent?: boolean }) {
+/** Étoiles décoratives : les aperçus ne présentent pas de note réelle. */
+function Stars({
+  rating,
+  accent = false,
+  decorative = false,
+}: {
+  rating: number;
+  accent?: boolean;
+  decorative?: boolean;
+}) {
   return (
-    <span className="flex items-center gap-0.5">
+    <span
+      className="flex items-center gap-0.5"
+      aria-hidden={decorative}
+    >
       {[1, 2, 3, 4, 5].map((step) => {
         const filled = step <= rating;
         return (
@@ -55,7 +67,7 @@ function Stars({ rating, accent = false }: { rating: number; accent?: boolean })
           />
         );
       })}
-      <span className="sr-only">{rating} sur 5</span>
+      {!decorative ? <span className="sr-only">{rating} sur 5</span> : null}
     </span>
   );
 }
@@ -85,7 +97,7 @@ function ScreenShell({
 
 export function QrStandScreen() {
   return (
-    <ScreenShell caption="Aperçu · Votre QR code, à imprimer">
+    <ScreenShell caption="Aperçu visuel · QR code">
       <article className="w-full max-w-[22rem] rounded-md border border-black/15 bg-white p-7 text-center text-black shadow-lg shadow-black/25">
         <div className="flex items-center justify-center gap-2">
           <Image
@@ -107,21 +119,32 @@ export function QrStandScreen() {
           Scannez le QR code et notez votre visite en 30 secondes.
         </p>
 
-        <div className="mt-5 rounded-xl border border-black/10 bg-gray-100 p-4">
-          <Image
-            src="/assets/landing/qr-code-avistrack.png"
-            alt="QR code menant au formulaire d'avis"
-            width={1024}
-            height={1024}
-            sizes="(max-width: 640px) 12rem, 12rem"
-            decoding="async"
-            className="mx-auto aspect-square w-full max-w-[12rem] rounded-md bg-white object-contain"
-          />
+        <div className="mt-5 flex aspect-square w-full items-center justify-center rounded-xl border border-black/10 bg-gray-100 p-4">
+          <div className="relative aspect-square w-full max-w-[12rem] overflow-hidden rounded-md border border-black/10 bg-white">
+            <Image
+              src="/assets/landing/qr-code-preview.png"
+              alt="Illustration de QR code AvisTrack, non reliée à un commerce."
+              fill
+              sizes="12rem"
+              className="object-contain p-2"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-[61%] h-4 -translate-y-1/2 bg-accent/15"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-[61%] h-1 -translate-y-1/2 bg-accent"
+            />
+          </div>
         </div>
 
-        <p className="mt-5 text-sm font-semibold">Pharmacie du Centre</p>
+        <p className="mt-5 text-sm font-semibold">Votre commerce</p>
         <p className="mt-1 text-xs text-gray-600">
           Sans compte · sans application
+        </p>
+        <p className="mt-1 text-[0.65rem] text-gray-600">
+          Illustration non reliée à un commerce
         </p>
       </article>
     </ScreenShell>
@@ -166,11 +189,11 @@ export function PhoneFormScreen() {
             {/* En-tête commerce */}
             <div className="flex items-center gap-3">
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-sm font-bold text-white">
-                P
+                V
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">
-                  Pharmacie du Centre
+                  Votre commerce
                 </p>
                 <p className="text-xs text-gray-600">Notez votre visite</p>
               </div>
@@ -182,8 +205,8 @@ export function PhoneFormScreen() {
                 Comment s&apos;est passée votre visite ?
               </h3>
               <div className="mt-3 flex items-center gap-3">
-                <Stars rating={4} accent />
-                <span className="text-sm font-semibold">Très bien</span>
+                <Stars rating={4} accent decorative />
+                <span className="text-sm font-semibold">Votre note</span>
               </div>
             </div>
 
@@ -227,7 +250,7 @@ export function PhoneFormScreen() {
 
 export function DashboardScreen() {
   return (
-    <ScreenShell caption="Aperçu · Votre tableau de bord">
+    <ScreenShell caption="Exemple · Tableau de bord">
       <div className="w-full rounded-xl border border-black/15 bg-white text-black shadow-lg shadow-black/25">
         {/* Chrome de fenêtre */}
         <div className="flex items-center gap-2 border-b border-black/10 px-4 py-2.5">
@@ -237,19 +260,24 @@ export function DashboardScreen() {
             <i className="block size-2.5 rounded-full bg-black/15" />
           </span>
           <span className="mx-auto rounded-md bg-gray-100 px-3 py-1 text-[0.65rem] text-gray-600">
-            avistrack.fr/dashboard
+            avistrack.org/dashboard
           </span>
         </div>
 
         <div className="flex flex-col gap-4 p-4 sm:p-5">
-          <header>
-            <h3 className="text-lg font-semibold tracking-tight">
-              Tableau de bord
-            </h3>
-            <p className="text-xs text-gray-600">
-              La satisfaction de vos clients et leurs avis récents, en un coup
-              d&apos;œil.
-            </p>
+          <header className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold tracking-tight">
+                Tableau de bord
+              </h3>
+              <p className="text-xs text-gray-600">
+                La satisfaction de vos clients et leurs avis récents, en un
+                coup d&apos;œil.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-[0.6rem] font-bold tracking-wide text-accent uppercase">
+              Exemple
+            </span>
           </header>
 
           {/* Indicateurs */}
@@ -270,9 +298,6 @@ export function DashboardScreen() {
                     </span>
                   ) : null}
                 </dd>
-                <dd aria-hidden className="mt-1 flex text-gray-600">
-                  {stat.icon}
-                </dd>
               </div>
             ))}
           </dl>
@@ -282,13 +307,13 @@ export function DashboardScreen() {
             <section className="rounded-lg border border-black/10 p-3.5">
               <h4 className="text-sm font-semibold">Répartition des notes</h4>
               <p className="mt-0.5 text-[0.7rem] text-gray-600">
-                4,6 / 5 · {TOTAL} avis
+                Répartition des avis par note.
               </p>
               <ul className="mt-3 flex flex-col gap-2">
                 {DISTRIBUTION.map(({ rating, count }) => (
                   <li
                     key={rating}
-                    className="grid grid-cols-[2rem_1fr_2.5rem] items-center gap-2 text-xs"
+                    className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 text-xs"
                   >
                     <span className="flex items-center gap-1 font-semibold tabular-nums">
                       {rating}
@@ -300,7 +325,10 @@ export function DashboardScreen() {
                       preserveAspectRatio="none"
                       className="h-2.5 w-full rounded-sm bg-gray-100 fill-accent"
                     >
-                      <rect width={(count / MAX) * 100} height="10" />
+                      <rect
+                        width={Math.max((count / MAX_RATING_COUNT) * 100, 7)}
+                        height="10"
+                      />
                     </svg>
                     <span className="text-right tabular-nums text-gray-600">
                       {count}
@@ -308,13 +336,16 @@ export function DashboardScreen() {
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-[0.65rem] text-gray-600">
+                Valeurs illustratives, non issues de vrais avis.
+              </p>
             </section>
 
             {/* Derniers avis */}
             <section className="rounded-lg border border-black/10 p-3.5">
               <h4 className="text-sm font-semibold">Derniers avis</h4>
               <p className="mt-0.5 text-[0.7rem] text-gray-600">
-                Du plus récent au plus ancien
+                Exemples de retours clients.
               </p>
               <ul className="mt-2 flex flex-col divide-y divide-black/10">
                 {RECENT_REVIEWS.map((review) => (
@@ -323,7 +354,7 @@ export function DashboardScreen() {
                     className="flex flex-col gap-1 py-2"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <Stars rating={review.rating} />
+                      <Stars rating={review.rating} accent />
                       <span className="text-[0.65rem] tabular-nums text-gray-600">
                         {review.date}
                       </span>
@@ -334,6 +365,9 @@ export function DashboardScreen() {
                   </li>
                 ))}
               </ul>
+              <p className="mt-2 text-[0.65rem] text-gray-600">
+                Avis fictifs présentés à titre d&apos;exemple.
+              </p>
             </section>
           </div>
         </div>

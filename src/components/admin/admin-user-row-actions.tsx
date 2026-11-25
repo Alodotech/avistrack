@@ -120,7 +120,7 @@ export function AdminUserRowActions({
           <option value="admin">Administrateur</option>
           <option value="dirigeant">Dirigeant AvisTrack</option>
         </select>
-        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
           <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -143,7 +143,7 @@ export function AdminUserRowActions({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
           <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -160,7 +160,7 @@ export function AdminUserRowActions({
 
       {/* Bouton de révocation */}
       {isCurrentAdmin ? (
-        <span className="rounded-md bg-gray-100 px-2 py-1 text-[0.7rem] font-semibold text-gray-400 cursor-not-allowed">
+        <span className="rounded-md bg-gray-100 px-2 py-1 text-[0.7rem] font-semibold text-gray-500 cursor-not-allowed">
           Votre compte
         </span>
       ) : (

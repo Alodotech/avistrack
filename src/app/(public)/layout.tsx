@@ -7,6 +7,7 @@ import { siteUrlOrFallback } from "@/lib/site-url";
 
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { CookieConsentBanner } from "@/components/marketing/cookie-consent";
 
 /** Surface publique : landing, formulaire d'avis et inscription. */
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <div className="relative z-10">
           <SiteFooter />
         </div>
+        <CookieConsentBanner />
         <AuthModal />
       </div>
     </AuthModalProvider>

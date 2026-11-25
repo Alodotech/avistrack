@@ -8,7 +8,7 @@
  */
 
 /** Domaine de repli : utilisé seulement si la variable d'environnement manque. */
-export const FALLBACK_SITE_URL = "https://avistrack.fr";
+export const FALLBACK_SITE_URL = "https://avistrack.org";
 
 /** URL de développement par défaut. */
 export const LOCAL_SITE_URL = "http://localhost:3000";

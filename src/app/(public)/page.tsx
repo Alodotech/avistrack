@@ -199,7 +199,7 @@ export default function LandingPage() {
               </OpenAuthButton>
               <a
                 className={buttonClass("secondary")}
-                href="mailto: contact@avistrack.org?subject=AvisTrack%20-%20Demande%20de%20renseignements"
+                href="mailto:contact@avistrack.org?subject=AvisTrack%20-%20Demande%20de%20renseignements"
               >
                 Nous contacter
               </a>

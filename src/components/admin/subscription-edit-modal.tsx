@@ -80,7 +80,7 @@ export function SubscriptionEditModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-11 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-black transition"
+            className="flex size-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-black transition"
             aria-label="Fermer"
           >
             <XIcon className="size-4" />

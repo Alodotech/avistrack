@@ -15,14 +15,6 @@ const inputClass =
 
 const initialState: PublicReviewState = { status: "idle" };
 
-/**
- * Soumission de démonstration (QR de la page d'accueil) : aucun avis n'est
- * écrit en base, mais le parcours reste identique pour le visiteur.
- */
-async function submitDemo(): Promise<PublicReviewState> {
-  return { status: "submitted" };
-}
-
 const RATING_VALUES = [1, 2, 3, 4, 5] as const;
 const RATING_LABELS = [
   "",
@@ -79,22 +71,19 @@ export function ReviewForm({
   publicId,
   config,
   maxDate,
-  demo = false,
 }: {
   companyName: string;
   publicId: string;
   config: ReviewFormConfig;
   maxDate: string;
-  /** Mode vitrine : le formulaire ne persiste rien. */
-  demo?: boolean;
 }) {
   const [mode, setMode] = useState<"welcome" | "review" | "remark">("welcome");
   const [reviewState, reviewAction, reviewPending] = useActionState(
-    demo ? submitDemo : submitReview,
+    submitReview,
     initialState,
   );
   const [remarkState, remarkAction, remarkPending] = useActionState(
-    demo ? submitDemo : submitRemark,
+    submitRemark,
     initialState,
   );
   const [rating, setRating] = useState(0);
@@ -169,6 +158,12 @@ export function ReviewForm({
         className="flex flex-col gap-5 rounded-md border border-black/10 bg-white p-5 shadow-sm sm:p-8"
       >
         <input type="hidden" name="publicId" value={publicId} />
+        <div className="sr-only" aria-hidden="true">
+          <label>
+            Laissez ce champ vide
+            <input name="website" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
         <header className="flex flex-col gap-2 border-b border-black/10 pb-5">
           <p className="text-xs font-semibold tracking-[0.14em] text-gray-600 uppercase">
             {companyName}
@@ -275,6 +270,12 @@ export function ReviewForm({
       className="flex flex-col gap-6 rounded-md border border-black/10 bg-white p-5 shadow-sm sm:p-8"
     >
       <input type="hidden" name="publicId" value={publicId} />
+      <div className="sr-only" aria-hidden="true">
+        <label>
+          Laissez ce champ vide
+          <input name="website" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
 
       <header className="flex flex-col gap-2 border-b border-black/10 pb-5">
         <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-gray-600 uppercase">
