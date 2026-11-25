@@ -3,6 +3,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Mentions légales",
   description: "Informations légales du service AvisTrack.",
+  alternates: { canonical: "/mentions-legales" },
+  openGraph: {
+    title: "Mentions légales — AvisTrack",
+    description: "Informations légales du service AvisTrack.",
+    url: "/mentions-legales",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
+  },
 };
 
 export default function LegalNoticePage() {

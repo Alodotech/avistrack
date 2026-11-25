@@ -10,9 +10,16 @@ export const metadata: Metadata = {
     title: "Tarifs AvisTrack",
     description:
       "Une offre Pro à 3 500 FCFA par mois ou 35 000 FCFA par an.",
+    url: "/tarifs",
     locale: "fr_FR",
     type: "website",
     siteName: "AvisTrack",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
   },
 };
 

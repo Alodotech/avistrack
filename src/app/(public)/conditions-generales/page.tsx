@@ -4,6 +4,19 @@ export const metadata: Metadata = {
   title: "Conditions générales",
   description:
     "Conditions d'utilisation et d'abonnement au service AvisTrack.",
+  alternates: { canonical: "/conditions-generales" },
+  openGraph: {
+    title: "Conditions générales — AvisTrack",
+    description:
+      "Conditions d'utilisation et d'abonnement au service AvisTrack.",
+    url: "/conditions-generales",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
+  },
 };
 
 const SECTION_CLASS = "flex flex-col gap-2";

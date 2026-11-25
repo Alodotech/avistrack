@@ -4,10 +4,8 @@ import { siteUrlOrFallback } from "@/lib/site-url";
 /**
  * Règles d'exploration.
  *
- * Sont interdits : l'espace d'administration, les tableaux de bord
- * entreprise, les pages d'authentification et les API. Les formulaires
- * d'avis `/avis/<public_id>` sont également exclus : ce sont des pages à
- * usage unique, destinées à être ouvertes depuis un QR code.
+ * Les espaces privés et formulaires d'avis portent une directive `noindex`
+ * pour que les moteurs puissent la lire. Seules les API sont bloquées ici.
  */
 export default function robots(): MetadataRoute.Robots {
   const base = siteUrlOrFallback();
@@ -17,15 +15,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/admin",
-          "/dashboard",
-          "/login",
-          "/onboarding",
-          "/avis/",
-          "/api/",
-          "/auth/",
-        ],
+        disallow: ["/api/"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,

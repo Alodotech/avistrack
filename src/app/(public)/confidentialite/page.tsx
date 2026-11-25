@@ -4,6 +4,19 @@ export const metadata: Metadata = {
   title: "Politique de confidentialité",
   description:
     "Comment AvisTrack collecte, utilise et protège les données des avis clients.",
+  alternates: { canonical: "/confidentialite" },
+  openGraph: {
+    title: "Politique de confidentialité — AvisTrack",
+    description:
+      "Comment AvisTrack collecte, utilise et protège les données des avis clients.",
+    url: "/confidentialite",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
+  },
 };
 
 export default function PrivacyPage() {

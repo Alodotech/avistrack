@@ -10,17 +10,24 @@ import {
 } from "@/components/landing/product-screens";
 
 export const metadata: Metadata = {
-  title: "Des avis clients. Un seul scan.",
+  title: "Avis clients par QR code pour commerces",
   description:
-    "Un QR code, un formulaire et un tableau de bord pour recueillir les avis de vos clients. AvisTrack, la satisfaction en un seul scan.",
+    "Collectez les avis clients de votre commerce avec un QR code, un formulaire mobile et un tableau de bord. Découvrez AvisTrack.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "AvisTrack — Des avis clients. Un seul scan.",
+    title: "AvisTrack — Avis clients par QR code pour commerces",
     description:
-      "Un QR code, un formulaire mobile et un tableau de bord pour recueillir les avis de vos clients.",
+      "Collectez les avis clients de votre commerce avec un QR code, un formulaire mobile et un tableau de bord.",
+    url: "/",
     locale: "fr_FR",
     type: "website",
     siteName: "AvisTrack",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
   },
 };
 

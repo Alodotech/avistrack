@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
@@ -14,6 +15,10 @@ import {
 } from "@/components/ui/icons";
 import { getCurrentCompany } from "@/server/auth/guards";
 import { getCompanySubscriptionView } from "@/server/services/company-access";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const NAV = [
   {

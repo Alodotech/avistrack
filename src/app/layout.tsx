@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { FALLBACK_SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://avistrack.org"),
+  metadataBase: new URL(FALLBACK_SITE_URL),
   title: {
     default: "AvisTrack",
     template: "%s — AvisTrack",
@@ -19,16 +20,25 @@ export const metadata: Metadata = {
     title: "AvisTrack — Des avis clients. Un seul scan.",
     description:
       "Un QR code, un formulaire mobile et un tableau de bord pour recueillir les avis de vos clients.",
-    url: "https://avistrack.org",
+    url: FALLBACK_SITE_URL,
     siteName: "AvisTrack",
     locale: "fr_FR",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "AvisTrack — Des avis clients. Un seul scan.",
     description:
       "Un QR code, un formulaire mobile et un tableau de bord pour recueillir les avis de vos clients.",
+    images: ["/opengraph-image"],
   },
   other: {
     // Empêche l'extension Dark Reader de réécrire le DOM avant l'hydratation.

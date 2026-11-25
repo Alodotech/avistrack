@@ -57,7 +57,7 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique (anon) |
    | `SUPABASE_SERVICE_ROLE_KEY` | Clé `service_role`, **serveur uniquement** |
    | `SUPABASE_PROJECT_ID` | Identifiant du projet (CLI `update-types`) |
-   | `NEXT_PUBLIC_SITE_URL` | URL publique canonique (QR code, sitemap, redirections OAuth) |
+   | `NEXT_PUBLIC_SITE_URL` | URL locale ou d'environnement; la production utilise `https://www.avistrack.org` comme domaine canonique |
    | `FEEXPAY_ENVIRONMENT` | `sandbox` en local, `live` en production |
    | `FEEXPAY_API_KEY` | Clé privée FeexPay de l'environnement choisi |
    | `FEEXPAY_SHOP_ID` | Identifiant de la boutique FeexPay correspondante |
@@ -146,8 +146,9 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    Google.
 2. Google Cloud Console → **OAuth 2.0 Client** : ajouter l'URI de redirection
    `https://<projet>.supabase.co/auth/v1/callback`.
-3. Supabase → **Authentication → URL Configuration** : renseigner
-   `NEXT_PUBLIC_SITE_URL` et l'URL de redirection `/auth/callback`.
+3. Supabase → **Authentication → URL Configuration** :
+   - **Site URL** : `https://www.avistrack.org`
+   - **Redirect URLs** : ajouter `https://www.avistrack.org/auth/callback`
 4. Le premier administrateur est créé en insérant son compte Auth dans la
    table `admins` (`user_id`, `email`).
 
