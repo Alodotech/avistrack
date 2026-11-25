@@ -27,15 +27,13 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
       title="Satisfaction des clients"
       description={
         stats.total === 0
-          ? "La satisfaction apparaîtra dès votre premier avis."
+          ? "Aucun avis pour le moment."
           : "Part des avis de 4 et 5 étoiles, et répartition de toutes les notes."
       }
       flush={stats.total === 0}
     >
       {stats.total === 0 ? (
-        <EmptyState>
-          Le premier avis reçu remplira cet aperçu en quelques secondes.
-        </EmptyState>
+        <EmptyState>Aucun avis pour le moment.</EmptyState>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[auto_1fr] lg:items-center">
           <div className="flex flex-col items-center gap-4">
@@ -60,7 +58,6 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
                 fill="none"
                 className="stroke-accent"
                 strokeWidth={STROKE}
-                strokeLinecap="round"
                 strokeDasharray={`${arc} ${CIRCUMFERENCE}`}
                 transform={`rotate(-90 ${CENTER} ${CENTER})`}
               />
@@ -104,7 +101,7 @@ export function SatisfactionOverview({ stats }: { stats: ReviewStats }) {
               return (
                 <li
                   key={rating}
-                  className="grid grid-cols-[2.5rem_1fr_6.5rem] items-center gap-4 text-sm"
+                  className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-sm sm:gap-4"
                 >
                   <span className="flex items-center gap-1 font-semibold tabular-nums">
                     {rating}

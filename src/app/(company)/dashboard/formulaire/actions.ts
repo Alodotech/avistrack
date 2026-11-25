@@ -36,6 +36,8 @@ const formConfigSchema = z.object({
     .trim()
     .min(2, "Le message doit contenir au moins 2 caractères.")
     .max(240, "Le message ne peut pas dépasser 240 caractères."),
+  allowAnonymous: z.boolean(),
+  allowRemarks: z.boolean(),
 });
 
 export type FormStudioState = {
@@ -72,6 +74,8 @@ export async function saveFormConfig(
     questions: parseQuestions(formData.get("questions")),
     thanksTitle: formData.get("thanksTitle"),
     thanksMessage: formData.get("thanksMessage"),
+    allowAnonymous: formData.get("allowAnonymous") === "on",
+    allowRemarks: formData.get("allowRemarks") === "on",
   });
   if (!parsed.success) {
     const fields = z.flattenError(parsed.error).fieldErrors;

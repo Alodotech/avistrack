@@ -7,20 +7,20 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-8 bg-gray-100 px-4 py-12">
       <Link
         href="/"
-        className="flex items-center gap-2.5 text-xl font-bold tracking-tight"
+        className="flex min-h-11 items-center gap-2.5 text-lg font-semibold tracking-tight"
         aria-label="AvisTrack, accueil"
       >
         <Image
-          src="/assets/logo.png"
+          src="/assets/logoavistrack.png"
           alt=""
-          width={36}
-          height={28}
+          width={38}
+          height={30}
           className="h-8 w-auto shrink-0 object-contain"
           priority
         />
-        <span>AvisTrack</span>
+        AvisTrack
       </Link>
-      <div className="w-full max-w-md">{children}</div>
+      <div className="w-full">{children}</div>
     </div>
   );
 }

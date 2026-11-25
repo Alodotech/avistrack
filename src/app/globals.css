@@ -11,8 +11,9 @@
   --color-black: #0a0a0a;
   --color-red: #d71920;
   --color-accent: #d71920;
-  --color-accent-deep: #b31217;
+  --color-accent-deep: #b01319;
   --color-gray-100: #f4f4f4;
+  --color-gray-500: #8a8a8a;
   --color-gray-600: #555555;
 
   --font-sans: var(--font-inter), Inter, Arial, Helvetica, sans-serif;
@@ -72,6 +73,17 @@ body {
   }
 }
 
+@keyframes avistrack-price-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .animate-rise {
   animation: avistrack-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -83,6 +95,22 @@ body {
 
 .animate-ping-slow {
   animation: avistrack-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.pricing-price {
+  animation: avistrack-price-in 0.28s ease both;
+}
+
+.chart-plot {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+@media (min-width: 768px) {
+  .chart-plot {
+    height: 300px;
+  }
 }
 
 /* --- Écran de chargement --- */
@@ -214,7 +242,18 @@ body {
  * texte blanc sur les cartes blanches des dashboards.
  */
 .surface-public {
-  background: var(--scene-bg);
+  background:
+    radial-gradient(
+      70rem 45rem at 78% 12%,
+      rgb(215 25 32 / 0.14),
+      transparent 62%
+    ),
+    radial-gradient(
+      55rem 40rem at 12% 78%,
+      rgb(128 128 140 / 0.12),
+      transparent 65%
+    ),
+    var(--scene-bg);
   color: var(--ink);
   /* Le halo des maquettes peut déborder des colonnes : on rogne sur l'axe
      horizontal pour éviter tout défilement latéral. */
@@ -302,8 +341,8 @@ body {
 
 .site-header-inner {
   width: 100%;
-  height: 4rem;
-  padding-inline: clamp(1.25rem, 4vw, 4rem);
+  min-height: 4rem;
+  padding-inline: clamp(1rem, 4vw, 4rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -313,10 +352,12 @@ body {
 .site-logo {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   color: var(--ink);
   text-decoration: none;
 }
@@ -329,25 +370,29 @@ body {
 }
 
 .site-nav {
-  display: flex;
   align-items: center;
   gap: 1.5rem;
   font-size: 0.9rem;
 }
 
+@media (min-width: 768px) {
+  .site-nav {
+    display: flex;
+  }
+}
+
 .site-nav a {
+  display: inline-flex;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
   color: var(--ink);
   text-decoration: none;
 }
 
 .site-nav a:hover {
   color: var(--color-accent);
-}
-
-@media (max-width: 760px) {
-  .site-nav > a:not(.inline-flex) {
-    display: none;
-  }
 }
 
 /* --- Chapitres --- */
@@ -433,6 +478,12 @@ body {
 
   .chapter-inner--wide > .screen-block {
     justify-self: end;
+  }
+
+  /* Chapitre sécurité : le texte reste dans la colonne de gauche pour
+   * laisser la maquette 3D respirer à droite. */
+  .chapter.security .copy-block {
+    max-width: 30rem;
   }
 }
 
@@ -593,6 +644,9 @@ body {
 }
 
 .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   color: var(--ink);
   font-size: 0.95rem;
   text-decoration: none;

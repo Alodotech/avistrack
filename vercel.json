@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/purge-company-data",
+      "schedule": "17 3 * * *"
+    }
+  ]
+}

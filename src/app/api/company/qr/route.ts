@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getCurrentCompany } from "@/server/auth/guards";
+import { isCompanyAccessBlocked } from "@/server/services/company-access";
 import {
   publicReviewUrl,
   renderQrPng,
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest) {
   }
   if (company.status !== "ACTIVE") {
     return Response.json({ error: "Compte inactif." }, { status: 403 });
+  }
+  if (await isCompanyAccessBlocked(company)) {
+    return Response.json({ error: "Abonnement expiré." }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;

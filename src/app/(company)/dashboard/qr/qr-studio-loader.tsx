@@ -8,13 +8,26 @@ const QrStudio = dynamic(
     ssr: false,
     loading: () => (
       <div className="grid h-[26rem] place-items-center rounded-lg border border-black/15 bg-white sm:h-[30rem] lg:h-[34rem]">
-        <p className="text-sm text-gray-600">Chargement du studio…</p>
+        <p className="text-sm text-gray-600">Génération de l&apos;affiche QR…</p>
       </div>
     ),
   },
 );
 
-/** Point d'entrée client du studio QR (three.js chargé en différé). */
-export function QrStudioLoader({ url }: { url: string }) {
-  return <QrStudio url={url} />;
+export function QrStudioLoader({
+  url,
+  companyName,
+  companyLogoUrl,
+}: {
+  url: string;
+  companyName?: string;
+  companyLogoUrl?: string | null;
+}) {
+  return (
+    <QrStudio
+      url={url}
+      companyName={companyName}
+      companyLogoUrl={companyLogoUrl ?? undefined}
+    />
+  );
 }

@@ -14,6 +14,9 @@ function review(createdAt: string): Review {
     companyId: "company-1",
     rating: 5,
     comment: null,
+    customerFirstName: null,
+    customerLastName: null,
+    customerPhone: null,
     visitDate: "2026-06-01",
     createdAt: new Date(createdAt),
   };

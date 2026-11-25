@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AccountStateScreen } from "@/components/company/account-state-screen";
+import { SubscriptionSummary } from "@/components/billing/subscription-summary";
 import { ReviewFilters } from "@/components/company/review-filters";
 import { ReviewsTable } from "@/components/company/reviews-table";
 import { SatisfactionOverview } from "@/components/company/satisfaction-overview";
@@ -21,20 +22,20 @@ import {
   StatGrid,
 } from "@/components/ui/stat-card";
 import { formatAverage, formatCount, formatPercent } from "@/lib/format";
+import { consecutiveWindows, countWithin, deltaChip } from "@/lib/kpi-delta";
 import { pageCount } from "@/lib/pagination";
 import {
   parseReviewQuery,
-  periodStart,
   reviewQueryToHref,
   REVIEWS_PAGE_SIZE,
 } from "@/lib/review-query";
 import { statsFromDistribution } from "@/lib/review-stats";
 import { buildDailyTrend } from "@/lib/review-trend";
 import { requireCompany } from "@/server/auth/guards";
+import { getCompanySubscription } from "@/server/repositories/subscription-repository";
 import {
-  countReviewsForCompanySince,
-  getAllReviewsForCompany,
   getRatingDistributionForCompany,
+  getReviewTimelineForCompany,
 } from "@/server/repositories/review-repository";
 import { listReviewsForDashboard } from "@/server/services/company-reviews";
 
@@ -76,12 +77,16 @@ async function DashboardContent({
   await connection();
   const query = parseReviewQuery(await searchParams);
   const now = new Date();
-  const [distribution, reviews, recentCount, allReviews] = await Promise.all([
+  // La chronologie couvre les 30 jours de tendance et les 30 jours précédents
+  // de comparaison, sans jamais charger l'historique complet des avis.
+  const [distribution, reviews, timeline, storedSubscription] = await Promise.all([
     getRatingDistributionForCompany(company.id),
     listReviewsForDashboard(company, query),
-    countReviewsForCompanySince(company.id, periodStart(30, now)),
-    getAllReviewsForCompany(company.id),
+    getReviewTimelineForCompany(company.id, 90, now),
+    getCompanySubscription(company.id),
   ]);
+  if (!storedSubscription) redirect("/onboarding");
+  const subscription = storedSubscription;
 
   const lastPage = pageCount(reviews.total, REVIEWS_PAGE_SIZE);
   if (query.page > lastPage) {
@@ -89,12 +94,19 @@ async function DashboardContent({
   }
 
   const stats = statsFromDistribution(distribution);
-  const trend = buildDailyTrend(allReviews, 30, now);
+  const trend = buildDailyTrend(timeline, 30, now);
+  // Le même jeu d'avis sert à mesurer la période courante et la précédente.
+  const windows = consecutiveWindows(now, 30);
+  const reviewDates = timeline.map((review) => review.createdAt);
+  const recentCount = countWithin(reviewDates, windows.current);
+  const previousRecentCount = countWithin(reviewDates, windows.previous);
   const isFiltered = Boolean(query.rating || query.periodDays);
   const satisfied = distribution[4] + distribution[5];
 
   return (
     <>
+      <SubscriptionSummary subscription={subscription} now={now} />
+
       <StatGrid>
         <StatCard
           label={STAT_LABELS.average}
@@ -122,6 +134,11 @@ async function DashboardContent({
           info="Les avis déposés au cours des 30 derniers jours."
           value={formatCount(recentCount)}
           hint="Déposés ces 30 derniers jours"
+          delta={deltaChip(
+            recentCount,
+            previousRecentCount,
+            "Avis des 30 derniers jours, comparés aux 30 jours précédents",
+          )}
           icon={<TrendIcon />}
         />
         <StatCard

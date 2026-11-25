@@ -1,10 +1,6 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import qrcode from "qrcode-generator";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 
 const ACCENT = 0xd71920;
 const SHELL = 0x111113;
@@ -22,6 +18,10 @@ const CAMERA_KEYS: Keyframe[] = [
   [-4.2, 5.2, -30.5, 1.9, 0.1, -35.5, 50],
   [-5.6, 7.2, 4.8, 2.1, 0.2, -30, 64],
 ];
+
+// Décalage caméra propre à chaque chapitre : il cadre la maquette dans la
+// colonne de droite sur desktop, sans jamais mordre sur le texte.
+const CAMERA_SHIFT: number[] = [2.2, 2.2, 0.6, 0, -0.2, 0];
 
 // Brume par chapitre : le plan final se déploie et doit montrer les trois
 // écrans (QR, téléphone, tableau) jusqu'au mur du fond, sans les noyer.
@@ -127,37 +127,49 @@ function roundRectPath(
 
 type Cleanup = () => void;
 
-/**
- * Scène WebGL fixe derrière le contenu : la caméra suit les 6 chapitres au
- * défilement (plaque QR + faisceau de scan, téléphone, tableau de bord,
- * isolation A/B). Chargée en différé, rendue aux événements uniquement.
- */
-export function Scene3D() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+/** Monte la scène WebGL sur un canvas déjà présent dans le DOM. */
+export function mountScene(canvas: HTMLCanvasElement, root: HTMLElement): Cleanup {
+  if (!document.getElementById("hero")) return () => undefined;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const root = document.documentElement;
-    if (!canvas || !document.getElementById("hero")) return;
+  // Sous 1024 px, la caméra ne peut pas garder les maquettes hors du texte :
+  // on rend les maquettes HTML à la place de la scène.
+  const sceneAllowed = window.matchMedia("(min-width: 1024px)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+  let cleanup: Cleanup | undefined;
+  let scheduled = 0;
+  let cancelled = false;
 
-    let cleanup: Cleanup | undefined;
+  const stop = () => {
+    window.clearTimeout(scheduled);
+    cleanup?.();
+    cleanup = undefined;
+  };
 
-    const scheduled = window.setTimeout(() => {
+  const sync = () => {
+    if (!sceneAllowed.matches) {
+      stop();
+      return;
+    }
+    if (cleanup || scheduled) return;
+    scheduled = window.setTimeout(() => {
+      scheduled = 0;
       void initScene(canvas, root, reducedMotion, prefersDark).then((done) => {
-        cleanup = done;
+        if (cancelled || !sceneAllowed.matches) done();
+        else cleanup = done;
       });
     }, 40);
+  };
 
-    return () => {
-      window.clearTimeout(scheduled);
-      cleanup?.();
-    };
-  }, []);
+  sync();
+  sceneAllowed.addEventListener("change", sync);
 
-  return <canvas ref={canvasRef} aria-hidden className="scene-canvas" />;
+  return () => {
+    cancelled = true;
+    sceneAllowed.removeEventListener("change", sync);
+    stop();
+  };
 }
 
 async function initScene(
@@ -176,6 +188,7 @@ async function initScene(
   const colors = getColors();
 
   let renderer: THREE.WebGLRenderer;
+  let queueRender = () => {};
   try {
     renderer = new THREE.WebGLRenderer({
       canvas,
@@ -194,7 +207,7 @@ async function initScene(
   // colonne texte. Sous 1024 px, l'affichage est mono-colonne et les écrans
   // produits sont rendus en HTML (lisibles et nets) : la scène reste centrée.
   const isSceneWide = window.innerWidth >= 1024;
-  const screenShift = isSceneWide ? 1.8 : 0;
+  const screenShift = isSceneWide ? 3.6 : 0;
   const maxPixelRatio = isSceneWide ? 1.7 : 1.35;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -203,12 +216,12 @@ async function initScene(
   renderer.toneMappingExposure = 1.05;
   if (isSceneWide) {
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
   }
 
-  // Les textures 3D (QR, formulaire, dashboard) utilisent la vraie Inter :
-  // garantir qu'elle est rastérisée avant de dessiner les canvas.
-  if (document.fonts?.ready) await document.fonts.ready;
+  // Les textures utilisent la police disponible ; un rendu est reprogrammé
+  // quand Inter finit de charger, sans bloquer l'apparition de la scène.
+  if (document.fonts?.ready) void document.fonts.ready.then(() => queueRender());
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(colors.bg);
@@ -220,7 +233,7 @@ async function initScene(
   const hdriUrl = "/assets/landing/studio_small_09_1k.hdr";
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  new RGBELoader()
+  new HDRLoader()
     .loadAsync(hdriUrl)
     .then((equirectangular) => {
       scene.environment = pmrem.fromEquirectangular(equirectangular).texture;
@@ -276,14 +289,25 @@ async function initScene(
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, 512, 670);
 
-    // Marque.
-    ctx.fillStyle = "#d71920";
-    roundRectPath(ctx, 44, 38, 22, 22, 7);
-    ctx.fill();
+    // Marque : logo officiel AvisTrack transparent + nom agrandi.
+    await new Promise<void>((resolve) => {
+      const logoImg = new window.Image();
+      logoImg.onload = () => {
+        ctx.drawImage(logoImg, 44, 28, 34, 34);
+        resolve();
+      };
+      logoImg.onerror = () => {
+        ctx.fillStyle = "#d71920";
+        roundRectPath(ctx, 44, 34, 24, 24, 7);
+        ctx.fill();
+        resolve();
+      };
+      logoImg.src = "/assets/logoavistrack.png";
+    });
     ctx.fillStyle = "#0a0a0a";
-    ctx.font = "700 22px Inter, Arial, sans-serif";
+    ctx.font = "700 26px Inter, Arial, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("AvisTrack", 78, 55);
+    ctx.fillText("AvisTrack", 88, 54);
 
     // Accroche.
     ctx.textAlign = "center";
@@ -295,76 +319,42 @@ async function initScene(
     ctx.fillText("Scannez le QR code et notez", 256, 160);
     ctx.fillText("votre visite en 30 secondes.", 256, 184);
 
-    // Encart du code.
+    // QR d'illustration : le visuel ne pointe pas vers un faux commerce.
     ctx.fillStyle = "#f4f4f4";
     roundRectPath(ctx, 44, 210, 424, 354, 18);
     ctx.fill();
-
-    // QR code réel : l'image de marque fournie, repli sur un QR généré.
     const qrSize = 314;
     const qrX = 256 - qrSize / 2;
     const qrY = 210 + (354 - qrSize) / 2;
+    ctx.fillStyle = "#ffffff";
+    roundRectPath(ctx, qrX, qrY, qrSize, qrSize, 18);
+    ctx.fill();
+    ctx.strokeStyle = "#d9d9d9";
+    ctx.lineWidth = 2;
+    ctx.stroke();
     await new Promise<void>((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = qrSize / Math.max(1, img.width, img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        ctx.drawImage(img, qrX + (qrSize - w) / 2, qrY + (qrSize - h) / 2, w, h);
+      const qrImage = new window.Image();
+      qrImage.onload = () => {
+        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
         resolve();
       };
-      img.onerror = () => {
-        try {
-          const code = qrcode(0, "M");
-          code.addData("https://avistrack.fr/avis/demo-avistrack");
-          code.make();
-          const count = code.getModuleCount();
-          const cell = qrSize / count;
-          for (let row = 0; row < count; row += 1) {
-            for (let col = 0; col < count; col += 1) {
-              if (!code.isDark(row, col)) continue;
-              ctx.fillStyle = "#0a0a0a";
-              ctx.fillRect(
-                Math.round(qrX + col * cell),
-                Math.round(qrY + row * cell),
-                Math.ceil(cell),
-                Math.ceil(cell),
-              );
-            }
-          }
-        } catch {
-          ctx.fillStyle = "#101012";
-          for (let row = 0; row < 27; row += 1) {
-            for (let col = 0; col < 27; col += 1) {
-              if (((row * 11 + col * 7 + row * col) % 5) < 2) {
-                ctx.fillRect(qrX + col * 12, qrY + row * 12, 10, 10);
-              }
-            }
-          }
-        }
+      qrImage.onerror = () => {
+        console.error("Impossible de charger l'illustration QR AvisTrack.");
         resolve();
       };
-      img.src = "/assets/landing/qr-code-avistrack.png";
+      qrImage.src = "/assets/landing/qr-code-preview.png";
     });
-
-    const logoImg = new Image();
-    logoImg.crossOrigin = "anonymous";
-    logoImg.onload = () => {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(40, 34, 32, 28);
-      ctx.drawImage(logoImg, 42, 36, 26, 20);
-      boardTexture.needsUpdate = true;
-      queueRender();
-    };
-    logoImg.src = "/assets/logo.png";
 
     // Commerce + réassurance.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 24px Inter, Arial, sans-serif";
-    ctx.fillText("Pharmacie du Centre", 256, 612);
+    ctx.fillText("Votre commerce", 256, 612);
     ctx.fillStyle = "#555555";
     ctx.font = "400 16px Inter, Arial, sans-serif";
     ctx.fillText("Sans compte · sans application", 256, 644);
+    ctx.fillStyle = "#777777";
+    ctx.font = "400 11px Inter, Arial, sans-serif";
+    ctx.fillText("Illustration non reliée à un commerce", 256, 662);
   }
   const boardTexture = new THREE.CanvasTexture(board);
   boardTexture.colorSpace = THREE.SRGBColorSpace;
@@ -383,13 +373,13 @@ async function initScene(
     new THREE.PlaneGeometry(3.25, 0.035),
     new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.95, depthWrite: false }),
   );
-  scanBeam.position.set(0, 0.45, 0.205);
+  scanBeam.position.set(0, -0.55, 0.205);
   plaque.add(scanBeam);
   const scanGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(3.25, 0.48),
     new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.08, depthWrite: false }),
   );
-  scanGlow.position.set(0, 0.45, 0.2);
+  scanGlow.position.set(0, -0.55, 0.2);
   plaque.add(scanGlow);
 
   // --- Smartphone posé sur un socle, chassis métal, vrai écran ---
@@ -476,16 +466,16 @@ async function initScene(
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 24px Inter, Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("P", 67, 141);
+    ctx.fillText("V", 67, 141);
     ctx.textAlign = "left";
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 27px Inter, Arial, sans-serif";
-    ctx.fillText("Pharmacie du Centre", 106, 132);
+    ctx.fillText("Votre commerce", 106, 132);
     ctx.fillStyle = "#555555";
     ctx.font = "500 16px Inter, Arial, sans-serif";
     ctx.fillText("Notez votre visite", 106, 156);
 
-    // Titre + note sélectionnée.
+    // Étoiles rouges illustratives, sans note client réelle.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 34px Inter, Arial, sans-serif";
     ctx.fillText("Comment s'est passée", 44, 232);
@@ -495,7 +485,7 @@ async function initScene(
     }
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 22px Inter, Arial, sans-serif";
-    ctx.fillText("Très bien", 316, 338);
+    ctx.fillText("Votre note", 316, 338);
 
     // Date de visite.
     ctx.fillStyle = "#555555";
@@ -584,11 +574,19 @@ async function initScene(
     ctx.fillStyle = "#555555";
     ctx.font = "400 15px Inter, Arial, sans-serif";
     ctx.fillText("Votre QR code, la satisfaction de vos clients et leurs avis.", 46, 86);
+    ctx.fillStyle = "#fce8e8";
+    roundRectPath(ctx, 886, 34, 96, 28, 14);
+    ctx.fill();
+    ctx.fillStyle = "#d71920";
+    ctx.textAlign = "center";
+    ctx.font = "700 12px Inter, Arial, sans-serif";
+    ctx.fillText("EXEMPLE", 934, 52);
+    ctx.textAlign = "left";
 
-    // Quatre cartes d'indicateurs : mêmes libellés et valeurs que l'app.
+    // Statistiques cohérentes, explicitement signalées comme exemples.
     const statCards = [
-      { label: "NOTE MOYENNE", value: "4,6", suffix: " / 5", hint: "Sur l'ensemble de vos avis" },
-      { label: "AVIS REÇUS", value: "128", suffix: "", hint: "Depuis la création du compte" },
+      { label: "NOTE MOYENNE", value: "4,6", suffix: " / 5", hint: "Sur l'ensemble des avis" },
+      { label: "AVIS AU TOTAL", value: "128", suffix: "", hint: "Depuis la création du compte" },
       { label: "AVIS SUR 30 JOURS", value: "42", suffix: "", hint: "Déposés ces 30 derniers jours" },
       { label: "CLIENTS SATISFAITS", value: "97 %", suffix: "", hint: "Part des avis à 4 ou 5 étoiles" },
     ] as const;
@@ -618,71 +616,83 @@ async function initScene(
       ctx.fillText(card.hint, x + 18, cardTop + 112);
     });
 
-    // Répartition des notes (colonne gauche), comme RatingHistogram.
+    // Répartition illustrative cohérente avec les statistiques affichées.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 20px Inter, Arial, sans-serif";
     ctx.fillText("Répartition des notes", 46, 292);
     ctx.fillStyle = "#555555";
     ctx.font = "400 14px Inter, Arial, sans-serif";
-    ctx.fillText("4,6 / 5 · 128 avis", 46, 314);
-
-    // Cohérent avec la moyenne 4,6 / 5 (128 avis, 97 % à 4-5 étoiles).
-    const counts = [1, 1, 2, 42, 82];
-    const maxCount = 82;
-    const barLeft = 108;
-    const barWidth = 296;
-    const barTop = 344;
-    const barStep = 42;
-    counts.forEach((count, i) => {
-      const y = barTop + i * barStep;
+    ctx.fillText("4,6 / 5 · 128 avis (exemple)", 46, 314);
+    ctx.fillStyle = "#f4f4f4";
+    roundRectPath(ctx, 46, 344, 430, 196, 14);
+    ctx.fill();
+    const distributionCounts = [1, 1, 2, 42, 82] as const;
+    const maxRatingCount = 82;
+    distributionCounts.forEach((count, index) => {
+      const y = 350 + index * 35;
       ctx.fillStyle = "#0a0a0a";
-      ctx.font = "600 18px Inter, Arial, sans-serif";
-      ctx.fillText(String(i + 1), 46, y + 15);
-      drawStar(ctx, 74, y + 9, 10, "#d71920");
-      ctx.fillStyle = "#f4f4f4";
-      roundRectPath(ctx, barLeft, y, barWidth, 18, 9);
+      ctx.font = "600 16px Inter, Arial, sans-serif";
+      ctx.fillText(String(index + 1), 46, y + 14);
+      drawStar(ctx, 73, y + 8, 9, "#d71920");
+      ctx.fillStyle = "#ffffff";
+      roundRectPath(ctx, 108, y, 296, 14, 7);
       ctx.fill();
-      const filled = Math.max(22, (count / maxCount) * barWidth);
       ctx.fillStyle = "#d71920";
-      roundRectPath(ctx, barLeft, y, filled, 18, 9);
+      roundRectPath(
+        ctx,
+        108,
+        y,
+        Math.max(22, (count / maxRatingCount) * 296),
+        14,
+        7,
+      );
       ctx.fill();
       ctx.fillStyle = "#555555";
-      ctx.font = "500 15px Inter, Arial, sans-serif";
-      ctx.fillText(String(count), barLeft + barWidth + 14, y + 15);
+      ctx.font = "500 13px Inter, Arial, sans-serif";
+      ctx.fillText(String(count), 420, y + 13);
     });
 
-    // Derniers avis (colonne droite).
+    // Avis fictifs, avec leur statut d'exemple indiqué dans l'en-tête.
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "600 20px Inter, Arial, sans-serif";
     ctx.fillText("Derniers avis", 532, 292);
     ctx.fillStyle = "#555555";
     ctx.font = "400 14px Inter, Arial, sans-serif";
-    ctx.fillText("Du plus récent au plus ancien", 532, 314);
-
+    ctx.fillText("Exemples de retours clients", 532, 314);
+    ctx.fillStyle = "#f4f4f4";
+    roundRectPath(ctx, 532, 344, 452, 196, 14);
+    ctx.fill();
     const recentReviews = [
       { rating: 5, date: "08/10/2026", comment: "Accueil très professionnel, je recommande." },
       { rating: 5, date: "06/10/2026", comment: "Conseils clairs et précis, merci." },
       { rating: 4, date: "05/10/2026", comment: "Rapide et efficace." },
       { rating: 2, date: "03/10/2026", comment: "Beaucoup d'attente en caisse." },
     ] as const;
-    recentReviews.forEach((review, i) => {
-      const y = 344 + i * 54;
+    recentReviews.forEach((review, index) => {
+      const y = 350 + index * 44;
       for (let star = 0; star < 5; star += 1) {
-        drawStar(ctx, 540 + star * 25, y + 8, 9, star < review.rating ? "#d71920" : "#d7d9dc");
+        drawStar(
+          ctx,
+          540 + star * 24,
+          y + 8,
+          8,
+          star < review.rating ? "#d71920" : "#d7d9dc",
+        );
       }
       ctx.textAlign = "right";
       ctx.fillStyle = "#555555";
-      ctx.font = "500 13px Inter, Arial, sans-serif";
-      ctx.fillText(review.date, 984, y + 13);
+      ctx.font = "500 11px Inter, Arial, sans-serif";
+      ctx.fillText(review.date, 984, y + 12);
       ctx.textAlign = "left";
       ctx.fillStyle = "#0a0a0a";
-      ctx.font = "400 16px Inter, Arial, sans-serif";
-      ctx.fillText(review.comment, 532, y + 38);
-      if (i < recentReviews.length - 1) {
+      ctx.font = "400 14px Inter, Arial, sans-serif";
+      ctx.fillText(review.comment, 532, y + 34);
+      if (index < recentReviews.length - 1) {
         ctx.fillStyle = "#e6e6e6";
-        ctx.fillRect(532, y + 46, 452, 1);
+        ctx.fillRect(532, y + 40, 452, 1);
       }
     });
+    ctx.textAlign = "left";
   }
   const dashboardTexture = new THREE.CanvasTexture(dashboardCanvas);
   dashboardTexture.colorSpace = THREE.SRGBColorSpace;
@@ -793,7 +803,7 @@ async function initScene(
   };
 
   let renderScheduled = false;
-  const queueRender = () => {
+  queueRender = () => {
     if (renderScheduled) return;
     renderScheduled = true;
     window.requestAnimationFrame((frameTime) => {
@@ -831,15 +841,18 @@ async function initScene(
     const portrait = aspect < 1 ? clamp((1 - aspect) / 0.6, 0, 1) : 0;
     const lift = portrait * 2.6;
 
-    // La caméra suit le décalage complet des écrans : le cadrage de chaque
-    // chapitre reste identique à celui d'origine, simplement translaté.
+    // La caméra ne suit que partiellement le décalage des écrans : ils
+    // restent dans la colonne de droite et ne passent jamais sous le texte.
+    const frameShift =
+      (CAMERA_SHIFT[segment] ?? 0) +
+      ((CAMERA_SHIFT[segment + 1] ?? 0) - (CAMERA_SHIFT[segment] ?? 0)) * local;
     camera.position.set(
-      interpolate(0) + screenShift + easedPointerX * 0.16,
+      interpolate(0) + frameShift + easedPointerX * 0.16,
       interpolate(1) - easedPointerY * 0.12 + lift,
       interpolate(2),
     );
     camera.lookAt(
-      interpolate(3) + screenShift + easedPointerX * 0.07,
+      interpolate(3) + frameShift + easedPointerX * 0.07,
       interpolate(4) + lift,
       interpolate(5),
     );

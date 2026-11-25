@@ -1,25 +1,15 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DEV_ADMIN_COOKIE } from "@/server/auth/session";
-import { findAdminByEmail } from "@/server/repositories/admin-repository";
+import { getCurrentAdmin } from "@/server/auth/guards";
+import { createClient } from "@/utils/supabase/server";
 
 export type AdminLoginState = { status: "idle" | "error"; message?: string };
-
-const cookieOptions = { httpOnly: true, sameSite: "lax", path: "/" } as const;
 
 export async function signInAdmin(
   _previous: AdminLoginState,
   formData: FormData,
 ): Promise<AdminLoginState> {
-  if (process.env.NODE_ENV === "production") {
-    return {
-      status: "error",
-      message: "La connexion sera disponible prochainement.",
-    };
-  }
-
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) {
@@ -29,14 +19,24 @@ export async function signInAdmin(
     };
   }
 
-  const admin = await findAdminByEmail(email);
-  if (!admin) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
     return {
       status: "error",
-      message: "Aucun administrateur ne correspond à cette adresse e-mail.",
+      message: "E-mail ou mot de passe incorrect.",
     };
   }
 
-  (await cookies()).set(DEV_ADMIN_COOKIE, admin.id, cookieOptions);
+  // Réservé aux comptes listés dans la table `admins` (T30).
+  const admin = await getCurrentAdmin();
+  if (!admin) {
+    await supabase.auth.signOut();
+    return {
+      status: "error",
+      message: "Ce compte n'a pas les droits d'administration.",
+    };
+  }
+
   redirect("/admin");
 }

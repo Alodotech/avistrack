@@ -6,13 +6,13 @@ import { requireCompany } from "@/server/auth/guards";
 import { getReviewFormConfig } from "@/server/repositories/form-repository";
 import { FormStudio } from "./form-studio";
 
-export const metadata: Metadata = { title: "Form studio" };
+export const metadata: Metadata = { title: "Studio du formulaire" };
 
 export default function FormStudioPage() {
   return (
     <>
       <PageHeader
-        title="Form studio"
+        title="Studio du formulaire"
         description="Personnalisez le formulaire que vos clients remplissent après avoir scanné votre QR code."
       />
       <Suspense
