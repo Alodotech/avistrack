@@ -15,6 +15,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mentions légales — AvisTrack",
+    description: "Informations légales du service AvisTrack.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function LegalNoticePage() {

@@ -9,21 +9,15 @@ import { siteUrlOrFallback } from "@/lib/site-url";
  * rien au référencement et n'ont pas vocation à être explorées.
  */
 const PUBLIC_ROUTES = [
-  { path: "", priority: 1, changeFrequency: "weekly" as const },
-  { path: "/tarifs", priority: 0.8, changeFrequency: "monthly" as const },
-  { path: "/conditions-generales", priority: 0.3, changeFrequency: "yearly" as const },
-  { path: "/mentions-legales", priority: 0.3, changeFrequency: "yearly" as const },
-  { path: "/confidentialite", priority: 0.3, changeFrequency: "yearly" as const },
+  "",
+  "/tarifs",
+  "/conditions-generales",
+  "/mentions-legales",
+  "/confidentialite",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteUrlOrFallback();
-  const lastModified = new Date();
 
-  return PUBLIC_ROUTES.map((route) => ({
-    url: `${base}${route.path}`,
-    lastModified,
-    changeFrequency: route.changeFrequency,
-    priority: route.priority,
-  }));
+  return PUBLIC_ROUTES.map((path) => ({ url: `${base}${path}` }));
 }

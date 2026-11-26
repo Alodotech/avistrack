@@ -21,6 +21,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tarifs AvisTrack",
+    description:
+      "Une offre Pro à 3 500 FCFA par mois ou 35 000 FCFA par an.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function PricingPage() {

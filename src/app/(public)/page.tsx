@@ -10,14 +10,14 @@ import {
 } from "@/components/landing/product-screens";
 
 export const metadata: Metadata = {
-  title: "Avis clients par QR code pour commerces",
+  title: "Collecter des avis clients par QR code",
   description:
-    "Collectez les avis clients de votre commerce avec un QR code, un formulaire mobile et un tableau de bord. Découvrez AvisTrack.",
+    "Au Bénin, collectez les avis de vos clients par QR code. Formulaire mobile sans application, tableau de bord privé et offre Pro dès 3 500 FCFA/mois.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "AvisTrack — Avis clients par QR code pour commerces",
+    title: "Collecter des avis clients par QR code | AvisTrack",
     description:
-      "Collectez les avis clients de votre commerce avec un QR code, un formulaire mobile et un tableau de bord.",
+      "Au Bénin, collectez les avis de vos clients par QR code. Formulaire mobile sans application, tableau de bord privé et offre Pro dès 3 500 FCFA/mois.",
     url: "/",
     locale: "fr_FR",
     type: "website",
@@ -28,6 +28,13 @@ export const metadata: Metadata = {
         alt: "AvisTrack — Collectez et analysez les avis clients par QR code",
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Collecter des avis clients par QR code | AvisTrack",
+    description:
+      "Au Bénin, collectez les avis de vos clients par QR code. Formulaire mobile sans application, tableau de bord privé et offre Pro dès 3 500 FCFA/mois.",
+    images: ["/opengraph-image"],
   },
 };
 
@@ -179,6 +186,80 @@ export default function LandingPage() {
       </section>
 
       <Pricing />
+
+      <section
+        id="faq-avis"
+        aria-labelledby="faq-avis-title"
+        className="px-6 py-20 text-black sm:py-24"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="text-center">
+            <p className="text-xs font-bold tracking-[0.22em] text-red uppercase">
+              Questions fréquentes
+            </p>
+            <h2
+              id="faq-avis-title"
+              className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl"
+            >
+              Les avis clients par QR code
+            </h2>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3">
+            <details className="rounded-xl border border-black/10 bg-white p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-black">
+                Comment recueillir un avis client avec un QR code ?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Créez un QR code pour votre établissement et affichez-le dans
+                votre commerce. Votre client le scanne avec son téléphone,
+                ouvre le formulaire web et envoie son avis. Vous le retrouvez
+                ensuite dans votre tableau de bord AvisTrack.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-black/10 bg-white p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-black">
+                Le client doit-il installer une application ou créer un compte ?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Non. Le QR code ouvre le formulaire dans le navigateur du
+                téléphone. Le client peut envoyer son avis sans installer
+                d&apos;application ni créer de compte.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-black/10 bg-white p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-black">
+                Les avis sont-ils publiés automatiquement sur Google ?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Non. AvisTrack recueille les retours dans le tableau de bord de
+                votre entreprise et ne les publie pas automatiquement sur
+                Google ou d&apos;autres plateformes d&apos;avis.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-black/10 bg-white p-5">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-black">
+                Les autres commerces peuvent-ils consulter mes avis ?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Non. Les avis sont associés à l&apos;entreprise concernée et ne
+                sont pas partagés avec les autres commerces utilisant
+                AvisTrack. Consultez les{" "}
+                <a
+                  href="/tarifs"
+                  className="font-semibold text-black underline underline-offset-2"
+                >
+                  offres et tarifs
+                </a>{" "}
+                pour découvrir le service.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
 
       {/* 05 — CTA final */}
       <section

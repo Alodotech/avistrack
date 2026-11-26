@@ -17,6 +17,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Conditions générales — AvisTrack",
+    description:
+      "Conditions d'utilisation et d'abonnement au service AvisTrack.",
+    images: ["/opengraph-image"],
+  },
 };
 
 const SECTION_CLASS = "flex flex-col gap-2";
