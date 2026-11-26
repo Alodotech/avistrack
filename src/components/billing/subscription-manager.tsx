@@ -20,6 +20,7 @@ type Props = {
   countryCode: string;
   companyPhone: string;
   testMode: boolean;
+  simulationEnabled?: boolean;
 };
 
 export function SubscriptionManager({
@@ -33,6 +34,7 @@ export function SubscriptionManager({
   countryCode,
   companyPhone,
   testMode,
+  simulationEnabled = false,
 }: Props) {
   const router = useRouter();
   const [cancelPending, startCancel] = useTransition();
@@ -80,6 +82,7 @@ export function SubscriptionManager({
           companyPhone={companyPhone}
           canPay={canPay}
           testMode={testMode}
+          simulationEnabled={simulationEnabled}
           initialPeriod={period === "annual" ? "annual" : "monthly"}
         />
 

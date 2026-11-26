@@ -64,7 +64,7 @@ export function ProfileForm({
         >
           {FEEXPAY_COUNTRIES.map((option) => (
             <option key={option.code} value={option.code}>
-              {option.name}
+              {option.flag} {option.name}
             </option>
           ))}
         </select>
@@ -82,8 +82,11 @@ export function ProfileForm({
           name="phone"
           type="tel"
           defaultValue={phone}
+          maxLength={20}
           required
           autoComplete="tel"
+          placeholder={country.phoneFormat}
+          title={`Format attendu : ${country.phoneFormat}`}
           aria-invalid={Boolean(state.errors?.phone)}
           aria-describedby={
             state.errors?.phone ? "profile-phone-error" : "profile-phone-hint"
@@ -96,7 +99,8 @@ export function ProfileForm({
           </p>
         ) : (
           <p id="profile-phone-hint" className="text-xs text-gray-600">
-            Format international avec l&apos;indicatif {`+${country.callingCode}`}.
+            Format attendu : {country.phoneFormat} (
+            {country.nationalNumberLength} chiffres après l&apos;indicatif).
           </p>
         )}
       </div>

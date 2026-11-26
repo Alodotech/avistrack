@@ -2,6 +2,12 @@
 
 import { useActionState, useRef, useState } from "react";
 import { CalendarIcon, StarIcon } from "@/components/ui/icons";
+import {
+  FEEXPAY_COUNTRIES,
+  getFeexPayCountry,
+  isFeexPayCountry,
+  type FeexPayCountryCode,
+} from "@/lib/feexpay";
 import { QUESTION_TYPE_LABELS } from "@/lib/review-form";
 import type { ReviewFormConfig } from "@/server/domain";
 import {
@@ -91,7 +97,12 @@ export function ReviewForm({
   const [reviewerType, setReviewerType] = useState<"anonymous" | "identified">(
     config.allowAnonymous === false ? "identified" : "anonymous",
   );
+  const [reviewerCountry, setReviewerCountry] = useState<FeexPayCountryCode>(
+    FEEXPAY_COUNTRIES[0].code,
+  );
   const ratingRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const reviewerCountryDetails =
+    getFeexPayCountry(reviewerCountry) ?? FEEXPAY_COUNTRIES[0];
 
   if (mode === "review" && reviewState.status === "submitted") {
     return (
@@ -289,7 +300,9 @@ export function ReviewForm({
       </header>
 
       <fieldset className="flex flex-col gap-3 rounded-xl border border-black/10 p-4">
-        <legend className="px-1 text-sm font-semibold">Votre identité</legend>
+        <legend className="px-1 text-sm font-semibold">
+          Comment souhaitez-vous répondre ?
+        </legend>
         <div className="flex flex-col gap-2">
           {config.allowAnonymous !== false ? (
             <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -301,7 +314,7 @@ export function ReviewForm({
                 onChange={() => setReviewerType("anonymous")}
                 className="accent-accent"
               />
-              Rester anonyme
+              Répondre anonymement
             </label>
           ) : null}
           <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -313,9 +326,13 @@ export function ReviewForm({
               onChange={() => setReviewerType("identified")}
               className="accent-accent"
             />
-            M&apos;identifier pour être recontacté
+            M&apos;identifier auprès de l&apos;entreprise
           </label>
         </div>
+        <p className="text-xs leading-5 text-gray-600">
+          Seule l&apos;entreprise pourra consulter votre note et votre message.
+          Vos coordonnées ne seront demandées que si vous choisissez de vous identifier.
+        </p>
 
         {reviewerType === "identified" ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -357,25 +374,81 @@ export function ReviewForm({
                 </p>
               ) : null}
             </div>
-            <div className="flex flex-col gap-1 sm:col-span-2">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="reviewer-country" className="text-xs font-semibold">
+                Pays du téléphone
+                <RequiredMark />
+              </label>
+              <select
+                id="reviewer-country"
+                name="reviewerCountry"
+                value={reviewerCountry}
+                onChange={(event) => {
+                  const countryCode = event.target.value;
+                  if (isFeexPayCountry(countryCode)) {
+                    setReviewerCountry(countryCode);
+                  }
+                }}
+                required
+                aria-invalid={Boolean(reviewState.errors?.reviewerPhone)}
+                className={inputClass}
+              >
+                {FEEXPAY_COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.flag} {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
               <label htmlFor="reviewer-phone" className="text-xs font-semibold">
-                Téléphone (facultatif)
+                Téléphone
+                <RequiredMark />
               </label>
               <input
                 id="reviewer-phone"
                 name="reviewerPhone"
                 type="tel"
-                autoComplete="tel"
-                placeholder="+22901970000"
+                inputMode="tel"
+                autoComplete="tel-national"
+                placeholder={reviewerCountryDetails.phoneFormat}
+                aria-describedby="reviewer-phone-hint"
+                required
                 aria-invalid={Boolean(reviewState.errors?.reviewerPhone)}
                 className={inputClass}
               />
+              <p id="reviewer-phone-hint" className="text-xs text-gray-600">
+                Format attendu : {reviewerCountryDetails.phoneFormat}
+              </p>
               {reviewState.errors?.reviewerPhone ? (
                 <p className="text-sm text-red">
                   {reviewState.errors.reviewerPhone}
                 </p>
               ) : null}
             </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label htmlFor="reviewer-email" className="text-xs font-semibold">
+                Adresse e-mail
+                <RequiredMark />
+              </label>
+              <input
+                id="reviewer-email"
+                name="reviewerEmail"
+                type="email"
+                autoComplete="email"
+                required
+                aria-invalid={Boolean(reviewState.errors?.reviewerEmail)}
+                className={inputClass}
+              />
+              {reviewState.errors?.reviewerEmail ? (
+                <p className="text-sm text-red">
+                  {reviewState.errors.reviewerEmail}
+                </p>
+              ) : null}
+            </div>
+            <p className="text-xs leading-5 text-gray-600 sm:col-span-2">
+              Votre nom et vos coordonnées ne seront visibles que par l&apos;entreprise.
+            </p>
           </div>
         ) : null}
       </fieldset>

@@ -29,6 +29,7 @@ export type Review = {
   customerFirstName: string | null;
   customerLastName: string | null;
   customerPhone: string | null;
+  customerEmail: string | null;
   /** Date de visite au format ISO `AAAA-MM-JJ`. */
   visitDate: string;
   reviewerType?: "anonymous" | "identified";

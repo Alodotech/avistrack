@@ -11,6 +11,7 @@ import {
   getCompanySubscription,
   listPayments,
 } from "@/server/repositories/subscription-repository";
+import { isLocalPaymentSimulationEnabled } from "@/lib/payment-simulation";
 
 export const metadata: Metadata = { title: "Abonnement" };
 
@@ -73,6 +74,7 @@ async function SubscriptionContent() {
           countryCode={company.countryCode}
           companyPhone={company.phone}
           testMode={process.env.FEEXPAY_ENVIRONMENT === "sandbox"}
+          simulationEnabled={isLocalPaymentSimulationEnabled()}
           canPay={Boolean(
             process.env.FEEXPAY_API_KEY &&
               process.env.FEEXPAY_SHOP_ID &&

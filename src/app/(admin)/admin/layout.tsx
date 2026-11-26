@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
-import { AppShell } from "@/components/ui/app-shell";
+import { AppShell, ShellIdentity } from "@/components/ui/app-shell";
 import {
   BuildingIcon,
   CreditCardIcon,
@@ -51,12 +51,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       items={visibleNav}
       identity={
         admin ? (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-white/60">
-              {admin.role === "dirigeant" ? "Dirigeant AvisTrack" : "Administrateur"}
-            </span>
-            <span className="truncate text-sm font-semibold">{admin.email}</span>
-          </div>
+          <ShellIdentity
+            label={
+              admin.role === "dirigeant"
+                ? "Dirigeant AvisTrack"
+                : "Administrateur"
+            }
+            value={admin.email}
+          />
         ) : null
       }
     >

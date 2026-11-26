@@ -11,6 +11,7 @@ import {
   needsCompanyOnboarding,
   needsProfileCompletion,
 } from "@/server/services/company-onboarding";
+import { isLocalPaymentSimulationEnabled } from "@/lib/payment-simulation";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata: Metadata = { title: "Compléter mon compte" };
@@ -55,6 +56,7 @@ export default async function OnboardingPage() {
                 process.env.FEEXPAY_ENVIRONMENT === "live"),
           )}
           testMode={process.env.FEEXPAY_ENVIRONMENT === "sandbox"}
+          simulationEnabled={isLocalPaymentSimulationEnabled()}
           initialStep={
             needsProfileCompletion(state.company) ? "profile" : "plan"
           }

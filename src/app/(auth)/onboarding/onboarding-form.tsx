@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { FeexPayPaymentForm } from "@/components/billing/feexpay-payment-form";
 import { Button } from "@/components/ui/button";
 import { LOGO_REQUIRED } from "@/lib/company-status";
@@ -20,6 +20,7 @@ export function OnboardingForm({
   canPay,
   testMode,
   initialStep = "profile",
+  simulationEnabled = false,
 }: {
   email: string;
   phone: string;
@@ -28,6 +29,7 @@ export function OnboardingForm({
   canPay: boolean;
   testMode: boolean;
   initialStep?: "profile" | "plan";
+  simulationEnabled?: boolean;
 }) {
   const [state, action, pending] = useActionState(
     completeOnboarding,
@@ -35,6 +37,9 @@ export function OnboardingForm({
   );
   const [editingProfile, setEditingProfile] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState(countryCode);
+  const [logoFileName, setLogoFileName] = useState("");
+  const [logoDragging, setLogoDragging] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const country =
     getFeexPayCountry(selectedCountryCode) ?? FEEXPAY_COUNTRIES[0];
   const profileComplete =
@@ -69,7 +74,9 @@ export function OnboardingForm({
         >
           <div className="flex flex-col gap-1">
             <label htmlFor="onboarding-name" className="text-sm font-semibold">
-              Nom de l&apos;entreprise
+              Nom de l&apos;entreprise{" "}
+              <span className="text-red" aria-hidden="true">*</span>
+              <span className="sr-only"> obligatoire</span>
             </label>
             <input
               id="onboarding-name"
@@ -87,7 +94,9 @@ export function OnboardingForm({
 
           <div className="flex flex-col gap-1">
             <label htmlFor="onboarding-country" className="text-sm font-semibold">
-              Pays de l&apos;entreprise
+              Pays de l&apos;entreprise{" "}
+              <span className="text-red" aria-hidden="true">*</span>
+              <span className="sr-only"> obligatoire</span>
             </label>
             <select
               id="onboarding-country"
@@ -100,7 +109,7 @@ export function OnboardingForm({
             >
               {FEEXPAY_COUNTRIES.map((option) => (
                 <option key={option.code} value={option.code}>
-                  {option.name}
+                  {option.flag} {option.name}
                 </option>
               ))}
             </select>
@@ -111,16 +120,20 @@ export function OnboardingForm({
 
           <div className="flex flex-col gap-1">
             <label htmlFor="onboarding-phone" className="text-sm font-semibold">
-              Téléphone professionnel
+              Téléphone professionnel{" "}
+              <span className="text-red" aria-hidden="true">*</span>
+              <span className="sr-only"> obligatoire</span>
             </label>
             <input
               id="onboarding-phone"
               name="phone"
               type="tel"
               defaultValue={phone}
+              maxLength={20}
               required
               autoComplete="tel"
-              placeholder={`+${country.callingCode} …`}
+              placeholder={country.phoneFormat}
+              title={`Format attendu : ${country.phoneFormat}`}
               aria-invalid={Boolean(state.errors?.phone)}
               aria-describedby={
                 state.errors?.phone
@@ -135,26 +148,67 @@ export function OnboardingForm({
               </p>
             ) : (
               <p id="onboarding-phone-hint" className="text-xs text-gray-600">
-                Format international avec l&apos;indicatif {`+${country.callingCode}`}.
+                  Format attendu : {country.phoneFormat} (
+                  {country.nationalNumberLength} chiffres après l&apos;indicatif).
               </p>
             )}
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="onboarding-logo" className="text-sm font-semibold">
-              Logo ({LOGO_REQUIRED ? "obligatoire" : "facultatif"})
+              Logo <span className="font-normal text-gray-600">(facultatif)</span>
             </label>
             <input
+              ref={logoInputRef}
               id="onboarding-logo"
               name="logo"
               type="file"
               accept="image/png,image/jpeg,image/webp"
               required={LOGO_REQUIRED}
-              className="min-h-11 w-full rounded-md border border-black/30 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+              className="sr-only"
+              onChange={(event) => {
+                setLogoFileName(event.target.files?.[0]?.name ?? "");
+              }}
             />
-            <p className="text-xs text-gray-600">
-              PNG, JPG ou WebP, 700 Ko maximum.
-            </p>
+            <label
+              htmlFor="onboarding-logo"
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setLogoDragging(true);
+              }}
+              onDragOver={(event) => event.preventDefault()}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+                  setLogoDragging(false);
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setLogoDragging(false);
+                const file = event.dataTransfer.files?.[0];
+                if (!file || !logoInputRef.current) return;
+                if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return;
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                logoInputRef.current.files = transfer.files;
+                setLogoFileName(file.name);
+              }}
+              className={`flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
+                logoDragging
+                  ? "border-accent bg-accent/5"
+                  : "border-black/20 bg-gray-50 hover:border-accent hover:bg-accent/5"
+              }`}
+            >
+              <span className="inline-flex min-h-9 items-center justify-center rounded-full bg-accent px-4 text-sm font-semibold text-white">
+                {logoFileName ? "Changer le logo" : "Ajouter une image"}
+              </span>
+              <span className="text-sm font-medium text-black">
+                {logoFileName || "Cliquer pour choisir ou déposer une image"}
+              </span>
+              <span className="text-xs text-gray-600">
+                PNG, JPG ou WebP · 700 Ko maximum
+              </span>
+            </label>
             {state.errors?.logo ? (
               <p className="text-sm text-red">{state.errors.logo}</p>
             ) : null}
@@ -162,7 +216,9 @@ export function OnboardingForm({
 
           <div className="flex flex-col gap-1">
             <label htmlFor="onboarding-email" className="text-sm font-semibold">
-              Adresse e-mail de connexion
+              Adresse e-mail de connexion{" "}
+              <span className="text-red" aria-hidden="true">*</span>
+              <span className="sr-only"> obligatoire</span>
             </label>
             <input
               id="onboarding-email"
@@ -170,6 +226,7 @@ export function OnboardingForm({
               type="email"
               value={email}
               readOnly
+              required
               className={`${inputClass} bg-gray-100 text-gray-600`}
             />
           </div>
@@ -265,6 +322,7 @@ export function OnboardingForm({
             companyPhone={phone}
             canPay={canPay}
             testMode={testMode}
+            simulationEnabled={simulationEnabled}
             verifyAfterPayment
             heading="Votre formule"
             description="Paiement sécurisé par FeexPay."

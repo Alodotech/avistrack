@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FeexPayCheckoutButton } from "@/components/billing/feexpay-checkout-button";
 import { Button } from "@/components/ui/button";
+import { simulateLocalPaymentAction } from "@/server/actions/payments";
 import {
   FEEXPAY_PAYMENT_METHODS,
   getFeexPayCountry,
@@ -23,6 +24,7 @@ type Props = {
   verifyAfterPayment?: boolean;
   heading?: string;
   description?: string;
+  simulationEnabled?: boolean;
 };
 
 export function FeexPayPaymentForm({
@@ -34,6 +36,7 @@ export function FeexPayPaymentForm({
   verifyAfterPayment = false,
   heading = "Choisir une formule",
   description = "Paiement sécurisé par FeexPay, en FCFA.",
+  simulationEnabled = false,
 }: Props) {
   const router = useRouter();
   const country = getFeexPayCountry(countryCode);
@@ -50,6 +53,8 @@ export function FeexPayPaymentForm({
   const [cardLastName, setCardLastName] = useState("");
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
+  const [simulationPending, setSimulationPending] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
   const selectedOperator =
     country && isFeexPayOperator(country.code, operator)
       ? operator
@@ -256,15 +261,86 @@ export function FeexPayPaymentForm({
               J&apos;ai payé — vérifier l&apos;activation
             </Button>
           ) : null}
+
+          {simulationEnabled ? (
+            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-black/25 bg-gray-50 p-4">
+              <p className="text-xs font-semibold text-gray-700">
+                Simulation locale — aucun paiement réel
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                disabled={simulationPending}
+                onClick={async () => {
+                  setSimulationError(null);
+                  setSimulationPending(true);
+                  const result = await simulateLocalPaymentAction(selectedPeriod);
+                  setSimulationPending(false);
+                  if (!result.ok) {
+                    setSimulationError(result.message ?? "Simulation impossible.");
+                    return;
+                  }
+                  router.push("/dashboard");
+                  router.refresh();
+                }}
+              >
+                {simulationPending
+                  ? "Activation de la simulation…"
+                  : "Simuler le paiement et ouvrir le dashboard"}
+              </Button>
+              {simulationError ? (
+                <p role="alert" className="text-sm text-red">
+                  {simulationError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </>
       ) : (
-        <div
-          role="alert"
-          className="rounded-lg border border-red/20 bg-red/5 p-4 text-sm text-red"
-        >
-          Le paiement en ligne est temporairement indisponible. Réessayez plus
-          tard ou contactez l&apos;équipe AvisTrack.
-        </div>
+        simulationEnabled ? (
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-black/25 bg-gray-50 p-4">
+            <p className="text-sm text-gray-700">
+              FeexPay n&apos;est pas configuré. Vous pouvez tester localement
+              l&apos;activation du dashboard sans paiement réel.
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              disabled={simulationPending}
+              onClick={async () => {
+                setSimulationError(null);
+                setSimulationPending(true);
+                const result = await simulateLocalPaymentAction(selectedPeriod);
+                setSimulationPending(false);
+                if (!result.ok) {
+                  setSimulationError(result.message ?? "Simulation impossible.");
+                  return;
+                }
+                router.push("/dashboard");
+                router.refresh();
+              }}
+            >
+              {simulationPending
+                ? "Activation de la simulation…"
+                : "Simuler le paiement et ouvrir le dashboard"}
+            </Button>
+            {simulationError ? (
+              <p role="alert" className="text-sm text-red">
+                {simulationError}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div
+            role="alert"
+            className="rounded-lg border border-red/20 bg-red/5 p-4 text-sm text-red"
+          >
+            Le paiement en ligne est temporairement indisponible. Réessayez plus
+            tard ou contactez l&apos;équipe AvisTrack.
+          </div>
+        )
       )}
     </div>
   );

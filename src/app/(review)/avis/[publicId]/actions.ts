@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { hasFilledHoneypot } from "@/lib/honeypot";
 import { sanitizeText } from "@/lib/sanitize";
+import { validateReviewerIdentity } from "@/lib/reviewer-identity";
 import { findPublicCompanyByPublicId } from "@/server/repositories/company-repository";
 import { getPublicReviewFormConfig } from "@/server/repositories/form-repository";
 import { createRemark, createReview } from "@/server/repositories/review-repository";
@@ -97,6 +98,7 @@ export async function submitReview(
   let customerFirstName: string | null = null;
   let customerLastName: string | null = null;
   let customerPhone: string | null = null;
+  let customerEmail: string | null = null;
 
   for (const question of config.questions) {
     const raw = formData.get(question.id);
@@ -150,23 +152,29 @@ export async function submitReview(
   }
 
   const submittedType = String(formData.get("reviewerType") ?? "anonymous");
-  const reviewerType = submittedType === "identified" ? "identified" : "anonymous";
+  if (submittedType !== "anonymous" && submittedType !== "identified") {
+    return {
+      status: "error",
+      message: "Choisissez comment vous souhaitez répondre.",
+    };
+  }
+  const reviewerType = submittedType;
   if (reviewerType === "identified") {
-    const firstName = String(formData.get("reviewerFirstName") ?? "").trim();
-    const lastName = String(formData.get("reviewerLastName") ?? "").trim();
-    const phone = String(formData.get("reviewerPhone") ?? "").trim();
-    if (firstName.length < 2) {
-      errors.reviewerFirstName = "Indiquez votre prénom.";
+    const identity = validateReviewerIdentity({
+      firstName: String(formData.get("reviewerFirstName") ?? ""),
+      lastName: String(formData.get("reviewerLastName") ?? ""),
+      countryCode: String(formData.get("reviewerCountry") ?? ""),
+      phone: String(formData.get("reviewerPhone") ?? ""),
+      email: String(formData.get("reviewerEmail") ?? ""),
+    });
+    if (identity.success) {
+      customerFirstName = identity.data.firstName;
+      customerLastName = identity.data.lastName;
+      customerPhone = identity.data.phone;
+      customerEmail = identity.data.email;
+    } else {
+      Object.assign(errors, identity.errors);
     }
-    if (lastName.length < 2) {
-      errors.reviewerLastName = "Indiquez votre nom.";
-    }
-    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s.-]/g, ""))) {
-      errors.reviewerPhone = "Indiquez un numéro au format international.";
-    }
-    customerFirstName = firstName || null;
-    customerLastName = lastName || null;
-    customerPhone = phone ? phone.replace(/[\s.-]/g, "") : null;
   }
 
   if (rating === null) {
@@ -190,6 +198,7 @@ export async function submitReview(
     customerFirstName,
     customerLastName,
     customerPhone,
+    customerEmail,
     reviewerType,
     visitDate,
     createdAt: new Date(),

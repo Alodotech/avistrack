@@ -195,7 +195,7 @@ async function AuditLogContent({
         </EmptyState>
       ) : (
         <>
-          <ul className="md:hidden">
+          <ul className="lg:hidden">
             {entries.items.map((entry) => (
               <li
                 key={entry.id}
@@ -224,12 +224,23 @@ async function AuditLogContent({
             ))}
           </ul>
 
-          <div className={`${t.wrapper} hidden md:block`}>
-            <table className={t.table}>
+          <div className={`${t.wrapper} hidden lg:block`}>
+            <table className={`${t.table} min-w-[1080px] table-fixed`}>
+              <colgroup>
+                <col className="w-40" />
+                <col className="w-52" />
+                <col className="w-44" />
+                <col className="w-64" />
+                <col className="w-72" />
+              </colgroup>
               <thead className={t.head}>
                 <tr>
                   {COLUMNS.map((heading) => (
-                    <th key={heading} scope="col" className={t.th}>
+                    <th
+                      key={heading}
+                      scope="col"
+                      className={`${t.th} py-4`}
+                    >
                       {heading}
                     </th>
                   ))}
@@ -237,18 +248,30 @@ async function AuditLogContent({
               </thead>
               <tbody>
                 {entries.items.map((entry) => (
-                  <tr key={entry.id} className={t.row}>
-                    <td className={`${t.td} whitespace-nowrap tabular-nums`}>
+                  <tr
+                    key={entry.id}
+                    className={`${t.row} even:bg-gray-50/70 hover:bg-accent/5`}
+                  >
+                    <td
+                      className={`${t.td} whitespace-nowrap text-xs tabular-nums text-gray-600`}
+                    >
                       {formatDateTime(entry.createdAt)}
                     </td>
-                    <td className={`${t.td} wrap-anywhere`}>{entry.adminEmail}</td>
-                    <td className={`${t.td} font-semibold`}>
-                      {ACTION_LABELS[entry.action]}
+                    <td
+                      className={`${t.td} break-words text-sm`}
+                      title={entry.adminEmail}
+                    >
+                      {entry.adminEmail}
                     </td>
-                    <td className={`${t.td} w-full`}>
+                    <td className={t.td}>
+                      <span className="inline-flex max-w-full rounded-full bg-gray-100 px-2.5 py-1 text-xs leading-5 font-semibold text-black">
+                        {ACTION_LABELS[entry.action]}
+                      </span>
+                    </td>
+                    <td className={`${t.td} break-words font-medium`}>
                       {entry.companyName ?? "—"}
                     </td>
-                    <td className={`${t.td} max-w-80 text-gray-600`}>
+                    <td className={`${t.td} break-words text-sm leading-5 text-gray-600`}>
                       {entry.reason ?? "—"}
                     </td>
                   </tr>

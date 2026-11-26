@@ -6,6 +6,7 @@ import { LOGO_REQUIRED } from "@/lib/company-status";
 import {
   getFeexPayCountry,
   isFeexPayCountry,
+  normalizeFeexPayPhoneNumber,
 } from "@/lib/feexpay";
 import {
   COMPANY_LOGIN_PATH,
@@ -35,24 +36,27 @@ const onboardingSchema = z.object({
   phone: z
     .string()
     .trim()
-    .transform((value) => value.replace(/[\s.-]/g, ""))
+    .transform((value) => value.replace(/[\s().-]/g, ""))
     .pipe(
       z
         .string()
         .regex(
-          /^\+[1-9]\d{7,14}$/,
-          "Indiquez le numéro au format international, par exemple +22901970000.",
+          /^\+[1-9]\d{6,14}$/,
+          "Indiquez le numéro au format international avec son indicatif.",
         ),
     ),
   countryCode: z.string().refine(isFeexPayCountry, "Pays non pris en charge."),
   email: z.string().trim().email("Adresse e-mail invalide"),
 }).superRefine((profile, context) => {
   const country = getFeexPayCountry(profile.countryCode);
-  if (country && !profile.phone.startsWith(`+${country.callingCode}`)) {
+  if (
+    country &&
+    !normalizeFeexPayPhoneNumber(profile.phone, profile.countryCode)
+  ) {
     context.addIssue({
       code: "custom",
       path: ["phone"],
-      message: `Le téléphone doit utiliser l'indicatif +${country.callingCode}.`,
+      message: `Numéro invalide. Pour ${country.name}, utilisez le format ${country.phoneFormat} avec exactement ${country.nationalNumberLength} chiffres après l'indicatif.`,
     });
   }
 });

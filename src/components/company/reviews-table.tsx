@@ -20,6 +20,39 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function ReviewerDetails({ review }: { review: Review }) {
+  if (review.reviewerType !== "identified") {
+    return <span className="text-gray-600">Anonyme</span>;
+  }
+
+  const name =
+    [review.customerFirstName, review.customerLastName]
+      .filter(Boolean)
+      .join(" ") || "Client identifié";
+
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-medium">{name}</span>
+      {review.customerPhone ? (
+        <a
+          href={`tel:${review.customerPhone}`}
+          className="text-xs text-gray-600 underline underline-offset-2"
+        >
+          {review.customerPhone}
+        </a>
+      ) : null}
+      {review.customerEmail ? (
+        <a
+          href={`mailto:${review.customerEmail}`}
+          className="break-all text-xs text-gray-600 underline underline-offset-2"
+        >
+          {review.customerEmail}
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 /** DE-04 : avis du plus récent au plus ancien. Les commentaires sont du texte brut. */
 export function ReviewsTable({ reviews }: { reviews: Review[] }) {
   return (
@@ -38,6 +71,12 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
                 Déposé le {formatDate(review.createdAt)}
               </span>
             </div>
+            <div className="text-sm">
+              <span className="text-xs font-semibold text-gray-600">
+                Répondant
+              </span>
+              <ReviewerDetails review={review} />
+            </div>
             <p className="wrap-break-word text-sm leading-6 whitespace-pre-line">
               {review.comment ?? (
                 <span className="text-gray-600">Sans commentaire</span>
@@ -53,7 +92,7 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
       </ul>
 
       <div className={`${t.wrapper} hidden md:block`}>
-        <table className={`${t.table} min-w-176`}>
+        <table className={`${t.table} min-w-[900px]`}>
           <thead className={t.head}>
             <tr>
               <th
@@ -65,6 +104,9 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
               </th>
               <th scope="col" className={t.th}>
                 Note
+              </th>
+              <th scope="col" className={t.th}>
+                Répondant
               </th>
               <th scope="col" className={`${t.th} w-full`}>
                 Commentaire
@@ -86,6 +128,9 @@ export function ReviewsTable({ reviews }: { reviews: Review[] }) {
                 </td>
                 <td className={`${t.td} whitespace-nowrap`}>
                   <Stars rating={review.rating} />
+                </td>
+                <td className={t.td}>
+                  <ReviewerDetails review={review} />
                 </td>
                 <td className={`${t.td} leading-6 wrap-break-word whitespace-pre-line`}>
                   {review.comment ?? (

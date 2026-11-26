@@ -62,6 +62,7 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    | `FEEXPAY_API_KEY` | Clé privée FeexPay de l'environnement choisi |
    | `FEEXPAY_SHOP_ID` | Identifiant de la boutique FeexPay correspondante |
    | `FEEXPAY_WEBHOOK_SECRET` | Secret de signature webhook du même environnement |
+   | `LOCAL_PAYMENT_SIMULATION` | `true` uniquement en local pour simuler l'activation du forfait |
    | `CRON_SECRET` | Secret utilisé par Vercel Cron pour autoriser la purge planifiée |
 
    `.env.local` n'est jamais versionné. La clé `service_role` contourne les
@@ -123,6 +124,11 @@ Le développement s'organise autour d'une équipe de 3 développeurs. Voici la s
    ```bash
    npm run dev
    ```
+   Pour tester le parcours sans paiement réel, ajoutez
+   `LOCAL_PAYMENT_SIMULATION=true` dans `.env.local`, redémarrez le serveur,
+   puis utilisez le bouton « Simuler le paiement et ouvrir le dashboard ».
+   Cette option est bloquée dès que `NODE_ENV=production`, même si la variable
+   reste accidentellement présente.
 
 8. **Vérifier le projet avant de commiter :**
    ```bash

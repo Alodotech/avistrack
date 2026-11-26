@@ -36,4 +36,23 @@ describe("pays et opérateurs FeexPay", () => {
     );
     expect(normalizeFeexPayPhoneNumber("+2250700000000", "BJ")).toBeNull();
   });
+
+  it("respecte la longueur nationale actuelle de chaque pays pris en charge", () => {
+    const validNumbers = [
+      ["BJ", "+229 01 97 00 00 00", "2290197000000"],
+      ["BF", "+226 70 12 34 56", "22670123456"],
+      ["CI", "+225 07 00 00 00 00", "2250700000000"],
+      ["SN", "+221 77 123 45 67", "221771234567"],
+      ["TG", "+228 90 12 34 56", "22890123456"],
+      ["CG", "+242 06 123 45 67", "242061234567"],
+    ] as const;
+
+    for (const [countryCode, phone, normalized] of validNumbers) {
+      expect(normalizeFeexPayPhoneNumber(phone, countryCode)).toBe(normalized);
+    }
+
+    expect(normalizeFeexPayPhoneNumber("+229 01 97 00 00 00 00", "BJ")).toBeNull();
+    expect(normalizeFeexPayPhoneNumber("+229 01 97 00 00 00", "BF")).toBeNull();
+    expect(normalizeFeexPayPhoneNumber("+229 01 97 00 00 abc", "BJ")).toBeNull();
+  });
 });

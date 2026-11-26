@@ -13,8 +13,16 @@ export function publicReviewUrl(publicId: string): string {
   return `${siteUrl()}/avis/${encodeURIComponent(publicId)}`;
 }
 
-export function renderQrPng(url: string): Promise<Buffer> {
-  return QRCode.toBuffer(url, { ...QR_OPTIONS, type: "png", width: 1024 });
+export function renderQrPng(
+  url: string,
+  color = "#000000",
+): Promise<Buffer> {
+  return QRCode.toBuffer(url, {
+    ...QR_OPTIONS,
+    type: "png",
+    width: 1024,
+    color: { dark: color, light: "#FFFFFF" },
+  });
 }
 
 export function renderQrSvg(url: string): Promise<string> {

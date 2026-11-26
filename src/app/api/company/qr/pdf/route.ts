@@ -3,22 +3,8 @@ import { isCompanyAccessBlocked } from "@/server/services/company-access";
 import { publicReviewUrl, renderQrPng } from "@/server/services/qr";
 
 /**
- * Affiche A6 (105 × 148 mm) prête à imprimer : QR code centré, logo de
- * l'entreprise au-dessus s'il existe, nom et consigne de scan.
+ * Affiche A6 prête à imprimer, personnalisée avec le nom de l'entreprise.
  */
-
-async function logoDataUrl(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) return null;
-    const type = response.headers.get("content-type") ?? "image/png";
-    if (!type.startsWith("image/")) return null;
-    const bytes = Buffer.from(await response.arrayBuffer());
-    return `data:${type};base64,${bytes.toString("base64")}`;
-  } catch {
-    return null;
-  }
-}
 
 function slug(value: string): string {
   return value
@@ -43,51 +29,65 @@ export async function GET() {
   }
 
   const url = publicReviewUrl(company.publicId);
-  const [qr, logo] = await Promise.all([
-    renderQrPng(url),
-    company.logoUrl ? logoDataUrl(company.logoUrl) : Promise.resolve(null),
-  ]);
+  const qr = await renderQrPng(url, "#D71920");
 
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a6" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const center = pageWidth / 2;
+  const pageHeight = doc.internal.pageSize.getHeight();
 
   doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), "F");
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  doc.setDrawColor(235, 235, 235);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(5, 5, pageWidth - 10, pageHeight - 10, 4, 4, "S");
 
-  let cursorY = 16;
-  if (logo) {
-    try {
-      doc.addImage(logo, "PNG", center - 10, 10, 20, 20);
-      cursorY = 36;
-    } catch {
-      // Un logo illisible ne doit jamais bloquer l'export.
-    }
-  }
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(logo ? 13 : 15);
-  doc.text(company.name, center, cursorY, {
+  doc.setFillColor(255, 241, 241);
+  doc.roundedRect(center - 23, 12, 46, 7, 3.5, 3.5, "F");
+  doc.setTextColor(215, 25, 32);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.text("30 SECONDES POUR NOUS AIDER", center, 16.5, {
     align: "center",
-    maxWidth: pageWidth - 20,
+  });
+  doc.setTextColor(20, 20, 20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text("Votre avis compte !", center, 37, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(85, 85, 85);
+  doc.setFontSize(9);
+  doc.text("Scannez pour partager votre expérience", center, 45, {
+    align: "center",
   });
 
-  const qrSize = 68;
+  const frameSize = 70;
+  const frameX = (pageWidth - frameSize) / 2;
+  const frameY = 51;
+  doc.setFillColor(255, 249, 249);
+  doc.setDrawColor(240, 190, 192);
+  doc.setLineWidth(0.7);
+  doc.roundedRect(frameX, frameY, frameSize, frameSize, 5, 5, "FD");
+
+  const qrSize = 60;
   doc.addImage(
     `data:image/png;base64,${Buffer.from(qr).toString("base64")}`,
     "PNG",
-    (pageWidth - qrSize) / 2,
-    46,
+    center - qrSize / 2,
+    frameY + (frameSize - qrSize) / 2,
     qrSize,
     qrSize,
   );
 
-  doc.setFontSize(11);
-  doc.text("Scannez pour donner votre avis", center, 126, { align: "center" });
-  doc.setFontSize(8);
-  doc.setTextColor(110, 110, 110);
-  doc.text("AvisTrack", center, 140, { align: "center" });
+  doc.setDrawColor(235, 235, 235);
+  doc.line(18, 130, pageWidth - 18, 130);
+  doc.setTextColor(20, 20, 20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(doc.splitTextToSize(company.name, pageWidth - 24), center, 138, {
+    align: "center",
+  });
 
   const bytes = new Uint8Array(doc.output("arraybuffer"));
 

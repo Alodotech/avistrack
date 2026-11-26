@@ -91,59 +91,50 @@ async function ReportContent({
         title="Période du rapport"
         description={`${report.periodLabel} · ${formatDate(report.from)} → ${formatDate(report.to)}`}
       >
-        <div className="flex flex-col gap-4">
-          <form method="get" action="/admin/rapports" className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="report-period"
-                className="text-xs font-semibold tracking-wide text-gray-600 uppercase"
-              >
-                Type
-              </label>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
+          <form
+            method="get"
+            action="/admin/rapports"
+            className="grid content-start gap-4 sm:grid-cols-2 2xl:grid-cols-[1fr_1.2fr_0.8fr_auto]"
+          >
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold tracking-wide text-gray-600 uppercase">
+              Type de rapport
               <select
                 id="report-period"
                 name="periode"
                 defaultValue={period}
-                className="min-h-11 rounded-md border border-black/30 bg-white px-3 text-sm"
+                className="min-h-11 w-full rounded-md border border-black/20 bg-white px-3 text-sm font-normal normal-case text-black focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
                 <option value="month">Mensuel</option>
                 <option value="year">Annuel</option>
               </select>
-            </div>
+            </label>
 
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="report-month"
-                className="text-xs font-semibold tracking-wide text-gray-600 uppercase"
-              >
+            {period === "month" ? (
+              <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold tracking-wide text-gray-600 uppercase">
                 Mois
+                <select
+                  id="report-month"
+                  name="mois"
+                  defaultValue={month}
+                  className="min-h-11 w-full rounded-md border border-black/20 bg-white px-3 text-sm font-normal normal-case text-black focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  {MONTHS.map((label, index) => (
+                    <option key={label} value={index + 1}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
               </label>
-              <select
-                id="report-month"
-                name="mois"
-                defaultValue={month}
-                className="min-h-11 rounded-md border border-black/30 bg-white px-3 text-sm"
-              >
-                {MONTHS.map((label, index) => (
-                  <option key={label} value={index + 1}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            ) : null}
 
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="report-year"
-                className="text-xs font-semibold tracking-wide text-gray-600 uppercase"
-              >
-                Année
-              </label>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold tracking-wide text-gray-600 uppercase">
+              Année
               <select
                 id="report-year"
                 name="annee"
                 defaultValue={year}
-                className="min-h-11 rounded-md border border-black/30 bg-white px-3 text-sm"
+                className="min-h-11 w-full rounded-md border border-black/20 bg-white px-3 text-sm font-normal normal-case text-black focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
                 {years.sort((a, b) => b - a).map((value) => (
                   <option key={value} value={value}>
@@ -151,69 +142,51 @@ async function ReportContent({
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
 
-            <button type="submit" className={buttonClass("primary")}>
-              Afficher
-            </button>
+            <div className="flex items-end sm:col-span-2 2xl:col-span-1">
+              <button
+                type="submit"
+                className={buttonClass("primary", "w-full 2xl:w-auto")}
+              >
+                Afficher le rapport
+              </button>
+            </div>
           </form>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-black/10 pt-4">
-            <span className="text-xs font-semibold tracking-wide text-gray-600 uppercase">
-              Exporter
-            </span>
+          <div className="flex flex-col justify-center gap-3 rounded-lg border border-black/10 bg-gray-50 p-4 sm:p-5">
+            <div>
+              <h3 className="text-sm font-semibold">Télécharger le rapport</h3>
+              <p className="mt-1 text-xs leading-5 text-gray-600">
+                Choisissez un format. Chaque téléchargement est ajouté à
+                l&apos;historique.
+              </p>
+            </div>
             <PlatformReportExportButtons
               period={period}
               year={year}
               month={month}
             />
-            <span className="ml-auto text-xs text-gray-500">
-              Chaque export est journalisé dans l&apos;historique ci-dessous.
-            </span>
           </div>
         </div>
       </Panel>
 
-      <Panel
-        id="historique"
-        title="Historique des téléchargements"
-        description={`${formatCount(downloads.total)} export${downloads.total > 1 ? "s" : ""} enregistré${downloads.total > 1 ? "s" : ""}.`}
-        flush
-      >
-        {downloads.items.length === 0 ? (
-          <EmptyState>Aucun rapport téléchargé pour le moment.</EmptyState>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
-                <tr>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Administrateur</th>
-                  <th className="px-4 py-3">Rapport</th>
-                  <th className="px-4 py-3">Format</th>
-                </tr>
-              </thead>
-              <tbody>
-                {downloads.items.map((download) => (
-                  <tr key={download.id} className="border-t border-black/10">
-                    <td className="px-4 py-3 tabular-nums">{formatDate(download.createdAt)}</td>
-                    <td className="px-4 py-3 text-gray-600">{download.adminEmail}</td>
-                    <td className="px-4 py-3">{download.label}</td>
-                    <td className="px-4 py-3 font-mono text-xs uppercase">{download.format}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
-
-      <StatGrid>
-        <StatCard label="Entreprises" value={formatCount(report.stats.companyCount)} hint="Inscrites sur la période" />
-        <StatCard label="Actives" value={formatCount(report.stats.activeCount)} hint="Comptes non suspendus" />
-        <StatCard label="Avis sur la période" value={formatCount(report.stats.periodReviewCount)} hint={`${formatCount(report.stats.reviewCount)} au total`} />
-        <StatCard label="Note moyenne" value={formatAverage(report.stats.averageRating)} hint="Sur les entreprises du rapport" />
-      </StatGrid>
+      <section aria-labelledby="report-kpis-title" className="flex flex-col gap-3">
+        <header className="flex flex-col gap-1">
+          <h2 id="report-kpis-title" className="text-lg font-semibold">
+            Chiffres clés
+          </h2>
+          <p className="text-sm text-gray-600">
+            Vue d&apos;ensemble pour {report.periodLabel.toLowerCase()}.
+          </p>
+        </header>
+        <StatGrid>
+          <StatCard label="Entreprises" value={formatCount(report.stats.companyCount)} hint="Inscrites sur la période" />
+          <StatCard label="Actives" value={formatCount(report.stats.activeCount)} hint="Comptes non suspendus" />
+          <StatCard label="Avis sur la période" value={formatCount(report.stats.periodReviewCount)} hint={`${formatCount(report.stats.reviewCount)} au total`} />
+          <StatCard label="Note moyenne" value={formatAverage(report.stats.averageRating)} hint="Sur les entreprises du rapport" />
+        </StatGrid>
+      </section>
 
       <Panel
         id="entreprises"
@@ -225,36 +198,75 @@ async function ReportContent({
           <EmptyState>Aucune entreprise inscrite sur cette période.</EmptyState>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
+            <table className="w-full min-w-[1050px] table-fixed text-sm">
+              <colgroup>
+                <col className="w-52" />
+                <col className="w-56" />
+                <col className="w-32" />
+                <col className="w-36" />
+                <col className="w-32" />
+                <col className="w-24" />
+                <col className="w-24" />
+              </colgroup>
+              <thead className="bg-black text-left text-xs tracking-wide text-white uppercase">
                 <tr>
-                  <th className="px-4 py-3">Entreprise</th>
-                  <th className="px-4 py-3">Contact</th>
-                  <th className="px-4 py-3">Statut</th>
-                  <th className="px-4 py-3">Inscription</th>
-                  <th className="px-4 py-3">Abonnement</th>
-                  <th className="px-4 py-3">Avis</th>
-                  <th className="px-4 py-3">Note</th>
+                  <th scope="col" className="px-4 py-3">Entreprise</th>
+                  <th scope="col" className="px-4 py-3">Contact</th>
+                  <th scope="col" className="px-4 py-3">Statut</th>
+                  <th scope="col" className="px-4 py-3">Inscription</th>
+                  <th scope="col" className="px-4 py-3">Abonnement</th>
+                  <th scope="col" className="px-4 py-3 text-right">Avis</th>
+                  <th scope="col" className="px-4 py-3 text-right">Note</th>
                 </tr>
               </thead>
               <tbody>
-                {report.companies.map((company) => (
-                  <tr key={company.id} className="border-t border-black/10">
-                    <td className="px-4 py-3">
-                      <span className="block font-semibold">{company.name}</span>
-                      <span className="block font-mono text-[0.65rem] text-gray-500">{company.publicId}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      <span className="block">{company.email}</span>
-                      <span className="block text-xs">{company.phone || "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">{company.status}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatDate(company.createdAt)}</td>
-                    <td className="px-4 py-3">{company.subscription}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatCount(company.reviewCount)}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatAverage(company.averageRating)}</td>
-                  </tr>
-                ))}
+                {report.companies.map((company) => {
+                  const status =
+                    company.status === "ACTIVE"
+                      ? "Active"
+                      : company.status === "SUSPENDED"
+                        ? "Suspendue"
+                        : "En attente";
+                  const subscription =
+                    company.subscription === "trial"
+                      ? "Essai"
+                      : company.subscription === "annual"
+                        ? "Pro annuel"
+                        : "Pro mensuel";
+
+                  return (
+                    <tr
+                      key={company.id}
+                      className="border-t border-black/10 even:bg-gray-50/70 hover:bg-accent/5"
+                    >
+                      <td className="break-words px-4 py-3">
+                        <span className="block font-semibold">{company.name}</span>
+                        <span className="mt-1 block truncate font-mono text-[0.65rem] text-gray-500" title={company.publicId}>
+                          {company.publicId}
+                        </span>
+                      </td>
+                      <td className="break-words px-4 py-3 text-gray-600">
+                        <span className="block">{company.email}</span>
+                        <span className="mt-1 block text-xs">{company.phone || "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold">
+                          {status}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600">
+                        {formatDate(company.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-sm">{subscription}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCount(company.reviewCount)}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatAverage(company.averageRating)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -270,20 +282,101 @@ async function ReportContent({
         {report.audit.length === 0 ? (
           <EmptyState>Aucune action administrative sur cette période.</EmptyState>
         ) : (
-          <ul className="divide-y divide-black/10">
-            {report.audit.slice(0, 50).map((entry) => (
-              <li key={entry.id} className="flex flex-col gap-1 px-4 py-3 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{entry.action}</span>
-                  <span className="text-xs text-gray-500 tabular-nums">{formatDate(entry.createdAt)}</span>
-                </div>
-                <span className="text-gray-600">
-                  {entry.adminEmail} · {entry.companyName ?? "—"}
-                </span>
-                {entry.reason ? <span className="text-xs text-gray-500">{entry.reason}</span> : null}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-black/10 lg:hidden">
+              {report.audit.slice(0, 50).map((entry) => (
+                <li key={entry.id} className="flex flex-col gap-1 px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold">{entry.action}</span>
+                    <span className="text-xs text-gray-500 tabular-nums">{formatDate(entry.createdAt)}</span>
+                  </div>
+                  <span className="break-words text-gray-600">
+                    {entry.adminEmail} · {entry.companyName ?? "—"}
+                  </span>
+                  {entry.reason ? <span className="break-words text-xs text-gray-500">{entry.reason}</span> : null}
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[950px] table-fixed text-sm">
+                <colgroup>
+                  <col className="w-36" />
+                  <col className="w-48" />
+                  <col className="w-56" />
+                  <col className="w-56" />
+                  <col className="w-72" />
+                </colgroup>
+                <thead className="bg-black text-left text-xs tracking-wide text-white uppercase">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">Date</th>
+                    <th scope="col" className="px-4 py-3">Action</th>
+                    <th scope="col" className="px-4 py-3">Administrateur</th>
+                    <th scope="col" className="px-4 py-3">Entreprise</th>
+                    <th scope="col" className="px-4 py-3">Motif</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.audit.slice(0, 50).map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className="border-t border-black/10 even:bg-gray-50/70 hover:bg-accent/5"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600">
+                        {formatDate(entry.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 font-semibold">{entry.action}</td>
+                      <td className="break-words px-4 py-3 text-gray-600">{entry.adminEmail}</td>
+                      <td className="break-words px-4 py-3 font-medium">{entry.companyName ?? "—"}</td>
+                      <td className="break-words px-4 py-3 text-gray-600">{entry.reason ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </Panel>
+
+      <Panel
+        id="historique"
+        title="Historique des téléchargements"
+        description={`${formatCount(downloads.total)} export${downloads.total > 1 ? "s" : ""} enregistré${downloads.total > 1 ? "s" : ""}.`}
+        flush
+      >
+        {downloads.items.length === 0 ? (
+          <EmptyState>Aucun rapport téléchargé pour le moment.</EmptyState>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead className="bg-black text-left text-xs tracking-wide text-white uppercase">
+                <tr>
+                  <th scope="col" className="px-4 py-3">Date</th>
+                  <th scope="col" className="px-4 py-3">Administrateur</th>
+                  <th scope="col" className="px-4 py-3">Rapport</th>
+                  <th scope="col" className="px-4 py-3">Format</th>
+                </tr>
+              </thead>
+              <tbody>
+                {downloads.items.map((download) => (
+                  <tr
+                    key={download.id}
+                    className="border-t border-black/10 even:bg-gray-50/70"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 tabular-nums">
+                      {formatDate(download.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {download.adminEmail}
+                    </td>
+                    <td className="px-4 py-3">{download.label}</td>
+                    <td className="px-4 py-3 font-mono text-xs uppercase">
+                      {download.format}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Panel>
     </div>

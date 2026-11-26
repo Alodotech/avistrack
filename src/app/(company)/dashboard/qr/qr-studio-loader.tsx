@@ -17,17 +17,14 @@ const QrStudio = dynamic(
 export function QrStudioLoader({
   url,
   companyName,
-  companyLogoUrl,
 }: {
   url: string;
   companyName?: string;
-  companyLogoUrl?: string | null;
 }) {
   return (
     <QrStudio
       url={url}
       companyName={companyName}
-      companyLogoUrl={companyLogoUrl ?? undefined}
     />
   );
 }

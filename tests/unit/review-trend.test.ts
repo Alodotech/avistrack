@@ -17,6 +17,7 @@ function review(createdAt: string): Review {
     customerFirstName: null,
     customerLastName: null,
     customerPhone: null,
+    customerEmail: null,
     visitDate: "2026-06-01",
     createdAt: new Date(createdAt),
   };

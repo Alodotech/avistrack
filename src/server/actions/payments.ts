@@ -20,7 +20,9 @@ import {
 import {
   cancelCompanySubscription,
   createPendingFeexPayPayment,
+  activatePaidSubscription,
 } from "@/server/repositories/subscription-repository";
+import { isLocalPaymentSimulationEnabled } from "@/lib/payment-simulation";
 
 export type PaymentActionState = {
   ok: boolean;
@@ -43,6 +45,44 @@ function refreshBilling() {
 }
 
 const BILLING_GUARD = { allowOnboarding: true, allowExpired: true } as const;
+
+export async function simulateLocalPaymentAction(
+  period: "monthly" | "annual",
+): Promise<PaymentActionState> {
+  if (!isLocalPaymentSimulationEnabled()) {
+    return { ok: false, message: "La simulation de paiement n'est pas disponible." };
+  }
+
+  try {
+    const company = await requireCompany(BILLING_GUARD);
+    if (period !== "monthly" && period !== "annual") {
+      return { ok: false, message: "Formule invalide." };
+    }
+
+    await activatePaidSubscription({
+      companyId: company.id,
+      plan: "pro",
+      period,
+      amount: getSubscriptionPrice(period),
+      provider: "local-simulation",
+      providerRef: `local-${randomUUID()}`,
+      actorEmail: "local-simulation",
+    });
+    refreshBilling();
+    return {
+      ok: true,
+      message: "Paiement simulé confirmé. Votre tableau de bord est activé.",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Impossible de simuler le paiement.",
+    };
+  }
+}
 
 export async function cancelSubscriptionAction(): Promise<PaymentActionState> {
   const company = await requireCompany(BILLING_GUARD);

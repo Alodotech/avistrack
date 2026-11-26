@@ -15,11 +15,12 @@ const PAGE_FORMATS: {
   { id: "A4", logicalW: 794, logicalH: 1123 },
 ];
 
-const QR_WIDTH_PCT = 0.60;
+const QR_FRAME_WIDTH_PCT = 0.76;
 const MARGIN_PCT = 0.08;
 
 function qrWidth(logicalW: number): number {
-  return Math.round(logicalW * QR_WIDTH_PCT);
+  const contentWidth = logicalW - 2 * marginPx(logicalW);
+  return Math.round(contentWidth * QR_FRAME_WIDTH_PCT);
 }
 
 function marginPx(logicalW: number): number {
@@ -35,12 +36,12 @@ describe("QR poster dimensions", () => {
     }
   });
 
-  it("le QR mesure 60% de la largeur logique (≥55%)", () => {
+  it("le cadre QR occupe au moins 60% de la largeur logique", () => {
     for (const f of PAGE_FORMATS) {
       const w = qrWidth(f.logicalW);
       const pct = w / f.logicalW;
-      expect(pct).toBeGreaterThanOrEqual(0.55);
-      expect(pct).toBeCloseTo(QR_WIDTH_PCT, 2);
+      expect(pct).toBeGreaterThanOrEqual(0.6);
+      expect(pct).toBeCloseTo((1 - 2 * MARGIN_PCT) * QR_FRAME_WIDTH_PCT, 2);
     }
   });
 

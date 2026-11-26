@@ -2,7 +2,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "BJ",
     name: "Bénin",
+    flag: "🇧🇯",
     callingCode: "229",
+    nationalNumberLength: 10,
+    phoneFormat: "+229 01 XX XX XX XX",
     operators: [
       { value: "mtn", label: "MTN" },
       { value: "moov", label: "Moov" },
@@ -14,7 +17,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "BF",
     name: "Burkina Faso",
+    flag: "🇧🇫",
     callingCode: "226",
+    nationalNumberLength: 8,
+    phoneFormat: "+226 XX XX XX XX",
     operators: [
       { value: "orange_bf", label: "Orange" },
       { value: "moov_bf", label: "Moov" },
@@ -24,7 +30,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "CI",
     name: "Côte d'Ivoire",
+    flag: "🇨🇮",
     callingCode: "225",
+    nationalNumberLength: 10,
+    phoneFormat: "+225 XX XX XX XX XX",
     operators: [
       { value: "mtn_ci", label: "MTN" },
       { value: "moov_ci", label: "Moov" },
@@ -36,7 +45,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "SN",
     name: "Sénégal",
+    flag: "🇸🇳",
     callingCode: "221",
+    nationalNumberLength: 9,
+    phoneFormat: "+221 XX XXX XX XX",
     operators: [
       { value: "orange_sn", label: "Orange" },
       { value: "free_sn", label: "Free" },
@@ -46,7 +58,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "TG",
     name: "Togo",
+    flag: "🇹🇬",
     callingCode: "228",
+    nationalNumberLength: 8,
+    phoneFormat: "+228 XX XX XX XX",
     operators: [
       { value: "moov_tg", label: "Moov" },
       { value: "togocom_tg", label: "Togocom" },
@@ -55,7 +70,10 @@ export const FEEXPAY_COUNTRIES = [
   {
     code: "CG",
     name: "Congo-Brazzaville",
+    flag: "🇨🇬",
     callingCode: "242",
+    nationalNumberLength: 9,
+    phoneFormat: "+242 XX XXX XX XX",
     operators: [{ value: "mtn_cg", label: "MTN" }],
   },
 ] as const;
@@ -101,6 +119,12 @@ export function normalizeFeexPayPhoneNumber(
   if (!country) return null;
 
   const trimmed = value.trim();
+  if (
+    !/^[+()\d\s.-]+$/.test(trimmed) ||
+    (trimmed.includes("+") && !trimmed.startsWith("+"))
+  ) {
+    return null;
+  }
   const digits = trimmed.replace(/\D/g, "");
   const international = trimmed.startsWith("00") ? digits.slice(2) : digits;
   const isInternational = trimmed.startsWith("+") || trimmed.startsWith("00");
@@ -111,6 +135,11 @@ export function normalizeFeexPayPhoneNumber(
   const national = international.startsWith(country.callingCode)
     ? international.slice(country.callingCode.length)
     : international;
-  if (!/^\d{6,12}$/.test(national)) return null;
+  if (
+    !/^\d+$/.test(national) ||
+    national.length !== country.nationalNumberLength
+  ) {
+    return null;
+  }
   return `${country.callingCode}${national}`;
 }
